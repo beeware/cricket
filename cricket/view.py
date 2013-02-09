@@ -68,12 +68,8 @@ class View(object):
         # last step - configure the menubar
         self.root['menu'] = self.menubar
 
-        # Main display frame
-        self.mainframe = Frame(self.root)
-        self.mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
-
         # Main toolbar
-        self.toolbar = Frame(self.mainframe)
+        self.toolbar = Frame(self.root)
         self.toolbar.grid(column=0, row=0, sticky=(W, E))
 
         # Buttons on the toolbar
@@ -81,10 +77,15 @@ class View(object):
         self.run_stop_button.grid(column=0, row=0)
 
         # Main content area
-        self.content = Frame(self.mainframe)
+        self.content = PanedWindow(self.root, orient=HORIZONTAL)
         self.content.grid(column=0, row=1, sticky=(N, S, E, W))
 
-        self.tree = Treeview(self.content)
+        # The left-hand side frame on the main content area
+        self.tree_frame = Frame(self.content)
+        self.tree_frame.grid(column=0, row=0, sticky=(N, S, E, W))
+        self.content.add(self.tree_frame)
+
+        self.tree = Treeview(self.tree_frame)
         self.tree.grid(column=0, row=0, sticky=(N, S, E, W))
 
         for testApp_name, testApp in sorted(self.model.items()):
@@ -129,8 +130,8 @@ class View(object):
 
         TestMethod.bind('status_update', self.on_nodeStatusUpdate)
 
-        # The widgets vertical scrollbar
-        self.vScrollbar = Scrollbar(self.content, orient=VERTICAL)
+        # The tree's vertical scrollbar
+        self.vScrollbar = Scrollbar(self.tree_frame, orient=VERTICAL)
         self.vScrollbar.grid(column=1, row=0, sticky=(N, S))
 
         # Tie the scrollbar to the text views, and the text views
@@ -138,32 +139,61 @@ class View(object):
         self.tree.config(yscrollcommand=self.vScrollbar.set)
         self.vScrollbar.config(command=self.tree.yview)
 
-        self.code = ReadOnlyText(self.content)
-        self.code.grid(column=2, row=0, sticky=(N, S, E, W))
+        # The right-hand side frame on the main content area
+        self.details_frame = Frame(self.content)
+        self.details_frame.grid(column=0, row=0, sticky=(N, S, E, W))
+        self.content.add(self.details_frame)
+
+        self.details = ReadOnlyText(self.details_frame)
+        self.details.grid(column=0, row=0, sticky=(N, S, E, W))
+
+        # Status bar
+        self.statusbar = Frame(self.root)
+        self.statusbar.grid(column=0, row=2, sticky=(W, E))
 
         # Current status
         self.status = StringVar()
-        self.status_label = Label(self.mainframe, textvariable=self.status)
-        self.status_label.grid(column=0, row=2, sticky=(W, E))
+        self.status_label = Label(self.statusbar, textvariable=self.status)
+        self.status_label.grid(column=0, row=0, sticky=(W, E))
         self.status.set('Not running')
 
+        # Test progress
+        self.progress_value = IntVar()
+        self.progress = Progressbar(self.statusbar, orient=HORIZONTAL, length=200, mode='determinate', maximum=100, variable=self.progress_value)
+        self.progress.grid(column=1, row=0, sticky=(W, E))
+
+        # TODO - hook up the progress bar.
+        # self.progress_value.set(42)
+        # self.progress['value'] = 42
+        # self.progress['maximum'] = 142
+
         # Main window resize handle
-        self.grip = Sizegrip(self.mainframe)
-        self.grip.grid(column=0, row=2, sticky=(S, E))
+        self.grip = Sizegrip(self.statusbar)
+        self.grip.grid(column=2, row=0, sticky=(S, E))
 
         # Now configure the weights for the frame grids
         self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=0)
+        self.root.rowconfigure(1, weight=1)
+        self.root.rowconfigure(2, weight=0)
 
-        self.mainframe.columnconfigure(0, weight=1)
-        self.mainframe.rowconfigure(0, weight=0)
-        self.mainframe.rowconfigure(1, weight=1)
-        self.mainframe.rowconfigure(2, weight=0)
+        self.toolbar.columnconfigure(0, weight=0)
+        self.toolbar.rowconfigure(0, weight=1)
 
-        self.content.columnconfigure(0, weight=4)
-        self.content.columnconfigure(1, weight=0)
-        self.content.columnconfigure(2, weight=6)
+        self.content.columnconfigure(0, weight=1)
         self.content.rowconfigure(0, weight=1)
+
+        self.statusbar.columnconfigure(0, weight=1)
+        self.statusbar.columnconfigure(1, weight=0)
+        self.statusbar.columnconfigure(2, weight=0)
+        self.statusbar.rowconfigure(0, weight=1)
+
+        self.tree_frame.columnconfigure(0, weight=1)
+        self.tree_frame.columnconfigure(1, weight=0)
+        self.tree_frame.rowconfigure(0, weight=1)
+
+        self.details_frame.columnconfigure(0, weight=1)
+        self.details_frame.rowconfigure(0, weight=1)
 
     def mainloop(self):
         self.root.mainloop()
@@ -272,7 +302,7 @@ class View(object):
             }
 
             # Queue the first progress handling event
-            self.mainframe.after(100, self.on_testProgress)
+            self.root.after(100, self.on_testProgress)
 
         else:
             self.status.set('Stopping...')
@@ -377,4 +407,4 @@ class View(object):
             self.status.set('Finished.')
             self.run_stop_button.configure(text='Run')
         elif not stopped:
-            self.mainframe.after(100, self.on_testProgress)
+            self.root.after(100, self.on_testProgress)
