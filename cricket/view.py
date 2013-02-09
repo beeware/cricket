@@ -162,11 +162,6 @@ class View(object):
         self.progress = Progressbar(self.statusbar, orient=HORIZONTAL, length=200, mode='determinate', maximum=100, variable=self.progress_value)
         self.progress.grid(column=1, row=0, sticky=(W, E))
 
-        # TODO - hook up the progress bar.
-        # self.progress_value.set(42)
-        # self.progress['value'] = 42
-        # self.progress['maximum'] = 142
-
         # Main window resize handle
         self.grip = Sizegrip(self.statusbar)
         self.grip.grid(column=2, row=0, sticky=(S, E))
@@ -276,6 +271,9 @@ class View(object):
 
         if self.test_runner is None or self.test_runner.returncode is not None:
             self.status.set('Running...')
+            self.progress['maximum'] = self.model.active_test_count
+            self.progress_value.set(0)
+
             self.run_stop_button.configure(text='Stop')
 
             self.test_runner = subprocess.Popen(
@@ -374,6 +372,7 @@ class View(object):
                         error=error,
                         duration=float(end_time) - float(start_time),
                     )
+                    self.progress_value.set(self.progress_value.get() + 1)
 
                     # Clear the decks for the next test.
                     self.result['test'] = None

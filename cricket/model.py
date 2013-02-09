@@ -191,6 +191,16 @@ class TestCase(dict, EventSource):
             return labels
         return TestLabelList([self.path])
 
+    @property
+    def active_test_count(self):
+        "Return the number of tests currently active for the test case"
+        count = 0
+        if self.active:
+            for testMethod_name, testMethod in self.items():
+                if testMethod.active:
+                    count = count + 1
+        return count
+
     def _update_active(self):
         for testMethod_name, testMethod in self.items():
             if testMethod.active:
@@ -256,6 +266,15 @@ class TestApp(dict, EventSource):
             return labels
         return TestLabelList([self.path])
 
+    @property
+    def active_test_count(self):
+        "Return the number of tests currently active for the app"
+        count = 0
+        if self.active:
+            for testCase_name, testCase in self.items():
+                count = count + testCase.active_test_count
+        return count
+
     def _update_active(self):
         for testCase_name, testCase in self.items():
             if testCase.active:
@@ -285,7 +304,7 @@ class Project(dict, EventSource):
         return ''
 
     @property
-    def test_labels(self, include_inactive=False):
+    def test_labels(self):
         """The list of all active test labels in this app.
 
         The values from this property can be passed to the test runner
@@ -301,6 +320,15 @@ class Project(dict, EventSource):
         if labels.found_inactive:
             return labels
         return []
+
+    @property
+    def active_test_count(self):
+        "Return the number of tests currently active for the project"
+        count = 0
+        for testApp_name, testApp in self.items():
+            count = count + testApp.active_test_count
+
+        return count
 
     def confirm_exists(self, test_label, timestamp=None):
         """Confirm that the given test label exists in the current data model.
