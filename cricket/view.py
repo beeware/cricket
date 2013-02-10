@@ -11,11 +11,95 @@ import subprocess
 
 
 from Tkinter import *
+from tkFont import *
 from ttk import *
 
 from cricket.widgets import ReadOnlyText
 from cricket.model import TestMethod, TestCase, TestApp
 from cricket.pipes import PipedTestResult, PipedTestRunner
+
+
+# Display constants for test status
+STATUS = {
+    TestMethod.STATUS_PASS: {
+        'description': 'Pass',
+        'tag': 'pass',
+        'color': 'green',
+    },
+    TestMethod.STATUS_SKIP: {
+        'description': 'Skipped',
+        'tag': 'skip',
+        'color': 'blue'
+    },
+    TestMethod.STATUS_FAIL: {
+        'description': 'Failure',
+        'tag': 'fail',
+        'color': 'red'
+    },
+    TestMethod.STATUS_EXPECTED_FAIL: {
+        'description': 'Expected\n  failure',
+        'tag': 'expected',
+        'color': 'blue'
+    },
+    TestMethod.STATUS_UNEXPECTED_SUCCESS: {
+        'description': 'Unexpected\n   success',
+        'tag': 'unexpected',
+        'color': 'red'
+    },
+    TestMethod.STATUS_ERROR: {
+        'description': 'Error',
+        'tag': 'error',
+        'color': 'red'
+    },
+}
+
+STATUS_DEFAULT = {
+    'description': '    Not\nexecuted',
+    'tag': None,
+    'color': 'gray',
+}
+
+
+def status_description(status):
+    "Toggle the current active status of this test method"
+    if status:
+        return {
+            TestMethod.STATUS_PASS: 'Pass',
+            TestMethod.STATUS_SKIP: 'Skipped',
+            TestMethod.STATUS_FAIL: 'Failure',
+            TestMethod.STATUS_EXPECTED_FAIL: 'Expected\n  failure',
+            TestMethod.STATUS_UNEXPECTED_SUCCESS: 'Unexpected\n   success',
+            TestMethod.STATUS_ERROR: 'Error',
+        }[status]
+    return 'Not executed'
+
+
+def status_tag(status):
+    "Get a tag version of the current test status"
+    if status:
+        return {
+            TestMethod.STATUS_PASS: 'pass',
+            TestMethod.STATUS_SKIP: 'skip',
+            TestMethod.STATUS_FAIL: 'fail',
+            TestMethod.STATUS_EXPECTED_FAIL: 'expected',
+            TestMethod.STATUS_UNEXPECTED_SUCCESS: 'unexpected',
+            TestMethod.STATUS_ERROR: 'error',
+        }[status]
+    return 'status'
+
+
+def status_color(status):
+    "Get a color of the current test status"
+    if status:
+        return {
+            TestMethod.STATUS_PASS: 'green',
+            TestMethod.STATUS_SKIP: 'blue',
+            TestMethod.STATUS_FAIL: 'red',
+            TestMethod.STATUS_EXPECTED_FAIL: 'blue',
+            TestMethod.STATUS_UNEXPECTED_SUCCESS: 'red',
+            TestMethod.STATUS_ERROR: 'red',
+        }[status]
+    return 'gray'
 
 
 class View(object):
@@ -31,13 +115,14 @@ class View(object):
         # Root window
         self.root = Tk()
         self.root.title('Cricket')
+        self.root.geometry('1024x768')
+
         # Prevent the menus from having the empty tearoff entry
         self.root.option_add('*tearOff', FALSE)
         # Catch the close button
         self.root.protocol("WM_DELETE_WINDOW", self.on_quit)
         # Catch the "quit" event.
         self.root.createcommand('exit', self.on_quit)
-
         # Menubar
         self.menubar = Menu(self.root)
 
@@ -88,6 +173,7 @@ class View(object):
         self.tree = Treeview(self.tree_frame)
         self.tree.grid(column=0, row=0, sticky=(N, S, E, W))
 
+        # Populate the initial tree nodes.
         for testApp_name, testApp in sorted(self.model.items()):
             testApp_node = self.tree.insert('', 'end', testApp.path,
                 text=testApp.name,
@@ -108,14 +194,21 @@ class View(object):
                         open=True
                     )
 
-        self.tree.tag_configure('fail', foreground='red')
-        self.tree.tag_configure('pass', foreground='green')
+        # Set up the tag colors for tree nodes.
+        for status, config in STATUS.items():
+            self.tree.tag_configure(config['tag'], foreground=config['color'])
         self.tree.tag_configure('inactive', foreground='lightgray')
 
+        # Listen for button clicks on tree nodes
         self.tree.tag_bind('TestApp', '<Double-Button-1>', self.on_testAppClicked)
         self.tree.tag_bind('TestCase', '<Double-Button-1>', self.on_testCaseClicked)
         self.tree.tag_bind('TestMethod', '<Double-Button-1>', self.on_testMethodClicked)
 
+        self.tree.tag_bind('TestApp', '<<TreeviewSelect>>', self.on_testMethodSelected)
+        self.tree.tag_bind('TestCase', '<<TreeviewSelect>>', self.on_testMethodSelected)
+        self.tree.tag_bind('TestMethod', '<<TreeviewSelect>>', self.on_testMethodSelected)
+
+        # Listen for any state changes on nodes in the tree
         TestApp.bind('active', self.on_nodeActive)
         TestCase.bind('active', self.on_nodeActive)
         TestMethod.bind('active', self.on_nodeActive)
@@ -124,38 +217,87 @@ class View(object):
         TestCase.bind('inactive', self.on_nodeInactive)
         TestMethod.bind('inactive', self.on_nodeInactive)
 
+        # Listen for new nodes added to the tree
         TestApp.bind('new', self.on_nodeAdded)
         TestCase.bind('new', self.on_nodeAdded)
         TestMethod.bind('new', self.on_nodeAdded)
 
+        # Listen for any status updates on nodes in the tree.
         TestMethod.bind('status_update', self.on_nodeStatusUpdate)
 
         # The tree's vertical scrollbar
-        self.vScrollbar = Scrollbar(self.tree_frame, orient=VERTICAL)
-        self.vScrollbar.grid(column=1, row=0, sticky=(N, S))
+        self.treeScrollbar = Scrollbar(self.tree_frame, orient=VERTICAL)
+        self.treeScrollbar.grid(column=1, row=0, sticky=(N, S))
 
         # Tie the scrollbar to the text views, and the text views
         # to each other.
-        self.tree.config(yscrollcommand=self.vScrollbar.set)
-        self.vScrollbar.config(command=self.tree.yview)
+        self.tree.config(yscrollcommand=self.treeScrollbar.set)
+        self.treeScrollbar.config(command=self.tree.yview)
 
         # The right-hand side frame on the main content area
         self.details_frame = Frame(self.content)
         self.details_frame.grid(column=0, row=0, sticky=(N, S, E, W))
         self.content.add(self.details_frame)
 
-        self.details = ReadOnlyText(self.details_frame)
-        self.details.grid(column=0, row=0, sticky=(N, S, E, W))
+        # Set up the content in the details panel
+        # Test Name
+        self.name_label = Label(self.details_frame, text='Name:')
+        self.name_label.grid(column=0, row=0, pady=5, sticky=(E,))
+
+        self.name = StringVar()
+        self.name_widget = Entry(self.details_frame, textvariable=self.name)
+        self.name_widget.configure(state='readonly')
+        self.name_widget.grid(column=1, row=0, pady=5, sticky=(W, E))
+
+        # Test status
+        self.test_status = StringVar()
+        self.test_status_widget = Label(self.details_frame, textvariable=self.test_status, width=12, anchor=CENTER)
+        f = Font(font=self.test_status_widget['font'])
+        f['weight'] = 'bold'
+        self.test_status_widget.config(font=f)
+        self.test_status_widget.grid(column=2, row=0, pady=5, rowspan=2, sticky=(N, W, E, S))
+
+        # Test duration
+        self.duration_label = Label(self.details_frame, text='Duration:')
+        self.duration_label.grid(column=0, row=1, pady=5, sticky=(E,))
+
+        self.duration = StringVar()
+        self.duration_widget = Entry(self.details_frame, textvariable=self.duration)
+        self.duration_widget.grid(column=1, row=1, pady=5, sticky=(E, W,))
+
+        # Test description
+        self.description_label = Label(self.details_frame, text='Description:')
+        self.description_label.grid(column=0, row=2, pady=5, sticky=(N, E,))
+
+        self.description = ReadOnlyText(self.details_frame, width=80, height=4)
+        self.description.grid(column=1, row=2, pady=5, columnspan=2, sticky=(N, S, E, W,))
+
+        self.descriptionScrollbar = Scrollbar(self.details_frame, orient=VERTICAL)
+        self.descriptionScrollbar.grid(column=3, row=2, pady=5, sticky=(N, S))
+        self.description.config(yscrollcommand=self.descriptionScrollbar.set)
+        self.descriptionScrollbar.config(command=self.description.yview)
+
+        # Error message
+        self.error_label = Label(self.details_frame, text='Error:')
+        self.error_label.grid(column=0, row=3, pady=5, sticky=(N, E,))
+
+        self.error = ReadOnlyText(self.details_frame, width=80)
+        self.error.grid(column=1, row=3, pady=5, columnspan=2, sticky=(N, S, E, W))
+
+        self.errorScrollbar = Scrollbar(self.details_frame, orient=VERTICAL)
+        self.errorScrollbar.grid(column=3, row=3, pady=5, sticky=(N, S))
+        self.error.config(yscrollcommand=self.errorScrollbar.set)
+        self.errorScrollbar.config(command=self.error.yview)
 
         # Status bar
         self.statusbar = Frame(self.root)
         self.statusbar.grid(column=0, row=2, sticky=(W, E))
 
         # Current status
-        self.status = StringVar()
-        self.status_label = Label(self.statusbar, textvariable=self.status)
-        self.status_label.grid(column=0, row=0, sticky=(W, E))
-        self.status.set('Not running')
+        self.run_status = StringVar()
+        self.run_status_label = Label(self.statusbar, textvariable=self.run_status)
+        self.run_status_label.grid(column=0, row=0, sticky=(W, E))
+        self.run_status.set('Not running')
 
         # Test progress
         self.progress_value = IntVar()
@@ -178,6 +320,9 @@ class View(object):
         self.content.columnconfigure(0, weight=1)
         self.content.rowconfigure(0, weight=1)
 
+        self.content.pane(0, weight=1)
+        self.content.pane(1, weight=2)
+
         self.statusbar.columnconfigure(0, weight=1)
         self.statusbar.columnconfigure(1, weight=0)
         self.statusbar.columnconfigure(2, weight=0)
@@ -187,8 +332,20 @@ class View(object):
         self.tree_frame.columnconfigure(1, weight=0)
         self.tree_frame.rowconfigure(0, weight=1)
 
-        self.details_frame.columnconfigure(0, weight=1)
-        self.details_frame.rowconfigure(0, weight=1)
+        self.details_frame.columnconfigure(0, weight=0)
+        self.details_frame.columnconfigure(1, weight=1)
+        self.details_frame.columnconfigure(2, weight=0)
+        self.details_frame.columnconfigure(3, weight=0)
+        self.details_frame.rowconfigure(0, weight=0)
+        self.details_frame.rowconfigure(1, weight=0)
+        self.details_frame.rowconfigure(2, weight=1)
+        self.details_frame.rowconfigure(3, weight=10)
+
+        # Now that we've laid out the grid, hide the error text
+        # until we actually have an error to display
+        self.error_label.grid_remove()
+        self.error.grid_remove()
+        self.errorScrollbar.grid_remove()
 
     def mainloop(self):
         self.root.mainloop()
@@ -196,7 +353,7 @@ class View(object):
     def on_quit(self):
         "Event handler: Quit"
         if self.test_runner:
-            self.status.set('Stopping...')
+            self.run_status.set('Stopping...')
 
             self.test_runner.terminate()
             self.test_runner = None
@@ -239,6 +396,63 @@ class View(object):
 
         testMethod.toggle_active()
 
+    def on_testMethodSelected(self, event):
+        "Event handler: a test case has been selected in the tree"
+        if len(self.tree.selection()) == 1:
+            parts = self.tree.selection()[0].split('.')
+            if len(parts) == 3:
+                testApp_name, testCase_name, testMethod_name = parts
+                testMethod = self.model[testApp_name][testCase_name][testMethod_name]
+
+                self.name.set(testMethod.path)
+
+                self.description.delete('1.0', END)
+                self.description.insert('1.0', testMethod.description)
+
+                config = STATUS.get(testMethod.status, STATUS_DEFAULT)
+                self.test_status_widget.config(foreground=config['color'])
+                self.test_status.set(config['description'])
+
+                if testMethod._result:
+                    self.duration.set('%0.2fs' % testMethod._result['duration'])
+
+                    self.error.delete('1.0', END)
+                    if testMethod.error:
+                        self.error_label.grid()
+                        self.error.grid()
+                        self.errorScrollbar.grid()
+                        self.error.insert('1.0', testMethod.error)
+                    else:
+                        self.error_label.grid_remove()
+                        self.error.grid_remove()
+                        self.errorScrollbar.grid_remove()
+                else:
+                    self.duration.set('Not executed')
+
+                    self.error_label.grid_remove()
+                    self.error.grid_remove()
+                    self.errorScrollbar.grid_remove()
+            else:
+                self.name.set('')
+                self.test_status.set('')
+
+                self.duration.set('')
+                self.description.delete('1.0', END)
+
+                self.error_label.grid_remove()
+                self.error.grid_remove()
+                self.errorScrollbar.grid_remove()
+        else:
+            self.name.set('')
+            self.test_status.set('')
+
+            self.duration.set('')
+            self.description.delete('1.0', END)
+
+            self.error_label.grid_remove()
+            self.error.grid_remove()
+            self.errorScrollbar.grid_remove()
+
     def on_nodeAdded(self, node):
         "Event handler: a new node has been added to the tree"
         self.tree.insert(node.parent.path, 'end', node.path,
@@ -259,7 +473,7 @@ class View(object):
 
     def on_nodeStatusUpdate(self, node):
         "Event handler: a node on the tree has received a status update"
-        self.tree.item(node.path, tags=['TestMethod', node.status_tag])
+        self.tree.item(node.path, tags=['TestMethod', STATUS[node.status]['tag']])
 
     def on_run_stop(self, event=None):
         "Event handler: The run/stop button has been pressed"
@@ -270,7 +484,7 @@ class View(object):
             self.test_runner.poll()
 
         if self.test_runner is None or self.test_runner.returncode is not None:
-            self.status.set('Running...')
+            self.run_status.set('Running...')
             self.progress['maximum'] = self.model.active_test_count
             self.progress_value.set(0)
 
@@ -303,12 +517,12 @@ class View(object):
             self.root.after(100, self.on_testProgress)
 
         else:
-            self.status.set('Stopping...')
+            self.run_status.set('Stopping...')
 
             self.test_runner.terminate()
             self.test_runner = None
 
-            self.status.set('Stopped.')
+            self.run_status.set('Stopped.')
             self.run_stop_button.configure(text='Run')
 
     def on_testProgress(self):
@@ -350,22 +564,22 @@ class View(object):
                         error = None
                     elif self.result['lines'][1] == 'result: s':
                         status = TestMethod.STATUS_SKIP
-                        error = None
+                        error = 'Skipped: ' + '\n'.join(self.result['lines'][3:])
                     elif self.result['lines'][1] == 'result: F':
                         status = TestMethod.STATUS_FAIL
-                        error = '\n'.join(self.result['lines'][2:-1])
+                        error = '\n'.join(self.result['lines'][3:])
                     elif self.result['lines'][1] == 'result: x':
                         status = TestMethod.STATUS_EXPECTED_FAIL
-                        error = None
+                        error = '\n'.join(self.result['lines'][3:])
                     elif self.result['lines'][1] == 'result: u':
                         status = TestMethod.STATUS_UNEXPECTED_SUCCESS
                         error = None
                     elif self.result['lines'][1] == 'result: E':
                         status = TestMethod.STATUS_ERROR
-                        error = '\n'.join(self.result['lines'][2:-1])
+                        error = '\n'.join(self.result['lines'][3:])
 
                     start_time = self.result['lines'][0][7:]
-                    end_time = self.result['lines'][-1][5:]
+                    end_time = self.result['lines'][2][5:]
 
                     self.result['test'].set_result(
                         status=status,
@@ -385,15 +599,15 @@ class View(object):
                         finished = True
                         self.result['lines'] = None
 
-                        self.status.set('Finished.')
+                        self.run_status.set('Finished.')
                         self.run_stop_button.configure(text='Run')
 
             else:
                 if self.result['lines'] is None:
-                    self.status.set(line)
+                    self.run_status.set(line)
                 else:
                     if self.result['test'] is None:
-                        self.status.set('Running %s...' % line)
+                        self.run_status.set('Running %s...' % line)
                         self.tree.see(line)
                         self.tree.item(line, tags=['TestMethod', 'active'])
 
@@ -403,7 +617,7 @@ class View(object):
 
         # If we're not finished, requeue the event.
         if finished:
-            self.status.set('Finished.')
+            self.run_status.set('Finished.')
             self.run_stop_button.configure(text='Run')
         elif not stopped:
             self.root.after(100, self.on_testProgress)

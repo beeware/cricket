@@ -1,5 +1,6 @@
 import sys
 import time
+import traceback
 import unittest
 
 from django.utils.unittest import result
@@ -33,26 +34,28 @@ class PipedTestResult(result.TestResult):
     def addError(self, test, err):
         super(PipedTestResult, self).addError(test, err)
         self.stream.write('result: E\nend: %s\n' % time.time())
-        self.stream.write(err)
+        self.stream.write('\n'.join(traceback.format_exception(*err)))
         self.stream.write('\n')
         self.stream.flush()
 
     def addFailure(self, test, err):
         super(PipedTestResult, self).addFailure(test, err)
         self.stream.write('result: F\nend: %s\n' % time.time())
-        self.stream.write(err)
+        self.stream.write('\n'.join(traceback.format_exception(*err)))
         self.stream.write('\n')
         self.stream.flush()
 
     def addSkip(self, test, reason):
         super(PipedTestResult, self).addSkip(test, reason)
-        self.stream.write("result: s\nend: %s" % time.time())
+        self.stream.write("result: s\nend: %s\n" % time.time())
+        self.stream.write(reason)
         self.stream.write('\n')
         self.stream.flush()
 
     def addExpectedFailure(self, test, err):
         super(PipedTestResult, self).addExpectedFailure(test, err)
-        self.stream.write("result: x\nend: %s" % time.time())
+        self.stream.write("result: x\nend: %s\n" % time.time())
+        self.stream.write('\n'.join(traceback.format_exception(*err)))
         self.stream.write('\n')
         self.stream.flush()
 

@@ -66,6 +66,7 @@ class TestMethod(EventSource):
 
     def __init__(self, name, testCase):
         self.name = name
+        self.description = 'Test description.'
         self._active = True
         self._result = None
 
@@ -115,17 +116,25 @@ class TestMethod(EventSource):
             self.parent._update_active()
 
     @property
-    def status_tag(self):
-        "Toggle the current active status of this test method"
-        if self._result:
-            return {
-                self.STATUS_PASS: 'pass',
-                self.STATUS_SKIP: 'skip',
-                self.STATUS_FAIL: 'fail',
-                self.STATUS_EXPECTED_FAIL: 'expected',
-                self.STATUS_UNEXPECTED_SUCCESS: 'unexpected',
-                self.STATUS_ERROR: 'error',
-            }[self._result['status']]
+    def status(self):
+        try:
+            return self._result['status']
+        except TypeError:
+            return None
+
+    @property
+    def error(self):
+        try:
+            return self._result['error']
+        except TypeError:
+            return None
+
+    @property
+    def duration(self):
+        try:
+            return self._result['duration']
+        except TypeError:
+            return None
 
     def set_result(self, status, error, duration):
         self._result = {
