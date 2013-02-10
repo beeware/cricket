@@ -60,46 +60,19 @@ STATUS_DEFAULT = {
 }
 
 
-def status_description(status):
-    "Toggle the current active status of this test method"
-    if status:
-        return {
-            TestMethod.STATUS_PASS: 'Pass',
-            TestMethod.STATUS_SKIP: 'Skipped',
-            TestMethod.STATUS_FAIL: 'Failure',
-            TestMethod.STATUS_EXPECTED_FAIL: 'Expected\n  failure',
-            TestMethod.STATUS_UNEXPECTED_SUCCESS: 'Unexpected\n   success',
-            TestMethod.STATUS_ERROR: 'Error',
-        }[status]
-    return 'Not executed'
+def split_content(lines):
+    "Split separated content into it's parts"
+    content = []
+    all_content = []
+    for line in lines:
+        if line == PipedTestResult.content_separator:
+            all_content.append('\n'.join(content))
+        else:
+            content.append(line)
+    # Store everything in the last content block
+    all_content.append('\n'.join(content))
 
-
-def status_tag(status):
-    "Get a tag version of the current test status"
-    if status:
-        return {
-            TestMethod.STATUS_PASS: 'pass',
-            TestMethod.STATUS_SKIP: 'skip',
-            TestMethod.STATUS_FAIL: 'fail',
-            TestMethod.STATUS_EXPECTED_FAIL: 'expected',
-            TestMethod.STATUS_UNEXPECTED_SUCCESS: 'unexpected',
-            TestMethod.STATUS_ERROR: 'error',
-        }[status]
-    return 'status'
-
-
-def status_color(status):
-    "Get a color of the current test status"
-    if status:
-        return {
-            TestMethod.STATUS_PASS: 'green',
-            TestMethod.STATUS_SKIP: 'blue',
-            TestMethod.STATUS_FAIL: 'red',
-            TestMethod.STATUS_EXPECTED_FAIL: 'blue',
-            TestMethod.STATUS_UNEXPECTED_SUCCESS: 'red',
-            TestMethod.STATUS_ERROR: 'red',
-        }[status]
-    return 'gray'
+    return all_content
 
 
 class View(object):
@@ -553,34 +526,44 @@ class View(object):
 
         # Process all the full lines that are available
         for line in lines:
-            if line in (PipedTestResult.separator, PipedTestRunner.separator):
+            if line in (PipedTestResult.result_separator, PipedTestRunner.separator):
                 if self.result['lines'] is None:
                     # Preamble is finished. Set up the line buffer.
                     self.result['lines'] = []
                 else:
                     # Start of new test result; record the last result
+
+                    content = split_content(self.result['lines'][3:])
+                    # Then, work out what content goes where.
                     if self.result['lines'][1] == 'result: OK':
                         status = TestMethod.STATUS_PASS
+                        description = content[0]
                         error = None
                     elif self.result['lines'][1] == 'result: s':
                         status = TestMethod.STATUS_SKIP
-                        error = 'Skipped: ' + '\n'.join(self.result['lines'][3:])
+                        description = content[0]
+                        error = 'Skipped: ' + content[1]
                     elif self.result['lines'][1] == 'result: F':
                         status = TestMethod.STATUS_FAIL
-                        error = '\n'.join(self.result['lines'][3:])
+                        description = content[0]
+                        error = content[1]
                     elif self.result['lines'][1] == 'result: x':
                         status = TestMethod.STATUS_EXPECTED_FAIL
-                        error = '\n'.join(self.result['lines'][3:])
+                        description = content[0]
+                        error = content[1]
                     elif self.result['lines'][1] == 'result: u':
                         status = TestMethod.STATUS_UNEXPECTED_SUCCESS
+                        description = content[0]
                         error = None
                     elif self.result['lines'][1] == 'result: E':
                         status = TestMethod.STATUS_ERROR
-                        error = '\n'.join(self.result['lines'][3:])
+                        description = content[0]
+                        error = content[1]
 
                     start_time = self.result['lines'][0][7:]
                     end_time = self.result['lines'][2][5:]
 
+                    self.result['test'].description = description
                     self.result['test'].set_result(
                         status=status,
                         error=error,

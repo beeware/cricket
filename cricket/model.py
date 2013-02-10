@@ -66,7 +66,7 @@ class TestMethod(EventSource):
 
     def __init__(self, name, testCase):
         self.name = name
-        self.description = 'Test description.'
+        self.description = ''
         self._active = True
         self._result = None
 
