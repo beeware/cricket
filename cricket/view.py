@@ -586,6 +586,10 @@ class View(object):
                         error=error,
                         duration=float(end_time) - float(start_time),
                     )
+
+                    if len(self.tree.selection()) == 1 and self.tree.selection()[0] == self.result['test'].path:
+                        self.on_testMethodSelected(None)
+
                     self.progress_value.set(self.progress_value.get() + 1)
 
                     # Clear the decks for the next test.
