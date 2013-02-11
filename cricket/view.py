@@ -22,41 +22,48 @@ from cricket.pipes import PipedTestResult, PipedTestRunner
 # Display constants for test status
 STATUS = {
     TestMethod.STATUS_PASS: {
-        'description': 'Pass',
+        'description': u'Pass',
+        'symbol': u'\u25cf',
         'tag': 'pass',
-        'color': 'green',
+        'color': '#28C025',
     },
     TestMethod.STATUS_SKIP: {
-        'description': 'Skipped',
+        'description': u'Skipped',
+        'symbol': u'S',
         'tag': 'skip',
-        'color': 'blue'
+        'color': '#259EBF'
     },
     TestMethod.STATUS_FAIL: {
-        'description': 'Failure',
+        'description': u'Failure',
+        'symbol': u'F',
         'tag': 'fail',
-        'color': 'red'
+        'color': '#E32C2E'
     },
     TestMethod.STATUS_EXPECTED_FAIL: {
-        'description': 'Expected\n  failure',
+        'description': u'Expected\n  failure',
+        'symbol': u'X',
         'tag': 'expected',
-        'color': 'blue'
+        'color': '#3C25BF'
     },
     TestMethod.STATUS_UNEXPECTED_SUCCESS: {
-        'description': 'Unexpected\n   success',
+        'description': u'Unexpected\n   success',
+        'symbol': u'U',
         'tag': 'unexpected',
-        'color': 'red'
+        'color': '#C82788'
     },
     TestMethod.STATUS_ERROR: {
         'description': 'Error',
+        'symbol': u'E',
         'tag': 'error',
-        'color': 'red'
+        'color': '#E4742C'
     },
 }
 
 STATUS_DEFAULT = {
-    'description': '    Not\nexecuted',
+    'description': 'Not\nexecuted',
+    'symbol': u'',
     'tag': None,
-    'color': 'gray',
+    'color': '#BFBFBF',
 }
 
 
@@ -67,10 +74,12 @@ def split_content(lines):
     for line in lines:
         if line == PipedTestResult.content_separator:
             all_content.append('\n'.join(content))
+            content = []
         else:
             content.append(line)
     # Store everything in the last content block
-    all_content.append('\n'.join(content))
+    if content:
+        all_content.append('\n'.join(content))
 
     return all_content
 
@@ -224,11 +233,12 @@ class View(object):
 
         # Test status
         self.test_status = StringVar()
-        self.test_status_widget = Label(self.details_frame, textvariable=self.test_status, width=12, anchor=CENTER)
+        self.test_status_widget = Label(self.details_frame, textvariable=self.test_status, width=1, anchor=CENTER)
         f = Font(font=self.test_status_widget['font'])
         f['weight'] = 'bold'
+        f['size'] = 50
         self.test_status_widget.config(font=f)
-        self.test_status_widget.grid(column=2, row=0, pady=5, rowspan=2, sticky=(N, W, E, S))
+        self.test_status_widget.grid(column=2, row=0, padx=15, pady=5, rowspan=2, sticky=(N, W, E, S))
 
         # Test duration
         self.duration_label = Label(self.details_frame, text='Duration:')
@@ -384,7 +394,7 @@ class View(object):
 
                 config = STATUS.get(testMethod.status, STATUS_DEFAULT)
                 self.test_status_widget.config(foreground=config['color'])
-                self.test_status.set(config['description'])
+                self.test_status.set(config['symbol'])
 
                 if testMethod._result:
                     self.duration.set('%0.2fs' % testMethod._result['duration'])
