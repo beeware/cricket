@@ -439,7 +439,7 @@ class View(object):
     def on_nodeAdded(self, node):
         "Event handler: a new node has been added to the tree"
         self.tree.insert(node.parent.path, 'end', node.path,
-                                text=testMethod.name,
+                                text=node.name,
                                 tags=[node.__class__.__name__, 'active'],
                                 open=True
                             )
@@ -605,10 +605,10 @@ class View(object):
                 else:
                     if self.result['test'] is None:
                         self.run_status.set('Running %s...' % line)
+                        self.result['test'] = self.model.confirm_exists(line)
+
                         self.tree.see(line)
                         self.tree.item(line, tags=['TestMethod', 'active'])
-
-                        self.result['test'] = self.model.confirm_exists(line)
                     else:
                         self.result['lines'].append(line)
 
