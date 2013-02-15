@@ -89,11 +89,6 @@ class View(object):
         self.model = model
         self.test_runner = None
 
-        # The last progress command issued by the user.
-        # When we start, set this to run_stop so that the
-        # default action is to start running.
-        self.last_command = self.on_run_stop
-
         # Root window
         self.root = Tk()
         self.root.title('Cricket')
@@ -140,8 +135,17 @@ class View(object):
         self.toolbar.grid(column=0, row=0, sticky=(W, E))
 
         # Buttons on the toolbar
-        self.run_stop_button = Button(self.toolbar, text='Run', command=self.on_run_stop)
-        self.run_stop_button.grid(column=0, row=0)
+        self.stop_button = Button(self.toolbar, text='Stop', command=self.on_stop, state=DISABLED)
+        self.stop_button.grid(column=0, row=0)
+
+        self.run_all_button = Button(self.toolbar, text='Run all', command=self.on_run_all)
+        self.run_all_button.grid(column=1, row=0)
+
+        self.run_selected_button = Button(self.toolbar, text='Run selected', command=self.on_run_selected)
+        self.run_selected_button.grid(column=2, row=0)
+
+        self.rerun_button = Button(self.toolbar, text='Re-run', command=self.on_rerun, state=DISABLED)
+        self.rerun_button.grid(column=3, row=0)
 
         # Main content area
         self.content = PanedWindow(self.root, orient=HORIZONTAL)
@@ -458,7 +462,89 @@ class View(object):
         "Event handler: a node on the tree has received a status update"
         self.tree.item(node.path, tags=['TestMethod', STATUS[node.status]['tag']])
 
-    def on_run_stop(self, event=None):
+    def on_stop(self, event=None):
+        "Event handler: The stop button has been pressed"
+
+        # Check to see if the test runner exists, and if it does,
+        # poll to check if it is still running.
+        if self.test_runner is not None:
+            self.test_runner.poll()
+
+        if self.test_runner is not None and self.test_runner.returncode is None:
+            self.run_status.set('Stopping...')
+
+            self.test_runner.terminate()
+            self.test_runner = None
+
+            self.run_status.set('Stopped.')
+
+            self.stop_button.configure(state=DISABLED)
+            self.run_all_button.configure(state=NORMAL)
+            self.run_selected_button.configure(state=NORMAL)
+            self.rerun_button.configure(state=NORMAL)
+
+    def _run(self, active=True, status=None, labels=None):
+        count, labels = self.model.find_tests(active, status, labels)
+
+        self.run_status.set('Running...')
+
+        self.stop_button.configure(state=NORMAL)
+        self.run_all_button.configure(state=DISABLED)
+        self.run_selected_button.configure(state=DISABLED)
+        self.rerun_button.configure(state=DISABLED)
+
+        self.progress['maximum'] = count
+        self.progress_value.set(0)
+
+        self.test_runner = subprocess.Popen(
+            ['python', 'manage.py', 'test', '--testrunner=cricket.runners.TestExecutor'] + labels,
+            stdin=None,
+            stdout=subprocess.PIPE,
+            stderr=None,
+            shell=False,
+            bufsize=1,
+        )
+        # Probably only works on UNIX-alikes.
+        # Windows users should feel free to suggest an alternative.
+        fcntl.fcntl(self.test_runner.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+
+        # Data storage for test results.
+        #  - buffer holds the character buffer being read from stdout
+        #  - test is the test currently under execution
+        #  - lines is an accumulator of extra test output.
+        #    If lines is None, there's no test currently under execution
+        self.result = {
+            'buffer': [],
+            'test': None,
+            'lines': None,
+        }
+
+        # Queue the first progress handling event
+        self.root.after(100, self.on_testProgress)
+
+    def on_run_all(self, event=None):
+        "Event handler: The Run all button has been pressed"
+
+        # Check to see if the test runner exists, and if it does,
+        # poll to check if it is still running.
+        if self.test_runner is not None:
+            self.test_runner.poll()
+
+        if self.test_runner is None or self.test_runner.returncode is not None:
+            self._run(active=True)
+
+    def on_run_selected(self, event=None):
+        "Event handler: The 'run selected' button has been pressed"
+
+        # Check to see if the test runner exists, and if it does,
+        # poll to check if it is still running.
+        if self.test_runner is not None:
+            self.test_runner.poll()
+
+        if self.test_runner is None or self.test_runner.returncode is not None:
+            self._run(labels=set(self.tree.selection()))
+
+    def on_rerun(self, event=None):
         "Event handler: The run/stop button has been pressed"
 
         # Check to see if the test runner exists, and if it does,
@@ -467,46 +553,7 @@ class View(object):
             self.test_runner.poll()
 
         if self.test_runner is None or self.test_runner.returncode is not None:
-            self.run_status.set('Running...')
-            self.progress['maximum'] = self.model.active_test_count
-            self.progress_value.set(0)
-
-            self.run_stop_button.configure(text='Stop')
-
-            self.test_runner = subprocess.Popen(
-                ['python', 'manage.py', 'test', '--testrunner=cricket.runners.TestExecutor'] + self.model.test_labels,
-                stdin=None,
-                stdout=subprocess.PIPE,
-                stderr=None,
-                shell=False,
-                bufsize=1,
-            )
-            # Probably only works on UNIX-alikes.
-            # Windows users should feel free to suggest an alternative.
-            fcntl.fcntl(self.test_runner.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
-
-            # Data storage for test results.
-            #  - buffer holds the character buffer being read from stdout
-            #  - test is the test currently under execution
-            #  - lines is an accumulator of extra test output.
-            #    If lines is None, there's no test currently under execution
-            self.result = {
-                'buffer': [],
-                'test': None,
-                'lines': None,
-            }
-
-            # Queue the first progress handling event
-            self.root.after(100, self.on_testProgress)
-
-        else:
-            self.run_status.set('Stopping...')
-
-            self.test_runner.terminate()
-            self.test_runner = None
-
-            self.run_status.set('Stopped.')
-            self.run_stop_button.configure(text='Run')
+            self._run(status=set(TestMethod.FAILING_STATES))
 
     def on_testProgress(self):
         "Event handler: a periodic update to read stdout, and turn that into GUI updates"
@@ -596,9 +643,6 @@ class View(object):
                         finished = True
                         self.result['lines'] = None
 
-                        self.run_status.set('Finished.')
-                        self.run_stop_button.configure(text='Run')
-
             else:
                 if self.result['lines'] is None:
                     self.run_status.set(line)
@@ -615,6 +659,11 @@ class View(object):
         # If we're not finished, requeue the event.
         if finished:
             self.run_status.set('Finished.')
-            self.run_stop_button.configure(text='Run')
+
+            self.stop_button.configure(state=DISABLED)
+            self.run_all_button.configure(state=NORMAL)
+            self.run_selected_button.configure(state=NORMAL)
+            self.rerun_button.configure(state=NORMAL)
+
         elif not stopped:
             self.root.after(100, self.on_testProgress)

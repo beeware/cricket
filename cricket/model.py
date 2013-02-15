@@ -30,24 +30,6 @@ class EventSource(object):
             pass
 
 
-class TestLabelList(list):
-    """Utility datatype.
-
-    Tracks a list of objects. A boolean on the list describes
-    if any element in the list is inactive. If this list is extended,
-    the inactive status of the other list is combined with this
-    one to determine if the new list contains an inactive element.
-    """
-
-    def __init__(self, *args):
-        super(TestLabelList, self).__init__(*args)
-        self.found_inactive = False
-
-    def extend(self, other):
-        super(TestLabelList, self).extend(other)
-        self.found_inactive = self.found_inactive or other.found_inactive
-
-
 class TestMethod(EventSource):
     """A data representation of an individual test method.
 
@@ -63,6 +45,8 @@ class TestMethod(EventSource):
     STATUS_EXPECTED_FAIL = 310
     STATUS_UNEXPECTED_SUCCESS = 320
     STATUS_ERROR = 400
+
+    FAILING_STATES = (STATUS_FAIL, STATUS_UNEXPECTED_SUCCESS, STATUS_ERROR)
 
     def __init__(self, name, testCase):
         self.name = name
@@ -179,36 +163,50 @@ class TestCase(dict, EventSource):
         "Is this test method currently active?"
         return self._active
 
-    @property
-    def test_labels(self):
-        """The list of all active test labels in this Test Case.
+    def find_tests(self, active=True, status=None, labels=None):
+        """Find the test labels matching the search criteria.
 
-        The values from this property can be passed to the test runner
-        to identify the tests that need to be executed.
+        This will check:
+            * active: if the method is currently an active test
+            * status: if the last run status of the method is in the provided list
+            * labels: if the method label is in the provided list
 
-        If all tests in the test case are active, the label of the
-        app is returned.
+        Returns a count of tests found, plus the labels needed to
+        execute those tests.
         """
-        labels = TestLabelList()
-        for testMethod_name, testMethod in self.items():
-            if testMethod.active:
-                labels.append(testMethod.path)
-            else:
-                labels.found_inactive = True
-
-        if labels.found_inactive:
-            return labels
-        return TestLabelList([self.path])
-
-    @property
-    def active_test_count(self):
-        "Return the number of tests currently active for the test case"
+        tests = []
         count = 0
-        if self.active:
-            for testMethod_name, testMethod in self.items():
-                if testMethod.active:
-                    count = count + 1
-        return count
+        for testMethod_name, testMethod in self.items():
+            include = True
+            # If only active tests have been requested, the method
+            # must be active.
+            if active and not testMethod.active:
+                include = False
+
+            # If a list of statuses has been provided, the
+            # method status must be in that list.
+            if status and testMethod.status not in status:
+                include = False
+
+            # If a list of tests has been provided, either
+            # the full test method or the case or the app must be
+            # mentioned explicitly.
+            if labels and not (
+                        testMethod.path in labels or
+                        self.path in labels or
+                        self.parent.name in labels
+                    ):
+                include = False
+
+            if include:
+                count = count + 1
+                tests.append(testMethod.path)
+
+        # If all the tests are included, then just reference the test case.
+        if len(self) == count:
+            return len(self), self.path
+
+        return count, tests
 
     def _update_active(self):
         for testMethod_name, testMethod in self.items():
@@ -257,32 +255,36 @@ class TestApp(dict, EventSource):
         "Is this test method currently active?"
         return self._active
 
-    @property
-    def test_labels(self):
-        """The list of all active test labels in this app.
+    def find_tests(self, active=True, status=None, labels=None):
+        """Find the test labels matching the search criteria.
 
-        The values from this property can be passed to the test runner
-        to identify the tests that need to be executed.
+        This will check:
+            * active: if the method is currently an active test
+            * status: if the last run status of the method is in the provided list
+            * labels: if the method label is in the provided list
+
+        Returns a count of tests found, plus the labels needed to
+        execute those tests.
         """
-        labels = TestLabelList()
-        for testCase_name, testCase in self.items():
-            if testCase.active:
-                labels.extend(testCase.test_labels)
-            else:
-                labels.found_inactive = True
-
-        if labels.found_inactive:
-            return labels
-        return TestLabelList([self.path])
-
-    @property
-    def active_test_count(self):
-        "Return the number of tests currently active for the app"
+        tests = []
         count = 0
-        if self.active:
-            for testCase_name, testCase in self.items():
-                count = count + testCase.active_test_count
-        return count
+
+        found_partial = False
+        for testCase_name, testCase in self.items():
+            subcount, subtests = testCase.find_tests(active, status, labels)
+
+            count = count + subcount
+            if isinstance(subtests, list):
+                found_partial = True
+                tests.extend(subtests)
+            else:
+                tests.append(subtests)
+
+        # No partials found; just reference the app.
+        if not found_partial:
+            return count, self.path
+
+        return count, tests
 
     def _update_active(self):
         for testCase_name, testCase in self.items():
@@ -312,32 +314,31 @@ class Project(dict, EventSource):
         "The dotted-path name that identifies this project to the test runner"
         return ''
 
-    @property
-    def test_labels(self):
-        """The list of all active test labels in this app.
+    def find_tests(self, active=True, status=None, labels=None):
+        """Find the test labels matching the search criteria.
 
-        The values from this property can be passed to the test runner
-        to identify the tests that need to be executed.
+        Returns a count of tests found, plus the labels needed to
+        execute those tests.
         """
-        labels = TestLabelList()
-        for testApp_name, testApp in self.items():
-            if testApp.active:
-                labels.extend(testApp.test_labels)
-            else:
-                labels.found_inactive = True
-
-        if labels.found_inactive:
-            return labels
-        return []
-
-    @property
-    def active_test_count(self):
-        "Return the number of tests currently active for the project"
+        tests = []
         count = 0
-        for testApp_name, testApp in self.items():
-            count = count + testApp.active_test_count
 
-        return count
+        found_partial = False
+        for testApp_name, testApp in self.items():
+            subcount, sublabels = testApp.find_tests(active, status, labels)
+            count = count + subcount
+
+            if isinstance(sublabels, list):
+                found_partial = True
+                tests.extend(sublabels)
+            else:
+                tests.append(sublabels)
+
+        # No partials found; just reference the app.
+        if not found_partial:
+            return count, []
+
+        return count, tests
 
     def confirm_exists(self, test_label, timestamp=None):
         """Confirm that the given test label exists in the current data model.
