@@ -48,6 +48,15 @@ class TestMethod(EventSource):
 
     FAILING_STATES = (STATUS_FAIL, STATUS_UNEXPECTED_SUCCESS, STATUS_ERROR)
 
+    STATUS_LABELS = {
+        STATUS_PASS: 'passed',
+        STATUS_SKIP: 'skipped',
+        STATUS_FAIL: 'failures',
+        STATUS_EXPECTED_FAIL: 'expected failures',
+        STATUS_UNEXPECTED_SUCCESS: 'unexpected successes',
+        STATUS_ERROR: 'errors',
+    }
+
     def __init__(self, name, testCase):
         self.name = name
         self.description = ''

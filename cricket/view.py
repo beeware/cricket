@@ -13,6 +13,7 @@ import subprocess
 from Tkinter import *
 from tkFont import *
 from ttk import *
+import tkMessageBox
 
 from cricket.widgets import ReadOnlyText
 from cricket.model import TestMethod, TestCase, TestApp
@@ -517,6 +518,7 @@ class View(object):
             'buffer': [],
             'test': None,
             'lines': None,
+            'results': {}
         }
 
         # Queue the first progress handling event
@@ -626,6 +628,8 @@ class View(object):
                         error=error,
                         duration=float(end_time) - float(start_time),
                     )
+                    self.result['results'].setdefault(status, 0)
+                    self.result['results'][status] = self.result['results'][status] + 1
 
                     if len(self.tree.selection()) == 1 and self.tree.selection()[0] == self.result['test'].path:
                         self.on_testMethodSelected(None)
@@ -659,6 +663,15 @@ class View(object):
         # If we're not finished, requeue the event.
         if finished:
             self.run_status.set('Finished.')
+
+            if sum(self.result['results'].get(state, 0) for state in TestMethod.FAILING_STATES):
+                dialog = tkMessageBox.showerror
+            else:
+                dialog = tkMessageBox.showinfo
+            dialog(message=', '.join(
+                '%d %s' % (count, TestMethod.STATUS_LABELS[state])
+                for state, count in sorted(self.result['results'].items()))
+            )
 
             self.stop_button.configure(state=DISABLED)
             self.run_all_button.configure(state=NORMAL)
