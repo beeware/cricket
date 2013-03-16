@@ -651,7 +651,6 @@ class View(object):
                         self.run_status.set('Running %s...' % line)
                         self.result['test'] = self.model.confirm_exists(line)
 
-                        self.tree.see(line)
                         self.tree.item(line, tags=['TestMethod', 'active'])
                     else:
                         self.result['lines'].append(line)
