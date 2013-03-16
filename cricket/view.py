@@ -534,6 +534,16 @@ class View(object):
     def on_run_selected(self, event=None):
         "Event handler: The 'run selected' button has been pressed"
 
+        # If a node is selected, it needs to be made active
+        for path in self.tree.selection():
+            parts = path.split('.')
+            if len(parts) == 1:
+                self.model[parts[0]].active = True
+            elif len(parts) == 2:
+                self.model[parts[0]][parts[1]].active = True
+            elif len(parts) == 3:
+                self.model[parts[0]][parts[1]][parts[2]].active = True
+
         # Check to see if the test runner exists, and if it does,
         # poll to check if it is still running.
         if self.test_runner is not None:
