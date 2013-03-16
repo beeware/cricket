@@ -353,12 +353,10 @@ class View(object):
         testApp = self.model[self.tree.focus()]
 
         if testApp.active:
-            self.tree.item(self.tree.focus(), open=True)
             for testCase_name, testCase in testApp.items():
                 for testMethod_name, testMethod in testCase.items():
                     testMethod.active = False
         else:
-            self.tree.item(self.tree.focus(), open=False)
             for testCase_name, testCase in testApp.items():
                 for testMethod_name, testMethod in testCase.items():
                     testMethod.active = True
@@ -369,13 +367,11 @@ class View(object):
         testCase = self.model[testApp_name][testCase_name]
 
         if testCase.active:
-            self.tree.item(self.tree.focus(), open=True)
             for testMethod_name, testMethod in testCase.items():
                 testMethod.active = False
         else:
             for testMethod_name, testMethod in testCase.items():
                 testMethod.active = True
-            self.tree.item(self.tree.focus(), open=False)
 
     def on_testMethodClicked(self, event):
         "Event handler: a test case has been clicked in the tree"

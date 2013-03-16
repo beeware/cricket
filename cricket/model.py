@@ -85,7 +85,7 @@ class TestMethod(EventSource):
         return self._active
 
     @active.setter
-    def set_active(self, is_active):
+    def active(self, is_active):
         if self._active:
             if not is_active:
                 self._active = False
@@ -172,6 +172,19 @@ class TestCase(dict, EventSource):
         "Is this test method currently active?"
         return self._active
 
+    @active.setter
+    def active(self, is_active):
+        if self._active:
+            if not is_active:
+                self._active = False
+                self.emit('inactive')
+                self.parent._update_active()
+        else:
+            if is_active:
+                self._active = True
+                self.emit('active')
+                self.parent._update_active()
+
     def find_tests(self, active=True, status=None, labels=None):
         """Find the test labels matching the search criteria.
 
@@ -218,17 +231,15 @@ class TestCase(dict, EventSource):
         return count, tests
 
     def _update_active(self):
+        "Check the active status of all child nodes, and update the status of this node accordingly"
         for testMethod_name, testMethod in self.items():
             if testMethod.active:
-                if not self.active:
-                    self._active = True
-                    self.emit('active')
-                    self.parent._update_active()
+                # As soon as we find an active child, this node
+                # must be marked active, and no other checks are
+                # required.
+                self.active = True
                 return
-        if self.active:
-            self._active = False
-            self.emit('inactive')
-            self.parent._update_active()
+        self.active = False
 
 
 class TestApp(dict, EventSource):
@@ -264,6 +275,17 @@ class TestApp(dict, EventSource):
         "Is this test method currently active?"
         return self._active
 
+    @active.setter
+    def active(self, is_active):
+        if self._active:
+            if not is_active:
+                self._active = False
+                self.emit('inactive')
+        else:
+            if is_active:
+                self._active = True
+                self.emit('active')
+
     def find_tests(self, active=True, status=None, labels=None):
         """Find the test labels matching the search criteria.
 
@@ -296,15 +318,12 @@ class TestApp(dict, EventSource):
         return count, tests
 
     def _update_active(self):
+        "Check the active status of all child nodes, and update the status of this node accordingly"
         for testCase_name, testCase in self.items():
             if testCase.active:
-                if not self.active:
-                    self._active = True
-                    self.emit('active')
+                self.active = True
                 return
-        if self.active:
-            self._active = False
-            self.emit('inactive')
+        self.active = False
 
 
 class Project(dict, EventSource):
