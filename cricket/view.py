@@ -287,14 +287,20 @@ class View(object):
         self.run_status_label.grid(column=0, row=0, sticky=(W, E))
         self.run_status.set('Not running')
 
+        # Test result summary
+        self.run_summary = StringVar()
+        self.run_summary_label = Label(self.statusbar, textvariable=self.run_summary)
+        self.run_summary_label.grid(column=1, row=0, sticky=(W, E))
+        self.run_summary.set('P:0 F:0 E:0 X:0 U:0 S:0')
+
         # Test progress
         self.progress_value = IntVar()
         self.progress = Progressbar(self.statusbar, orient=HORIZONTAL, length=200, mode='determinate', maximum=100, variable=self.progress_value)
-        self.progress.grid(column=1, row=0, sticky=(W, E))
+        self.progress.grid(column=2, row=0, sticky=(W, E))
 
         # Main window resize handle
         self.grip = Sizegrip(self.statusbar)
-        self.grip.grid(column=2, row=0, sticky=(S, E))
+        self.grip.grid(column=3, row=0, sticky=(S, E))
 
         # Now configure the weights for the frame grids
         self.root.columnconfigure(0, weight=1)
@@ -314,6 +320,7 @@ class View(object):
         self.statusbar.columnconfigure(0, weight=1)
         self.statusbar.columnconfigure(1, weight=0)
         self.statusbar.columnconfigure(2, weight=0)
+        self.statusbar.columnconfigure(3, weight=0)
         self.statusbar.rowconfigure(0, weight=1)
 
         self.tree_frame.columnconfigure(0, weight=1)
@@ -484,6 +491,7 @@ class View(object):
         count, labels = self.model.find_tests(active, status, labels)
 
         self.run_status.set('Running...')
+        self.run_summary.set('P:0 F:0 E:0 X:0 U:0 S:0')
 
         self.stop_button.configure(state=NORMAL)
         self.run_all_button.configure(state=DISABLED)
@@ -514,6 +522,11 @@ class View(object):
             'buffer': [],
             'test': None,
             'lines': None,
+            'start_time': None,
+            'count': {
+                'total': count,
+                'done': 0
+            },
             'results': {}
         }
 
@@ -625,6 +638,11 @@ class View(object):
                         description = content[0]
                         error = content[1]
 
+                    # Increase the count of executed tests
+                    self.progress_value.set(self.progress_value.get() + 1)
+                    self.result['count']['done'] = self.result['count']['done'] + 1
+
+                    # Get the start and end times for the test
                     start_time = self.result['lines'][0][7:]
                     end_time = self.result['lines'][2][5:]
 
@@ -634,13 +652,40 @@ class View(object):
                         error=error,
                         duration=float(end_time) - float(start_time),
                     )
+
+                    # Work out how long the suite has left to run (approximately)
+                    if self.result['start_time'] is None:
+                        self.result['start_time'] = start_time
+                    total_duration = float(end_time) - float(self.result['start_time'])
+                    time_per_test = total_duration / self.result['count']['done']
+                    remaining_time = (self.result['count']['total'] - self.result['count']['done']) * time_per_test
+                    if remaining_time > 4800:
+                        remaining = '%s hours' % int(remaining_time / 2400)
+                    elif remaining_time > 2400:
+                        remaining = '%s hour' % int(remaining_time / 2400)
+                    elif remaining_time > 120:
+                        remaining = '%s mins' % int(remaining_time / 60)
+                    elif remaining_time > 60:
+                        remaining = '%s min' % int(remaining_time / 60)
+                    else:
+                        remaining = '%ss' % int(remaining_time)
+
                     self.result['results'].setdefault(status, 0)
                     self.result['results'][status] = self.result['results'][status] + 1
+
+                    self.run_summary.set('P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s, ~%(remaining)s remaining' % {
+                            'pass': self.result['results'].get(TestMethod.STATUS_PASS, 0),
+                            'fail': self.result['results'].get(TestMethod.STATUS_FAIL, 0),
+                            'error': self.result['results'].get(TestMethod.STATUS_ERROR, 0),
+                            'expected': self.result['results'].get(TestMethod.STATUS_EXPECTED_FAIL, 0),
+                            'unexpected': self.result['results'].get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
+                            'skip': self.result['results'].get(TestMethod.STATUS_SKIP, 0),
+                            'remaining': remaining
+                        })
 
                     if len(self.tree.selection()) == 1 and self.tree.selection()[0] == self.result['test'].path:
                         self.on_testMethodSelected(None)
 
-                    self.progress_value.set(self.progress_value.get() + 1)
 
                     # Clear the decks for the next test.
                     self.result['test'] = None
@@ -677,6 +722,14 @@ class View(object):
                 '%d %s' % (count, TestMethod.STATUS_LABELS[state])
                 for state, count in sorted(self.result['results'].items()))
             )
+            self.run_summary.set('P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s' % {
+                    'pass': self.result['results'].get(TestMethod.STATUS_PASS, 0),
+                    'fail': self.result['results'].get(TestMethod.STATUS_FAIL, 0),
+                    'error': self.result['results'].get(TestMethod.STATUS_ERROR, 0),
+                    'expected': self.result['results'].get(TestMethod.STATUS_EXPECTED_FAIL, 0),
+                    'unexpected': self.result['results'].get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
+                    'skip': self.result['results'].get(TestMethod.STATUS_SKIP, 0),
+                })
 
             self.stop_button.configure(state=DISABLED)
             self.run_all_button.configure(state=NORMAL)
