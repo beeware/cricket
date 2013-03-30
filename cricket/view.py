@@ -162,20 +162,23 @@ class View(object):
 
         # Populate the initial tree nodes.
         for testApp_name, testApp in sorted(self.model.items()):
-            testApp_node = self.tree.insert('', 'end', testApp.path,
+            testApp_node = self.tree.insert(
+                '', 'end', testApp.path,
                 text=testApp.name,
                 tags=['TestApp', 'active'],
                 open=True)
 
             for testCase_name, testCase in sorted(testApp.items()):
-                testCase_node = self.tree.insert(testApp_node, 'end', testCase.path,
+                testCase_node = self.tree.insert(
+                    testApp_node, 'end', testCase.path,
                     text=testCase.name,
                     tags=['TestCase', 'active'],
                     open=True
                 )
 
                 for testMethod_name, testMethod in sorted(testCase.items()):
-                    self.tree.insert(testCase_node, 'end', testMethod.path,
+                    self.tree.insert(
+                        testCase_node, 'end', testMethod.path,
                         text=testMethod.name,
                         tags=['TestMethod', 'active'],
                         open=True
@@ -446,11 +449,12 @@ class View(object):
 
     def on_nodeAdded(self, node):
         "Event handler: a new node has been added to the tree"
-        self.tree.insert(node.parent.path, 'end', node.path,
-                                text=node.name,
-                                tags=[node.__class__.__name__, 'active'],
-                                open=True
-                            )
+        self.tree.insert(
+            node.parent.path, 'end', node.path,
+            text=node.name,
+            tags=[node.__class__.__name__, 'active'],
+            open=True
+        )
 
     def on_nodeActive(self, node):
         "Event handler: a node on the tree has been made active"
@@ -685,7 +689,6 @@ class View(object):
 
                     if len(self.tree.selection()) == 1 and self.tree.selection()[0] == self.result['test'].path:
                         self.on_testMethodSelected(None)
-
 
                     # Clear the decks for the next test.
                     self.result['test'] = None
