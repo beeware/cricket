@@ -1,8 +1,6 @@
 """A module containing a visual representation of the testApp.
 
 This is the "View" of the MVC world.
-
-There is a single object - the View
 """
 
 from Tkinter import *
@@ -63,7 +61,7 @@ STATUS_DEFAULT = {
 }
 
 
-class View(object):
+class MainWindow(object):
     def __init__(self, project):
         self.project = project
         self.executor = None
@@ -343,36 +341,16 @@ class View(object):
         self._hide_test_output()
         self._hide_test_errors()
 
-    def _hide_test_output(self):
-        self.output_label.grid_remove()
-        self.output.grid_remove()
-        self.outputScrollbar.grid_remove()
-        self.details_frame.rowconfigure(3, weight=0)
-
-    def _show_test_output(self, content):
-        self.output.delete('1.0', END)
-        self.output.insert('1.0', content)
-
-        self.output_label.grid()
-        self.output.grid()
-        self.outputScrollbar.grid()
-        self.details_frame.rowconfigure(3, weight=5)
-
-    def _hide_test_errors(self):
-        self.error_label.grid_remove()
-        self.error.grid_remove()
-        self.errorScrollbar.grid_remove()
-
-    def _show_test_errors(self, content):
-        self.error.delete('1.0', END)
-        self.error.insert('1.0', content)
-
-        self.error_label.grid()
-        self.error.grid()
-        self.errorScrollbar.grid()
+    ######################################################
+    # TK Main loop
+    ######################################################
 
     def mainloop(self):
         self.root.mainloop()
+
+    ######################################################
+    # GUI Callbacks
+    ######################################################
 
     def on_quit(self):
         "Event handler: Quit"
@@ -499,47 +477,12 @@ class View(object):
         "Event handler: The stop button has been pressed"
         self.stop()
 
-    def _run(self, active=True, status=None, labels=None):
-        count, labels = self.project.find_tests(active, status, labels)
-
-        self.run_status.set('Running...')
-        self.run_summary.set('P:0 F:0 E:0 X:0 U:0 S:0')
-
-        self.stop_button.configure(state=NORMAL)
-        self.run_all_button.configure(state=DISABLED)
-        self.run_selected_button.configure(state=DISABLED)
-        self.rerun_button.configure(state=DISABLED)
-
-        self.progress['maximum'] = count
-        self.progress_value.set(0)
-
-        # Create the runner
-        self.executor = Executor(self.project, count, labels)
-
-        # Queue the first progress handling event
-        self.root.after(100, self.on_testProgress)
-
-    def stop(self):
-        "Stop the test suite."
-        if self.executor and self.executor.is_running:
-            self.run_status.set('Stopping...')
-
-            self.executor.terminate()
-            self.executor = None
-
-            self.run_status.set('Stopped.')
-
-            self.stop_button.configure(state=DISABLED)
-            self.run_all_button.configure(state=NORMAL)
-            self.run_selected_button.configure(state=NORMAL)
-            self.rerun_button.configure(state=NORMAL)
-
     def on_run_all(self, event=None):
         "Event handler: The Run all button has been pressed"
         # If the executor isn't currently running, we can
         # start a test run.
         if not self.executor or not self.executor.is_running:
-            self._run(active=True)
+            self.run(active=True)
 
     def on_run_selected(self, event=None):
         "Event handler: The 'run selected' button has been pressed"
@@ -557,14 +500,14 @@ class View(object):
         # If the executor isn't currently running, we can
         # start a test run.
         if not self.executor or not self.executor.is_running:
-            self._run(labels=set(self.tree.selection()))
+            self.run(labels=set(self.tree.selection()))
 
     def on_rerun(self, event=None):
         "Event handler: The run/stop button has been pressed"
         # If the executor isn't currently running, we can
         # start a test run.
         if not self.executor or not self.executor.is_running:
-            self._run(status=set(TestMethod.FAILING_STATES))
+            self.run(status=set(TestMethod.FAILING_STATES))
 
     def on_testProgress(self):
         "Event handler: a periodic update to poll the runner for output, generating GUI updates"
@@ -650,3 +593,82 @@ class View(object):
 
         # Drop the reference to the executor
         self.executor = None
+
+    ######################################################
+    # GUI utility methods
+    ######################################################
+
+    def run(self, active=True, status=None, labels=None):
+        """Run the test suite.
+
+        If active=True, only active tests will be run.
+        If status is provided, only tests whose most recent run
+            status matches the set provided will be executed.
+        If labels is provided, only tests with those labels will
+            be executed
+        """
+        count, labels = self.project.find_tests(active, status, labels)
+
+        self.run_status.set('Running...')
+        self.run_summary.set('P:0 F:0 E:0 X:0 U:0 S:0')
+
+        self.stop_button.configure(state=NORMAL)
+        self.run_all_button.configure(state=DISABLED)
+        self.run_selected_button.configure(state=DISABLED)
+        self.rerun_button.configure(state=DISABLED)
+
+        self.progress['maximum'] = count
+        self.progress_value.set(0)
+
+        # Create the runner
+        self.executor = Executor(self.project, count, labels)
+
+        # Queue the first progress handling event
+        self.root.after(100, self.on_testProgress)
+
+    def stop(self):
+        "Stop the test suite."
+        if self.executor and self.executor.is_running:
+            self.run_status.set('Stopping...')
+
+            self.executor.terminate()
+            self.executor = None
+
+            self.run_status.set('Stopped.')
+
+            self.stop_button.configure(state=DISABLED)
+            self.run_all_button.configure(state=NORMAL)
+            self.run_selected_button.configure(state=NORMAL)
+            self.rerun_button.configure(state=NORMAL)
+
+    def _hide_test_output(self):
+        "Hide the test output panel on the test results page"
+        self.output_label.grid_remove()
+        self.output.grid_remove()
+        self.outputScrollbar.grid_remove()
+        self.details_frame.rowconfigure(3, weight=0)
+
+    def _show_test_output(self, content):
+        "Show the test output panel on the test results page"
+        self.output.delete('1.0', END)
+        self.output.insert('1.0', content)
+
+        self.output_label.grid()
+        self.output.grid()
+        self.outputScrollbar.grid()
+        self.details_frame.rowconfigure(3, weight=5)
+
+    def _hide_test_errors(self):
+        "Hide the test error panel on the test results page"
+        self.error_label.grid_remove()
+        self.error.grid_remove()
+        self.errorScrollbar.grid_remove()
+
+    def _show_test_errors(self, content):
+        "Show the test error panel on the test results page"
+        self.error.delete('1.0', END)
+        self.error.insert('1.0', content)
+
+        self.error_label.grid()
+        self.error.grid()
+        self.errorScrollbar.grid()

@@ -1,11 +1,11 @@
-from cricket.view import View
+from cricket.view import MainWindow
 from cricket.django.model import DjangoProject
 
 
 def main():
     project = DjangoProject()
 
-    view = View(project)
+    view = MainWindow(project)
 
     try:
         view.mainloop()
