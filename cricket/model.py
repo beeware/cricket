@@ -97,6 +97,13 @@ class TestMethod(EventSource):
             return None
 
     @property
+    def output(self):
+        try:
+            return self._result['output']
+        except TypeError:
+            return None
+
+    @property
     def error(self):
         try:
             return self._result['error']
@@ -110,9 +117,10 @@ class TestMethod(EventSource):
         except TypeError:
             return None
 
-    def set_result(self, status, error, duration):
+    def set_result(self, status, output, error, duration):
         self._result = {
             'status': status,
+            'output': output,
             'error': error,
             'duration': duration,
         }

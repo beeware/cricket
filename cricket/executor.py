@@ -168,6 +168,7 @@ class Executor(EventSource):
                     self.current_test.description = description
                     self.current_test.set_result(
                         status=status,
+                        output='' if self.completed_count % 2 == 0 else 'This is the output\nNo, this is the output',
                         error=error,
                         duration=float(end_time) - float(start_time),
                     )

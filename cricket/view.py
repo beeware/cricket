@@ -246,15 +246,27 @@ class View(object):
         self.description.config(yscrollcommand=self.descriptionScrollbar.set)
         self.descriptionScrollbar.config(command=self.description.yview)
 
+        # Test output
+        self.output_label = Label(self.details_frame, text='Output:')
+        self.output_label.grid(column=0, row=3, pady=5, sticky=(N, E,))
+
+        self.output = ReadOnlyText(self.details_frame, width=80, height=4)
+        self.output.grid(column=1, row=3, pady=5, columnspan=2, sticky=(N, S, E, W,))
+
+        self.outputScrollbar = Scrollbar(self.details_frame, orient=VERTICAL)
+        self.outputScrollbar.grid(column=3, row=3, pady=5, sticky=(N, S))
+        self.output.config(yscrollcommand=self.outputScrollbar.set)
+        self.outputScrollbar.config(command=self.description.yview)
+
         # Error message
         self.error_label = Label(self.details_frame, text='Error:')
-        self.error_label.grid(column=0, row=3, pady=5, sticky=(N, E,))
+        self.error_label.grid(column=0, row=4, pady=5, sticky=(N, E,))
 
         self.error = ReadOnlyText(self.details_frame, width=80)
-        self.error.grid(column=1, row=3, pady=5, columnspan=2, sticky=(N, S, E, W))
+        self.error.grid(column=1, row=4, pady=5, columnspan=2, sticky=(N, S, E, W))
 
         self.errorScrollbar = Scrollbar(self.details_frame, orient=VERTICAL)
-        self.errorScrollbar.grid(column=3, row=3, pady=5, sticky=(N, S))
+        self.errorScrollbar.grid(column=3, row=4, pady=5, sticky=(N, S))
         self.error.config(yscrollcommand=self.errorScrollbar.set)
         self.errorScrollbar.config(command=self.error.yview)
 
@@ -280,11 +292,11 @@ class View(object):
         self.progress.grid(column=2, row=0, sticky=(W, E))
 
         # Set up listeners for runner events.
-        Executor.bind('test_status_update', self.on_runnerTestStatusUpdate)
-        Executor.bind('test_start', self.on_runnerTestStart)
-        Executor.bind('test_end', self.on_runnerTestEnd)
-        Executor.bind('suite_end', self.on_runnerSuiteEnd)
-        Executor.bind('suite_error', self.on_runnerSuiteError)
+        Executor.bind('test_status_update', self.on_executorStatusUpdate)
+        Executor.bind('test_start', self.on_executorTestStart)
+        Executor.bind('test_end', self.on_executorTestEnd)
+        Executor.bind('suite_end', self.on_executorSuiteEnd)
+        Executor.bind('suite_error', self.on_executorSuiteError)
 
         # Main window resize handle
         self.grip = Sizegrip(self.statusbar)
@@ -319,13 +331,19 @@ class View(object):
         self.details_frame.columnconfigure(1, weight=1)
         self.details_frame.columnconfigure(2, weight=0)
         self.details_frame.columnconfigure(3, weight=0)
+        self.details_frame.columnconfigure(4, weight=0)
         self.details_frame.rowconfigure(0, weight=0)
         self.details_frame.rowconfigure(1, weight=0)
         self.details_frame.rowconfigure(2, weight=1)
-        self.details_frame.rowconfigure(3, weight=10)
+        self.details_frame.rowconfigure(3, weight=5)
+        self.details_frame.rowconfigure(4, weight=10)
 
-        # Now that we've laid out the grid, hide the error text
-        # until we actually have an error to display
+        # Now that we've laid out the grid, hide the error and output text
+        # until we actually have an error/output to display
+        self.output_label.grid_remove()
+        self.output.grid_remove()
+        self.outputScrollbar.grid_remove()
+
         self.error_label.grid_remove()
         self.error.grid_remove()
         self.errorScrollbar.grid_remove()
@@ -377,6 +395,7 @@ class View(object):
         if len(self.tree.selection()) == 1:
             parts = self.tree.selection()[0].split('.')
             if len(parts) == 3:
+                # Individual test selected.
                 testApp_name, testCase_name, testMethod_name = parts
                 testMethod = self.model[testApp_name][testCase_name][testMethod_name]
 
@@ -390,9 +409,21 @@ class View(object):
                 self.test_status.set(config['symbol'])
 
                 if testMethod._result:
+                    # Test has been executed
                     self.duration.set('%0.2fs' % testMethod._result['duration'])
-
+                    self.output.delete('1.0', END)
                     self.error.delete('1.0', END)
+
+                    if testMethod.output:
+                        self.output_label.grid()
+                        self.output.grid()
+                        self.outputScrollbar.grid()
+                        self.output.insert('1.0', testMethod.output)
+                    else:
+                        self.output_label.grid_remove()
+                        self.output.grid_remove()
+                        self.outputScrollbar.grid_remove()
+
                     if testMethod.error:
                         self.error_label.grid()
                         self.error.grid()
@@ -402,28 +433,45 @@ class View(object):
                         self.error_label.grid_remove()
                         self.error.grid_remove()
                         self.errorScrollbar.grid_remove()
+
                 else:
+                    # Test hasn't been executed yet.
                     self.duration.set('Not executed')
+
+                    self.output_label.grid_remove()
+                    self.output.grid_remove()
+                    self.outputScrollbar.grid_remove()
 
                     self.error_label.grid_remove()
                     self.error.grid_remove()
                     self.errorScrollbar.grid_remove()
             else:
+                # Test class/app selected
                 self.name.set('')
                 self.test_status.set('')
 
                 self.duration.set('')
                 self.description.delete('1.0', END)
 
+                self.output_label.grid_remove()
+                self.output.grid_remove()
+                self.outputScrollbar.grid_remove()
+
                 self.error_label.grid_remove()
                 self.error.grid_remove()
                 self.errorScrollbar.grid_remove()
+
         else:
+            # Multiple tests selected
             self.name.set('')
             self.test_status.set('')
 
             self.duration.set('')
             self.description.delete('1.0', END)
+
+            self.output_label.grid_remove()
+            self.output.grid_remove()
+            self.outputScrollbar.grid_remove()
 
             self.error_label.grid_remove()
             self.error.grid_remove()
@@ -493,7 +541,7 @@ class View(object):
 
     def on_run_all(self, event=None):
         "Event handler: The Run all button has been pressed"
-        # If the test runner isn't currently running, we can
+        # If the executor isn't currently running, we can
         # start a test run.
         if not self.executor or not self.executor.is_running:
             self._run(active=True)
@@ -511,14 +559,14 @@ class View(object):
             elif len(parts) == 3:
                 self.model[parts[0]][parts[1]][parts[2]].active = True
 
-        # If the test runner isn't currently running, we can
+        # If the executor isn't currently running, we can
         # start a test run.
         if not self.executor or not self.executor.is_running:
             self._run(labels=set(self.tree.selection()))
 
     def on_rerun(self, event=None):
         "Event handler: The run/stop button has been pressed"
-        # If the test runner isn't currently running, we can
+        # If the executor isn't currently running, we can
         # start a test run.
         if not self.executor or not self.executor.is_running:
             self._run(status=set(TestMethod.FAILING_STATES))
@@ -528,20 +576,19 @@ class View(object):
         if self.executor and self.executor.poll():
             self.root.after(100, self.on_testProgress)
 
-    def on_runnerTestStatusUpdate(self, event, update):
-        "The test runner has some progress to report"
+    def on_executorStatusUpdate(self, event, update):
+        "The executor has some progress to report"
         # Update the status line.
         self.run_status.set(update)
 
-    def on_runnerTestStart(self, event, test_path):
-        "The test runner has started running a new test."
+    def on_executorTestStart(self, event, test_path):
+        "The executor has started running a new test."
         # Update status line, and set the tree item to active.
         self.run_status.set('Running %s...' % test_path)
         self.tree.item(test_path, tags=['TestMethod', 'active'])
 
-    def on_runnerTestEnd(self, event, test_path, remaining_time):
-        "The test runner has finished running a test."
-
+    def on_executorTestEnd(self, event, test_path, remaining_time):
+        "The executor has finished running a test."
         # Update the progress meter
         self.progress_value.set(self.progress_value.get() + 1)
 
@@ -561,38 +608,50 @@ class View(object):
         if len(self.tree.selection()) == 1 and self.tree.selection()[0] == test_path:
             self.on_testMethodSelected(None)
 
-    def on_runnerSuiteEnd(self, runner):
+    def on_executorSuiteEnd(self, event):
+        "The test suite finished running."
+        # Display the final results
         self.run_status.set('Finished.')
-
-        if sum(runner.result_count.get(state, 0) for state in TestMethod.FAILING_STATES):
+        if sum(self.executor.result_count.get(state, 0) for state in TestMethod.FAILING_STATES):
             dialog = tkMessageBox.showerror
         else:
             dialog = tkMessageBox.showinfo
 
         dialog(message=', '.join(
             '%d %s' % (count, TestMethod.STATUS_LABELS[state])
-            for state, count in sorted(runner.result_count.items()))
+            for state, count in sorted(self.executor.result_count.items()))
         )
+
+        # Reset the running summary.
         self.run_summary.set('P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s' % {
-                'pass': runner.result_count.get(TestMethod.STATUS_PASS, 0),
-                'fail': runner.result_count.get(TestMethod.STATUS_FAIL, 0),
-                'error': runner.result_count.get(TestMethod.STATUS_ERROR, 0),
-                'expected': runner.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
-                'unexpected': runner.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
-                'skip': runner.result_count.get(TestMethod.STATUS_SKIP, 0),
+                'pass': self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
+                'fail': self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
+                'error': self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
+                'expected': self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
+                'unexpected': self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
+                'skip': self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
             })
 
+        # Reset the buttons
         self.stop_button.configure(state=DISABLED)
         self.run_all_button.configure(state=NORMAL)
         self.run_selected_button.configure(state=NORMAL)
         self.rerun_button.configure(state=NORMAL)
 
-    def on_runnerSuiteError(self, error):
-            if error:
-                self.run_status.set('Error running test suite.')
-                tkMessageBox.showerror(message='Error running test suite:\n' + error)
+        # Drop the reference to the executor
+        self.executor = None
 
-            self.stop_button.configure(state=DISABLED)
-            self.run_all_button.configure(state=NORMAL)
-            self.run_selected_button.configure(state=NORMAL)
-            self.rerun_button.configure(state=NORMAL)
+    def on_executorSuiteError(self, event, error):
+        "An error occurred running the test suite."
+        # Display the error
+        self.run_status.set('Error running test suite.')
+        tkMessageBox.showerror(message='Error running test suite:\n' + error)
+
+        # Reset the buttons
+        self.stop_button.configure(state=DISABLED)
+        self.run_all_button.configure(state=NORMAL)
+        self.run_selected_button.configure(state=NORMAL)
+        self.rerun_button.configure(state=NORMAL)
+
+        # Drop the reference to the executor
+        self.executor = None
