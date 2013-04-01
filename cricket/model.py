@@ -385,7 +385,7 @@ class Project(dict, EventSource):
     def discover_tests(self):
         "Discover all available tests in a project."
         runner = subprocess.Popen(
-            ['python', 'manage.py', 'test', '--testrunner=cricket.runners.TestDiscoverer'],
+            self.discover_commandline(),
             stdin=None,
             stdout=subprocess.PIPE,
             stderr=None,

@@ -64,8 +64,8 @@ STATUS_DEFAULT = {
 
 
 class View(object):
-    def __init__(self, model):
-        self.model = model
+    def __init__(self, project):
+        self.project = project
         self.executor = None
 
         # Root window
@@ -139,7 +139,7 @@ class View(object):
         self.tree.grid(column=0, row=0, sticky=(N, S, E, W))
 
         # Populate the initial tree nodes.
-        for testApp_name, testApp in sorted(self.model.items()):
+        for testApp_name, testApp in sorted(self.project.items()):
             testApp_node = self.tree.insert(
                 '', 'end', testApp.path,
                 text=testApp.name,
@@ -360,7 +360,7 @@ class View(object):
 
     def on_testAppClicked(self, event):
         "Event handler: an app has been clicked in the tree"
-        testApp = self.model[self.tree.focus()]
+        testApp = self.project[self.tree.focus()]
 
         if testApp.active:
             for testCase_name, testCase in testApp.items():
@@ -374,7 +374,7 @@ class View(object):
     def on_testCaseClicked(self, event):
         "Event handler: a test case has been clicked in the tree"
         testApp_name, testCase_name = self.tree.focus().split('.')
-        testCase = self.model[testApp_name][testCase_name]
+        testCase = self.project[testApp_name][testCase_name]
 
         if testCase.active:
             for testMethod_name, testMethod in testCase.items():
@@ -386,7 +386,7 @@ class View(object):
     def on_testMethodClicked(self, event):
         "Event handler: a test case has been clicked in the tree"
         testApp_name, testCase_name, testMethod_name = self.tree.focus().split('.')
-        testMethod = self.model[testApp_name][testCase_name][testMethod_name]
+        testMethod = self.project[testApp_name][testCase_name][testMethod_name]
 
         testMethod.toggle_active()
 
@@ -397,7 +397,7 @@ class View(object):
             if len(parts) == 3:
                 # Individual test selected.
                 testApp_name, testCase_name, testMethod_name = parts
-                testMethod = self.model[testApp_name][testCase_name][testMethod_name]
+                testMethod = self.project[testApp_name][testCase_name][testMethod_name]
 
                 self.name.set(testMethod.path)
 
@@ -505,7 +505,7 @@ class View(object):
         self.stop()
 
     def _run(self, active=True, status=None, labels=None):
-        count, labels = self.model.find_tests(active, status, labels)
+        count, labels = self.project.find_tests(active, status, labels)
 
         self.run_status.set('Running...')
         self.run_summary.set('P:0 F:0 E:0 X:0 U:0 S:0')
@@ -519,7 +519,7 @@ class View(object):
         self.progress_value.set(0)
 
         # Create the runner
-        self.executor = Executor(self.model, count, labels)
+        self.executor = Executor(self.project, count, labels)
 
         # Queue the first progress handling event
         self.root.after(100, self.on_testProgress)
@@ -553,11 +553,11 @@ class View(object):
         for path in self.tree.selection():
             parts = path.split('.')
             if len(parts) == 1:
-                self.model[parts[0]].active = True
+                self.project[parts[0]].active = True
             elif len(parts) == 2:
-                self.model[parts[0]][parts[1]].active = True
+                self.project[parts[0]][parts[1]].active = True
             elif len(parts) == 3:
-                self.model[parts[0]][parts[1]][parts[2]].active = True
+                self.project[parts[0]][parts[1]][parts[2]].active = True
 
         # If the executor isn't currently running, we can
         # start a test run.

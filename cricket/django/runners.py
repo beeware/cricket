@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from django.test.simple import DjangoTestSuiteRunner
 
 from cricket.pipes import PipedTestRunner

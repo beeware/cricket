@@ -1,20 +1,41 @@
-Django Cricket v0.1
-===================
+Cricket v0.1
+============
 
-Cricket a graphical tool that helps you run your Django test suite.
+Cricket a graphical tool that helps you run your test suites.
 
-Django's test runner dumps all output to the console, and only at completion
-of the test run. This isn't a very helpful format for identifying when (and
-why) tests have failed, it doesn't let you start looking at failures until
-the test suite has completed running, it isn't a very accessible format for
-identifying patterns in test failures, and doesn't make it trivial to re-run
-any tests that have failed.
+Normal unittest test runners dumps all output to the console, and provide very
+little detail while the suite is running. As a result:
 
-There are also performance optimizations that can be made if the test database
-isn't changing between runs -- you only need to create the database once, then
-re-use it. Depending on your database setup, this can save a lot of running
-time.
+ * You can't start looking at failures until the test suite has completed running,
 
-Why the name ``cricket``? Test Cricket is the most prestigious version of the
-game of cricket. Games last for up to 5 days... just like running some test
-suites :-)
+ * It isn't a very accessible format for identifying patterns in test failures,
+
+ * It can be hard (or cumbersome) to re-run any tests that have failed.
+
+If you're running a test suite with an expensive suite setup/teardown method,
+there may also be performance optimizations that can be made. For example, if
+you're running a Django test suite, and the test database isn't changing
+between runs,  you only need to create the database once, then re-use it.
+Depending on your database setup, this can save a lot of running time.
+
+Why the name ``cricket``? `Test Cricket`_ is the most prestigious version of
+the game of cricket. Games last for up to 5 days... just like running some
+test suites. The usual approach for making cricket watchable is a generous
+dose of beer; in programming, `Balmer Peak`_ limits come into effect, so
+something else is required... :-)
+
+.. _Test Cricket: http://en.wikipedia.org/wiki/Test_cricket
+.. _Balmer Peak: http://xkcd.com/323/
+
+Quickstart
+----------
+
+At present, Cricket only has support for Django project test suites.
+
+In your Django project, install cricket, and then run it:
+
+    $ pip install cricket
+    $ python -m cricket.django
+
+This will pop up a GUI window. Hit "Run all", and watch your test suite
+execute.

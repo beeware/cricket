@@ -9,11 +9,11 @@ from cricket.pipes import PipedTestResult, PipedTestRunner
 
 class Executor(EventSource):
     "A wrapper around the subprocess that executes tests."
-    def __init__(self, model, count, labels):
-        self.model = model
+    def __init__(self, project, count, labels):
+        self.project = project
 
         self.proc = subprocess.Popen(
-            ['python', 'manage.py', 'test', '--testrunner=cricket.runners.TestExecutor', '--noinput'] + labels,
+            self.project.execute_commandline(labels),
             stdin=None,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -218,7 +218,7 @@ class Executor(EventSource):
                     # Suite is running - have we got an active test?
                     if self.current_test is None:
                         # No active test; first line tells us which test is running.
-                        self.current_test = self.model.confirm_exists(line)
+                        self.current_test = self.project.confirm_exists(line)
                         self.emit('test_start', test_path=line)
                     else:
                         # Active test; just accumulate the buffer.

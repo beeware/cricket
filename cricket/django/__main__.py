@@ -1,9 +1,9 @@
 from cricket.view import View
-from cricket.model import Project
+from cricket.django.model import DjangoProject
 
 
 def main():
-    project = Project()
+    project = DjangoProject()
 
     view = View(project)
 

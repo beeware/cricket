@@ -9,13 +9,13 @@ finally:
     readme.close()
 
 setup(
-    name='django-cricket',
+    name='cricket',
     version=VERSION,
-    description='A graphical tool to assist running a Django test suite.',
+    description='A graphical tool to assist running test suites.',
     long_description=long_description,
     author='Russell Keith-Magee',
     author_email='russell@keith-magee.com',
-    url='http://pypi.python.org/pypi/django-cricket',
+    url='http://github.com/freakboy3742/cricket',
     packages=['cricket'],
     license='New BSD',
     classifiers=[
