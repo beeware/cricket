@@ -1,4 +1,5 @@
 import fcntl
+import json
 import os
 import subprocess
 
@@ -59,23 +60,6 @@ class Executor(EventSource):
         "Stop the executor."
         self.proc.terminate()
 
-    def _split_content(self):
-        "Split separated content into it's parts"
-        content = []
-        all_content = []
-        for line in self.buffer[3:]:
-            if line == PipedTestResult.content_separator:
-                all_content.append('\n'.join(content))
-                content = []
-            else:
-                content.append(line)
-
-        # Store everything in the last content block
-        if content:
-            all_content.append('\n'.join(content))
-
-        return all_content
-
     def poll(self):
         "Poll the runner looking for new test output"
         stopped = False
@@ -125,58 +109,55 @@ class Executor(EventSource):
         # Process all the full lines that are available
         for line in lines:
             # Look for a separator.
-            if line in (PipedTestResult.result_separator, PipedTestRunner.separator):
+            if line in (PipedTestResult.RESULT_SEPARATOR, PipedTestRunner.START_TEST_RESULTS, PipedTestRunner.END_TEST_RESULTS):
                 if self.buffer is None:
                     # Preamble is finished. Set up the line buffer.
                     self.buffer = []
                 else:
                     # Start of new test result; record the last result
-                    content = self._split_content()
                     # Then, work out what content goes where.
-                    if self.buffer[1] == 'result: OK':
+                    pre = json.loads(self.buffer[0])
+                    post = json.loads(self.buffer[1])
+
+                    if post['status'] == 'OK':
                         status = TestMethod.STATUS_PASS
-                        description = content[0]
                         error = None
-                    elif self.buffer[1] == 'result: s':
+                    elif post['status'] == 's':
                         status = TestMethod.STATUS_SKIP
-                        description = content[0]
-                        error = 'Skipped: ' + content[1]
-                    elif self.buffer[1] == 'result: F':
+                        error = 'Skipped: ' + post.get('error')
+                    elif post['status'] == 'F':
                         status = TestMethod.STATUS_FAIL
-                        description = content[0]
-                        error = content[1]
-                    elif self.buffer[1] == 'result: x':
+                        error = post.get('error')
+                    elif post['status'] == 'x':
                         status = TestMethod.STATUS_EXPECTED_FAIL
-                        description = content[0]
-                        error = content[1]
-                    elif self.buffer[1] == 'result: u':
+                        error = post.get('error')
+                    elif post['status'] == 'u':
                         status = TestMethod.STATUS_UNEXPECTED_SUCCESS
-                        description = content[0]
                         error = None
-                    elif self.buffer[1] == 'result: E':
+                    elif post['status'] == 'E':
                         status = TestMethod.STATUS_ERROR
-                        description = content[0]
-                        error = content[1]
+                        error = post.get('error')
 
                     # Increase the count of executed tests
                     self.completed_count = self.completed_count + 1
 
                     # Get the start and end times for the test
-                    start_time = self.buffer[0][7:]
-                    end_time = self.buffer[2][5:]
+                    start_time = float(pre['start_time'])
+                    end_time = float(post['end_time'])
 
-                    self.current_test.description = description
+                    self.current_test.description = post['description']
+
                     self.current_test.set_result(
                         status=status,
-                        output='' if self.completed_count % 2 == 0 else 'This is the output\nNo, this is the output',
+                        output=post.get('output'),
                         error=error,
-                        duration=float(end_time) - float(start_time),
+                        duration=end_time - start_time,
                     )
 
                     # Work out how long the suite has left to run (approximately)
                     if self.start_time is None:
                         self.start_time = start_time
-                    total_duration = float(end_time) - float(self.start_time)
+                    total_duration = end_time - self.start_time
                     time_per_test = total_duration / self.completed_count
                     remaining_time = (self.total_count - self.completed_count) * time_per_test
                     if remaining_time > 4800:
@@ -201,7 +182,7 @@ class Executor(EventSource):
                     self.current_test = None
                     self.buffer = []
 
-                    if line == PipedTestRunner.separator:
+                    if line == PipedTestRunner.END_TEST_RESULTS:
                         # End of test execution.
                         # Mark the runner as finished, and move back
                         # to a pre-test state in the results.
@@ -216,13 +197,15 @@ class Executor(EventSource):
                     self.emit('test_status_update', update=line)
                 else:
                     # Suite is running - have we got an active test?
+                    self.buffer.append(line)
+
+                    # If we don't have an currently active test, this line will
+                    # contain the path for the test.
                     if self.current_test is None:
                         # No active test; first line tells us which test is running.
-                        self.current_test = self.project.confirm_exists(line)
-                        self.emit('test_start', test_path=line)
-                    else:
-                        # Active test; just accumulate the buffer.
-                        self.buffer.append(line)
+                        pre = json.loads(line)
+                        self.current_test = self.project.confirm_exists(pre['path'])
+                        self.emit('test_start', test_path=pre['path'])
 
         # If we're not finished, requeue the event.
         if finished:
