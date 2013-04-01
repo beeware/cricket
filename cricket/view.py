@@ -350,7 +350,8 @@ class View(object):
 
     def on_quit(self):
         "Event handler: Quit"
-        if self.test_runner:
+        # If the runner is currently running, kill it.
+        if self.test_runner and self.test_runner.poll() is None:
             self.run_status.set('Stopping...')
 
             self.test_runner.terminate()
@@ -506,16 +507,17 @@ class View(object):
         self.progress_value.set(0)
 
         self.test_runner = subprocess.Popen(
-            ['python', 'manage.py', 'test', '--testrunner=cricket.runners.TestExecutor'] + labels,
+            ['python', 'manage.py', 'test', '--testrunner=cricket.runners.TestExecutor', '--noinput'] + labels,
             stdin=None,
             stdout=subprocess.PIPE,
-            stderr=None,
+            stderr=subprocess.PIPE,
             shell=False,
             bufsize=1,
         )
         # Probably only works on UNIX-alikes.
         # Windows users should feel free to suggest an alternative.
         fcntl.fcntl(self.test_runner.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+        fcntl.fcntl(self.test_runner.stderr.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
 
         # Data storage for test results.
         #  - buffer holds the character buffer being read from stdout
@@ -582,28 +584,48 @@ class View(object):
 
     def on_testProgress(self):
         "Event handler: a periodic update to read stdout, and turn that into GUI updates"
-        finished = False
         stopped = False
+        finished = False
 
         # Read from stdout, building a buffer.
         lines = []
         try:
-            while True:
-                ch = self.test_runner.stdout.read(1)
-                if ch == '\n':
-                    lines.append(''.join(self.result['buffer']))
-                    self.result['buffer'] = []
-                elif ch == '':
-                    # An indicator that stdout is no longer
-                    # available.
-                    raise IOError()
-                else:
-                    self.result['buffer'].append(ch)
+            chunk = self.test_runner.stdout.read()
+            if chunk != '':
+                # If the last character in the chunk is a newline, drop it
+                # because it will cause an empty line to be registered.
+                if chunk[-1] == '\n':
+                    chunk = chunk[:-1]
+                lines = chunk.split('\n')
         except IOError:
-            # No data available on stdout
+            # If there's no data available, an IOError will be raised.
             pass
         except AttributeError:
-            # stdout has gone away; probably due to process being killed.
+            # If the process has been stopped, there won't be a pipe anymore.
+            pass
+
+        # Read from stderr, building a buffer.
+        errors = []
+        try:
+            chunk = self.test_runner.stderr.read()
+            if chunk != '':
+                # If the last character in the chunk is a newline, drop it
+                # because it will cause an empty line to be registered.
+                if chunk[-1] == '\n':
+                    chunk = chunk[:-1]
+                errors = chunk.split('\n')
+        except IOError:
+            # If there's no data available, an IOError will be raised.
+            pass
+        except AttributeError:
+            # If the process has been stopped, there won't be a pipe anymore.
+            pass
+
+        # Check to see if the subprocess is still running.
+        # If it isn't, raise an error.
+        if self.test_runner is None:
+            stopped = True
+        elif self.test_runner.poll() is not None:
             stopped = True
 
         # Process all the full lines that are available
@@ -739,5 +761,15 @@ class View(object):
             self.run_selected_button.configure(state=NORMAL)
             self.rerun_button.configure(state=NORMAL)
 
-        elif not stopped:
+        elif stopped:
+            if errors:
+                self.run_status.set('Error running test suite.')
+                tkMessageBox.showerror(message='Error running test suite:\n' + '\n'.join(errors))
+
+            self.stop_button.configure(state=DISABLED)
+            self.run_all_button.configure(state=NORMAL)
+            self.run_selected_button.configure(state=NORMAL)
+            self.rerun_button.configure(state=NORMAL)
+
+        else:
             self.root.after(100, self.on_testProgress)
