@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import json
+from StringIO import StringIO
 import sys
 import time
 import traceback
@@ -58,6 +59,11 @@ class PipedTestResult(result.TestResult):
 
     def startTest(self, test):
         super(PipedTestResult, self).startTest(test)
+
+        # # Create a clean buffer for stdout content.
+        self._stdout = StringIO()
+        sys.stdout = self._stdout
+
         parts = test.id().split('.')
         tests_index = parts.index('tests')
 
@@ -79,7 +85,7 @@ class PipedTestResult(result.TestResult):
             'status': 'OK',
             'end_time': time.time(),
             'description': self.description(test),
-            'output': '',
+            'output': self._stdout.getvalue(),
         }
         self.stream.write('%s\n' % json.dumps(body))
         self.stream.flush()
@@ -91,7 +97,7 @@ class PipedTestResult(result.TestResult):
             'end_time': time.time(),
             'description': self.description(test),
             'error': '\n'.join(traceback.format_exception(*err)),
-            'output': '',
+            'output': self._stdout.getvalue(),
         }
         self.stream.write('%s\n' % json.dumps(body))
         self.stream.flush()
@@ -103,7 +109,7 @@ class PipedTestResult(result.TestResult):
             'end_time': time.time(),
             'description': self.description(test),
             'error': '\n'.join(traceback.format_exception(*err)),
-            'output': '',
+            'output': self._stdout.getvalue(),
         }
         self.stream.write('%s\n' % json.dumps(body))
         self.stream.flush()
@@ -115,7 +121,7 @@ class PipedTestResult(result.TestResult):
             'end_time': time.time(),
             'description': self.description(test),
             'error': reason,
-            'output': '',
+            'output': self._stdout.getvalue(),
         }
         self.stream.write('%s\n' % json.dumps(body))
         self.stream.flush()
@@ -127,7 +133,7 @@ class PipedTestResult(result.TestResult):
             'end_time': time.time(),
             'description': self.description(test),
             'error': '\n'.join(traceback.format_exception(*err)),
-            'output': '',
+            'output': self._stdout.getvalue(),
         }
         self.stream.write('%s\n' % json.dumps(body))
         self.stream.flush()
@@ -138,7 +144,7 @@ class PipedTestResult(result.TestResult):
             'status': 'u',
             'end_time': time.time(),
             'description': self.description(test),
-            'output': '',
+            'output': self._stdout.getvalue(),
         }
         self.stream.write('%s\n' % json.dumps(body))
         self.stream.flush()
@@ -158,11 +164,18 @@ class PipedTestRunner(unittest.TextTestRunner):
 
     def run(self, test):
         "Run the given test case or test suite."
-        result = PipedTestResult(self.stream)
+        # Remeber stdout reference so it can be restored later
+        old_stdout = sys.stdout
 
+        # Create the result pipe, and run the tests with it.
+        result = PipedTestResult(self.stream)
         test(result)
 
+        # Report end of test run
         self.stream.write(self.END_TEST_RESULTS + '\n')
         self.stream.flush()
+
+        # Restore the stdout reference
+        sys.stdout = old_stdout
 
         return result

@@ -340,13 +340,36 @@ class View(object):
 
         # Now that we've laid out the grid, hide the error and output text
         # until we actually have an error/output to display
+        self._hide_test_output()
+        self._hide_test_errors()
+
+    def _hide_test_output(self):
         self.output_label.grid_remove()
         self.output.grid_remove()
         self.outputScrollbar.grid_remove()
+        self.details_frame.rowconfigure(3, weight=0)
 
+    def _show_test_output(self, content):
+        self.output.delete('1.0', END)
+        self.output.insert('1.0', content)
+
+        self.output_label.grid()
+        self.output.grid()
+        self.outputScrollbar.grid()
+        self.details_frame.rowconfigure(3, weight=5)
+
+    def _hide_test_errors(self):
         self.error_label.grid_remove()
         self.error.grid_remove()
         self.errorScrollbar.grid_remove()
+
+    def _show_test_errors(self, content):
+        self.error.delete('1.0', END)
+        self.error.insert('1.0', content)
+
+        self.error_label.grid()
+        self.error.grid()
+        self.errorScrollbar.grid()
 
     def mainloop(self):
         self.root.mainloop()
@@ -411,40 +434,22 @@ class View(object):
                 if testMethod._result:
                     # Test has been executed
                     self.duration.set('%0.2fs' % testMethod._result['duration'])
-                    self.output.delete('1.0', END)
-                    self.error.delete('1.0', END)
 
                     if testMethod.output:
-                        self.output_label.grid()
-                        self.output.grid()
-                        self.outputScrollbar.grid()
-                        self.output.insert('1.0', testMethod.output)
+                        self._show_test_output(testMethod.output)
                     else:
-                        self.output_label.grid_remove()
-                        self.output.grid_remove()
-                        self.outputScrollbar.grid_remove()
+                        self._hide_test_output()
 
                     if testMethod.error:
-                        self.error_label.grid()
-                        self.error.grid()
-                        self.errorScrollbar.grid()
-                        self.error.insert('1.0', testMethod.error)
+                        self._show_test_errors(testMethod.error)
                     else:
-                        self.error_label.grid_remove()
-                        self.error.grid_remove()
-                        self.errorScrollbar.grid_remove()
-
+                        self._hide_test_errors()
                 else:
                     # Test hasn't been executed yet.
                     self.duration.set('Not executed')
 
-                    self.output_label.grid_remove()
-                    self.output.grid_remove()
-                    self.outputScrollbar.grid_remove()
-
-                    self.error_label.grid_remove()
-                    self.error.grid_remove()
-                    self.errorScrollbar.grid_remove()
+                    self._hide_test_output()
+                    self._hide_test_errors()
             else:
                 # Test class/app selected
                 self.name.set('')
@@ -453,13 +458,8 @@ class View(object):
                 self.duration.set('')
                 self.description.delete('1.0', END)
 
-                self.output_label.grid_remove()
-                self.output.grid_remove()
-                self.outputScrollbar.grid_remove()
-
-                self.error_label.grid_remove()
-                self.error.grid_remove()
-                self.errorScrollbar.grid_remove()
+                self._hide_test_output()
+                self._hide_test_errors()
 
         else:
             # Multiple tests selected
@@ -469,13 +469,8 @@ class View(object):
             self.duration.set('')
             self.description.delete('1.0', END)
 
-            self.output_label.grid_remove()
-            self.output.grid_remove()
-            self.outputScrollbar.grid_remove()
-
-            self.error_label.grid_remove()
-            self.error.grid_remove()
-            self.errorScrollbar.grid_remove()
+            self._hide_test_output()
+            self._hide_test_errors()
 
     def on_nodeAdded(self, node):
         "Event handler: a new node has been added to the tree"
