@@ -5,11 +5,6 @@ This is the "View" of the MVC world.
 There is a single object - the View
 """
 
-import fcntl
-import os
-import subprocess
-
-
 from Tkinter import *
 from tkFont import *
 from ttk import *
@@ -17,7 +12,7 @@ import tkMessageBox
 
 from cricket.widgets import ReadOnlyText
 from cricket.model import TestMethod, TestCase, TestApp
-from cricket.pipes import PipedTestResult, PipedTestRunner
+from cricket.executor import Executor
 
 
 # Display constants for test status
@@ -68,27 +63,10 @@ STATUS_DEFAULT = {
 }
 
 
-def split_content(lines):
-    "Split separated content into it's parts"
-    content = []
-    all_content = []
-    for line in lines:
-        if line == PipedTestResult.content_separator:
-            all_content.append('\n'.join(content))
-            content = []
-        else:
-            content.append(line)
-    # Store everything in the last content block
-    if content:
-        all_content.append('\n'.join(content))
-
-    return all_content
-
-
 class View(object):
     def __init__(self, model):
         self.model = model
-        self.test_runner = None
+        self.executor = None
 
         # Root window
         self.root = Tk()
@@ -301,6 +279,13 @@ class View(object):
         self.progress = Progressbar(self.statusbar, orient=HORIZONTAL, length=200, mode='determinate', maximum=100, variable=self.progress_value)
         self.progress.grid(column=2, row=0, sticky=(W, E))
 
+        # Set up listeners for runner events.
+        Executor.bind('test_status_update', self.on_runnerTestStatusUpdate)
+        Executor.bind('test_start', self.on_runnerTestStart)
+        Executor.bind('test_end', self.on_runnerTestEnd)
+        Executor.bind('suite_end', self.on_runnerSuiteEnd)
+        Executor.bind('suite_error', self.on_runnerSuiteError)
+
         # Main window resize handle
         self.grip = Sizegrip(self.statusbar)
         self.grip.grid(column=3, row=0, sticky=(S, E))
@@ -351,11 +336,7 @@ class View(object):
     def on_quit(self):
         "Event handler: Quit"
         # If the runner is currently running, kill it.
-        if self.test_runner and self.test_runner.poll() is None:
-            self.run_status.set('Stopping...')
-
-            self.test_runner.terminate()
-            self.test_runner = None
+        self.stop()
 
         self.root.quit()
 
@@ -473,24 +454,7 @@ class View(object):
 
     def on_stop(self, event=None):
         "Event handler: The stop button has been pressed"
-
-        # Check to see if the test runner exists, and if it does,
-        # poll to check if it is still running.
-        if self.test_runner is not None:
-            self.test_runner.poll()
-
-        if self.test_runner is not None and self.test_runner.returncode is None:
-            self.run_status.set('Stopping...')
-
-            self.test_runner.terminate()
-            self.test_runner = None
-
-            self.run_status.set('Stopped.')
-
-            self.stop_button.configure(state=DISABLED)
-            self.run_all_button.configure(state=NORMAL)
-            self.run_selected_button.configure(state=NORMAL)
-            self.rerun_button.configure(state=NORMAL)
+        self.stop()
 
     def _run(self, active=True, status=None, labels=None):
         count, labels = self.model.find_tests(active, status, labels)
@@ -506,48 +470,32 @@ class View(object):
         self.progress['maximum'] = count
         self.progress_value.set(0)
 
-        self.test_runner = subprocess.Popen(
-            ['python', 'manage.py', 'test', '--testrunner=cricket.runners.TestExecutor', '--noinput'] + labels,
-            stdin=None,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=False,
-            bufsize=1,
-        )
-        # Probably only works on UNIX-alikes.
-        # Windows users should feel free to suggest an alternative.
-        fcntl.fcntl(self.test_runner.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
-        fcntl.fcntl(self.test_runner.stderr.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
-
-        # Data storage for test results.
-        #  - buffer holds the character buffer being read from stdout
-        #  - test is the test currently under execution
-        #  - lines is an accumulator of extra test output.
-        #    If lines is None, there's no test currently under execution
-        self.result = {
-            'buffer': [],
-            'test': None,
-            'lines': None,
-            'start_time': None,
-            'count': {
-                'total': count,
-                'done': 0
-            },
-            'results': {}
-        }
+        # Create the runner
+        self.executor = Executor(self.model, count, labels)
 
         # Queue the first progress handling event
         self.root.after(100, self.on_testProgress)
 
+    def stop(self):
+        "Stop the test suite."
+        if self.executor and self.executor.is_running:
+            self.run_status.set('Stopping...')
+
+            self.executor.terminate()
+            self.executor = None
+
+            self.run_status.set('Stopped.')
+
+            self.stop_button.configure(state=DISABLED)
+            self.run_all_button.configure(state=NORMAL)
+            self.run_selected_button.configure(state=NORMAL)
+            self.rerun_button.configure(state=NORMAL)
+
     def on_run_all(self, event=None):
         "Event handler: The Run all button has been pressed"
-
-        # Check to see if the test runner exists, and if it does,
-        # poll to check if it is still running.
-        if self.test_runner is not None:
-            self.test_runner.poll()
-
-        if self.test_runner is None or self.test_runner.returncode is not None:
+        # If the test runner isn't currently running, we can
+        # start a test run.
+        if not self.executor or not self.executor.is_running:
             self._run(active=True)
 
     def on_run_selected(self, event=None):
@@ -563,213 +511,88 @@ class View(object):
             elif len(parts) == 3:
                 self.model[parts[0]][parts[1]][parts[2]].active = True
 
-        # Check to see if the test runner exists, and if it does,
-        # poll to check if it is still running.
-        if self.test_runner is not None:
-            self.test_runner.poll()
-
-        if self.test_runner is None or self.test_runner.returncode is not None:
+        # If the test runner isn't currently running, we can
+        # start a test run.
+        if not self.executor or not self.executor.is_running:
             self._run(labels=set(self.tree.selection()))
 
     def on_rerun(self, event=None):
         "Event handler: The run/stop button has been pressed"
-
-        # Check to see if the test runner exists, and if it does,
-        # poll to check if it is still running.
-        if self.test_runner is not None:
-            self.test_runner.poll()
-
-        if self.test_runner is None or self.test_runner.returncode is not None:
+        # If the test runner isn't currently running, we can
+        # start a test run.
+        if not self.executor or not self.executor.is_running:
             self._run(status=set(TestMethod.FAILING_STATES))
 
     def on_testProgress(self):
-        "Event handler: a periodic update to read stdout, and turn that into GUI updates"
-        stopped = False
-        finished = False
-
-        # Read from stdout, building a buffer.
-        lines = []
-        try:
-            chunk = self.test_runner.stdout.read()
-            if chunk != '':
-                # If the last character in the chunk is a newline, drop it
-                # because it will cause an empty line to be registered.
-                if chunk[-1] == '\n':
-                    chunk = chunk[:-1]
-                lines = chunk.split('\n')
-        except IOError:
-            # If there's no data available, an IOError will be raised.
-            pass
-        except AttributeError:
-            # If the process has been stopped, there won't be a pipe anymore.
-            pass
-
-        # Read from stderr, building a buffer.
-        errors = []
-        try:
-            chunk = self.test_runner.stderr.read()
-            if chunk != '':
-                # If the last character in the chunk is a newline, drop it
-                # because it will cause an empty line to be registered.
-                if chunk[-1] == '\n':
-                    chunk = chunk[:-1]
-                errors = chunk.split('\n')
-        except IOError:
-            # If there's no data available, an IOError will be raised.
-            pass
-        except AttributeError:
-            # If the process has been stopped, there won't be a pipe anymore.
-            pass
-
-        # Check to see if the subprocess is still running.
-        # If it isn't, raise an error.
-        if self.test_runner is None:
-            stopped = True
-        elif self.test_runner.poll() is not None:
-            stopped = True
-
-        # Process all the full lines that are available
-        for line in lines:
-            if line in (PipedTestResult.result_separator, PipedTestRunner.separator):
-                if self.result['lines'] is None:
-                    # Preamble is finished. Set up the line buffer.
-                    self.result['lines'] = []
-                else:
-                    # Start of new test result; record the last result
-
-                    content = split_content(self.result['lines'][3:])
-                    # Then, work out what content goes where.
-                    if self.result['lines'][1] == 'result: OK':
-                        status = TestMethod.STATUS_PASS
-                        description = content[0]
-                        error = None
-                    elif self.result['lines'][1] == 'result: s':
-                        status = TestMethod.STATUS_SKIP
-                        description = content[0]
-                        error = 'Skipped: ' + content[1]
-                    elif self.result['lines'][1] == 'result: F':
-                        status = TestMethod.STATUS_FAIL
-                        description = content[0]
-                        error = content[1]
-                    elif self.result['lines'][1] == 'result: x':
-                        status = TestMethod.STATUS_EXPECTED_FAIL
-                        description = content[0]
-                        error = content[1]
-                    elif self.result['lines'][1] == 'result: u':
-                        status = TestMethod.STATUS_UNEXPECTED_SUCCESS
-                        description = content[0]
-                        error = None
-                    elif self.result['lines'][1] == 'result: E':
-                        status = TestMethod.STATUS_ERROR
-                        description = content[0]
-                        error = content[1]
-
-                    # Increase the count of executed tests
-                    self.progress_value.set(self.progress_value.get() + 1)
-                    self.result['count']['done'] = self.result['count']['done'] + 1
-
-                    # Get the start and end times for the test
-                    start_time = self.result['lines'][0][7:]
-                    end_time = self.result['lines'][2][5:]
-
-                    self.result['test'].description = description
-                    self.result['test'].set_result(
-                        status=status,
-                        error=error,
-                        duration=float(end_time) - float(start_time),
-                    )
-
-                    # Work out how long the suite has left to run (approximately)
-                    if self.result['start_time'] is None:
-                        self.result['start_time'] = start_time
-                    total_duration = float(end_time) - float(self.result['start_time'])
-                    time_per_test = total_duration / self.result['count']['done']
-                    remaining_time = (self.result['count']['total'] - self.result['count']['done']) * time_per_test
-                    if remaining_time > 4800:
-                        remaining = '%s hours' % int(remaining_time / 2400)
-                    elif remaining_time > 2400:
-                        remaining = '%s hour' % int(remaining_time / 2400)
-                    elif remaining_time > 120:
-                        remaining = '%s mins' % int(remaining_time / 60)
-                    elif remaining_time > 60:
-                        remaining = '%s min' % int(remaining_time / 60)
-                    else:
-                        remaining = '%ss' % int(remaining_time)
-
-                    self.result['results'].setdefault(status, 0)
-                    self.result['results'][status] = self.result['results'][status] + 1
-
-                    self.run_summary.set('P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s, ~%(remaining)s remaining' % {
-                            'pass': self.result['results'].get(TestMethod.STATUS_PASS, 0),
-                            'fail': self.result['results'].get(TestMethod.STATUS_FAIL, 0),
-                            'error': self.result['results'].get(TestMethod.STATUS_ERROR, 0),
-                            'expected': self.result['results'].get(TestMethod.STATUS_EXPECTED_FAIL, 0),
-                            'unexpected': self.result['results'].get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
-                            'skip': self.result['results'].get(TestMethod.STATUS_SKIP, 0),
-                            'remaining': remaining
-                        })
-
-                    if len(self.tree.selection()) == 1 and self.tree.selection()[0] == self.result['test'].path:
-                        self.on_testMethodSelected(None)
-
-                    # Clear the decks for the next test.
-                    self.result['test'] = None
-                    self.result['lines'] = []
-
-                    if line == PipedTestRunner.separator:
-                        # End of test execution.
-                        # Mark the runner as finished, and move back
-                        # to a pre-test state in the results.
-                        finished = True
-                        self.result['lines'] = None
-
-            else:
-                if self.result['lines'] is None:
-                    self.run_status.set(line)
-                else:
-                    if self.result['test'] is None:
-                        self.run_status.set('Running %s...' % line)
-                        self.result['test'] = self.model.confirm_exists(line)
-
-                        self.tree.item(line, tags=['TestMethod', 'active'])
-                    else:
-                        self.result['lines'].append(line)
-
-        # If we're not finished, requeue the event.
-        if finished:
-            self.run_status.set('Finished.')
-
-            if sum(self.result['results'].get(state, 0) for state in TestMethod.FAILING_STATES):
-                dialog = tkMessageBox.showerror
-            else:
-                dialog = tkMessageBox.showinfo
-            dialog(message=', '.join(
-                '%d %s' % (count, TestMethod.STATUS_LABELS[state])
-                for state, count in sorted(self.result['results'].items()))
-            )
-            self.run_summary.set('P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s' % {
-                    'pass': self.result['results'].get(TestMethod.STATUS_PASS, 0),
-                    'fail': self.result['results'].get(TestMethod.STATUS_FAIL, 0),
-                    'error': self.result['results'].get(TestMethod.STATUS_ERROR, 0),
-                    'expected': self.result['results'].get(TestMethod.STATUS_EXPECTED_FAIL, 0),
-                    'unexpected': self.result['results'].get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
-                    'skip': self.result['results'].get(TestMethod.STATUS_SKIP, 0),
-                })
-
-            self.stop_button.configure(state=DISABLED)
-            self.run_all_button.configure(state=NORMAL)
-            self.run_selected_button.configure(state=NORMAL)
-            self.rerun_button.configure(state=NORMAL)
-
-        elif stopped:
-            if errors:
-                self.run_status.set('Error running test suite.')
-                tkMessageBox.showerror(message='Error running test suite:\n' + '\n'.join(errors))
-
-            self.stop_button.configure(state=DISABLED)
-            self.run_all_button.configure(state=NORMAL)
-            self.run_selected_button.configure(state=NORMAL)
-            self.rerun_button.configure(state=NORMAL)
-
-        else:
+        "Event handler: a periodic update to poll the runner for output, generating GUI updates"
+        if self.executor and self.executor.poll():
             self.root.after(100, self.on_testProgress)
+
+    def on_runnerTestStatusUpdate(self, event, update):
+        "The test runner has some progress to report"
+        # Update the status line.
+        self.run_status.set(update)
+
+    def on_runnerTestStart(self, event, test_path):
+        "The test runner has started running a new test."
+        # Update status line, and set the tree item to active.
+        self.run_status.set('Running %s...' % test_path)
+        self.tree.item(test_path, tags=['TestMethod', 'active'])
+
+    def on_runnerTestEnd(self, event, test_path, remaining_time):
+        "The test runner has finished running a test."
+
+        # Update the progress meter
+        self.progress_value.set(self.progress_value.get() + 1)
+
+        # Update the run summary
+        self.run_summary.set('P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s, ~%(remaining)s remaining' % {
+                'pass': self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
+                'fail': self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
+                'error': self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
+                'expected': self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
+                'unexpected': self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
+                'skip': self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
+                'remaining': remaining_time
+            })
+
+        # If the test that just fininshed is the one (and only one)
+        # selected on the tree, update the display.
+        if len(self.tree.selection()) == 1 and self.tree.selection()[0] == test_path:
+            self.on_testMethodSelected(None)
+
+    def on_runnerSuiteEnd(self, runner):
+        self.run_status.set('Finished.')
+
+        if sum(runner.result_count.get(state, 0) for state in TestMethod.FAILING_STATES):
+            dialog = tkMessageBox.showerror
+        else:
+            dialog = tkMessageBox.showinfo
+
+        dialog(message=', '.join(
+            '%d %s' % (count, TestMethod.STATUS_LABELS[state])
+            for state, count in sorted(runner.result_count.items()))
+        )
+        self.run_summary.set('P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s' % {
+                'pass': runner.result_count.get(TestMethod.STATUS_PASS, 0),
+                'fail': runner.result_count.get(TestMethod.STATUS_FAIL, 0),
+                'error': runner.result_count.get(TestMethod.STATUS_ERROR, 0),
+                'expected': runner.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
+                'unexpected': runner.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
+                'skip': runner.result_count.get(TestMethod.STATUS_SKIP, 0),
+            })
+
+        self.stop_button.configure(state=DISABLED)
+        self.run_all_button.configure(state=NORMAL)
+        self.run_selected_button.configure(state=NORMAL)
+        self.rerun_button.configure(state=NORMAL)
+
+    def on_runnerSuiteError(self, error):
+            if error:
+                self.run_status.set('Error running test suite.')
+                tkMessageBox.showerror(message='Error running test suite:\n' + error)
+
+            self.stop_button.configure(state=DISABLED)
+            self.run_all_button.configure(state=NORMAL)
+            self.run_selected_button.configure(state=NORMAL)
+            self.rerun_button.configure(state=NORMAL)
