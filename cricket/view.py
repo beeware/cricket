@@ -129,35 +129,36 @@ class MainWindow(object):
         self.content.grid(column=0, row=1, sticky=(N, S, E, W))
 
         # The left-hand side frame on the main content area
-        self.tree_frame = Frame(self.content)
-        self.tree_frame.grid(column=0, row=0, sticky=(N, S, E, W))
-        self.content.add(self.tree_frame)
+        self.all_tests_tree_frame = Frame(self.content)
+        self.all_tests_tree_frame.grid(column=0, row=0, sticky=(N, S, E, W))
+        self.content.add(self.all_tests_tree_frame)
 
-        self.tree = Treeview(self.tree_frame)
-        self.tree.grid(column=0, row=0, sticky=(N, S, E, W))
+        self.all_tests_tree = Treeview(self.all_tests_tree_frame)
+        self.all_tests_tree.grid(column=0, row=0, sticky=(N, S, E, W))
+        # self.all_tests_tree_frame.add(self.all_tests_tree, text='All tests')
 
         # Set up the tag colors for tree nodes.
         for status, config in STATUS.items():
-            self.tree.tag_configure(config['tag'], foreground=config['color'])
-        self.tree.tag_configure('inactive', foreground='lightgray')
+            self.all_tests_tree.tag_configure(config['tag'], foreground=config['color'])
+        self.all_tests_tree.tag_configure('inactive', foreground='lightgray')
 
         # Listen for button clicks on tree nodes
-        self.tree.tag_bind('TestApp', '<Double-Button-1>', self.on_testAppClicked)
-        self.tree.tag_bind('TestCase', '<Double-Button-1>', self.on_testCaseClicked)
-        self.tree.tag_bind('TestMethod', '<Double-Button-1>', self.on_testMethodClicked)
+        self.all_tests_tree.tag_bind('TestApp', '<Double-Button-1>', self.on_testAppClicked)
+        self.all_tests_tree.tag_bind('TestCase', '<Double-Button-1>', self.on_testCaseClicked)
+        self.all_tests_tree.tag_bind('TestMethod', '<Double-Button-1>', self.on_testMethodClicked)
 
-        self.tree.tag_bind('TestApp', '<<TreeviewSelect>>', self.on_testMethodSelected)
-        self.tree.tag_bind('TestCase', '<<TreeviewSelect>>', self.on_testMethodSelected)
-        self.tree.tag_bind('TestMethod', '<<TreeviewSelect>>', self.on_testMethodSelected)
+        self.all_tests_tree.tag_bind('TestApp', '<<TreeviewSelect>>', self.on_testMethodSelected)
+        self.all_tests_tree.tag_bind('TestCase', '<<TreeviewSelect>>', self.on_testMethodSelected)
+        self.all_tests_tree.tag_bind('TestMethod', '<<TreeviewSelect>>', self.on_testMethodSelected)
 
         # The tree's vertical scrollbar
-        self.treeScrollbar = Scrollbar(self.tree_frame, orient=VERTICAL)
-        self.treeScrollbar.grid(column=1, row=0, sticky=(N, S))
+        self.all_tests_tree_scrollbar = Scrollbar(self.all_tests_tree_frame, orient=VERTICAL)
+        self.all_tests_tree_scrollbar.grid(column=1, row=0, sticky=(N, S))
 
         # Tie the scrollbar to the text views, and the text views
         # to each other.
-        self.tree.config(yscrollcommand=self.treeScrollbar.set)
-        self.treeScrollbar.config(command=self.tree.yview)
+        self.all_tests_tree.config(yscrollcommand=self.all_tests_tree_scrollbar.set)
+        self.all_tests_tree_scrollbar.config(command=self.all_tests_tree.yview)
 
         # The right-hand side frame on the main content area
         self.details_frame = Frame(self.content)
@@ -198,10 +199,10 @@ class MainWindow(object):
         self.description = ReadOnlyText(self.details_frame, width=80, height=4)
         self.description.grid(column=1, row=2, pady=5, columnspan=2, sticky=(N, S, E, W,))
 
-        self.descriptionScrollbar = Scrollbar(self.details_frame, orient=VERTICAL)
-        self.descriptionScrollbar.grid(column=3, row=2, pady=5, sticky=(N, S))
-        self.description.config(yscrollcommand=self.descriptionScrollbar.set)
-        self.descriptionScrollbar.config(command=self.description.yview)
+        self.description_scrollbar = Scrollbar(self.details_frame, orient=VERTICAL)
+        self.description_scrollbar.grid(column=3, row=2, pady=5, sticky=(N, S))
+        self.description.config(yscrollcommand=self.description_scrollbar.set)
+        self.description_scrollbar.config(command=self.description.yview)
 
         # Test output
         self.output_label = Label(self.details_frame, text='Output:')
@@ -210,10 +211,10 @@ class MainWindow(object):
         self.output = ReadOnlyText(self.details_frame, width=80, height=4)
         self.output.grid(column=1, row=3, pady=5, columnspan=2, sticky=(N, S, E, W,))
 
-        self.outputScrollbar = Scrollbar(self.details_frame, orient=VERTICAL)
-        self.outputScrollbar.grid(column=3, row=3, pady=5, sticky=(N, S))
-        self.output.config(yscrollcommand=self.outputScrollbar.set)
-        self.outputScrollbar.config(command=self.description.yview)
+        self.output_scrollbar = Scrollbar(self.details_frame, orient=VERTICAL)
+        self.output_scrollbar.grid(column=3, row=3, pady=5, sticky=(N, S))
+        self.output.config(yscrollcommand=self.output_scrollbar.set)
+        self.output_scrollbar.config(command=self.description.yview)
 
         # Error message
         self.error_label = Label(self.details_frame, text='Error:')
@@ -222,10 +223,10 @@ class MainWindow(object):
         self.error = ReadOnlyText(self.details_frame, width=80)
         self.error.grid(column=1, row=4, pady=5, columnspan=2, sticky=(N, S, E, W))
 
-        self.errorScrollbar = Scrollbar(self.details_frame, orient=VERTICAL)
-        self.errorScrollbar.grid(column=3, row=4, pady=5, sticky=(N, S))
-        self.error.config(yscrollcommand=self.errorScrollbar.set)
-        self.errorScrollbar.config(command=self.error.yview)
+        self.error_scrollbar = Scrollbar(self.details_frame, orient=VERTICAL)
+        self.error_scrollbar.grid(column=3, row=4, pady=5, sticky=(N, S))
+        self.error.config(yscrollcommand=self.error_scrollbar.set)
+        self.error_scrollbar.config(command=self.error.yview)
 
         # Status bar
         self.statusbar = Frame(self.root)
@@ -280,9 +281,9 @@ class MainWindow(object):
         self.statusbar.columnconfigure(3, weight=0)
         self.statusbar.rowconfigure(0, weight=1)
 
-        self.tree_frame.columnconfigure(0, weight=1)
-        self.tree_frame.columnconfigure(1, weight=0)
-        self.tree_frame.rowconfigure(0, weight=1)
+        self.all_tests_tree_frame.columnconfigure(0, weight=1)
+        self.all_tests_tree_frame.columnconfigure(1, weight=0)
+        self.all_tests_tree_frame.rowconfigure(0, weight=1)
 
         self.details_frame.columnconfigure(0, weight=0)
         self.details_frame.columnconfigure(1, weight=1)
@@ -314,14 +315,14 @@ class MainWindow(object):
 
         # Populate the initial tree nodes.
         for testApp_name, testApp in sorted(project.items()):
-            testApp_node = self.tree.insert(
+            testApp_node = self.all_tests_tree.insert(
                 '', 'end', testApp.path,
                 text=testApp.name,
                 tags=['TestApp', 'active'],
                 open=True)
 
             for testCase_name, testCase in sorted(testApp.items()):
-                testCase_node = self.tree.insert(
+                testCase_node = self.all_tests_tree.insert(
                     testApp_node, 'end', testCase.path,
                     text=testCase.name,
                     tags=['TestCase', 'active'],
@@ -329,7 +330,7 @@ class MainWindow(object):
                 )
 
                 for testMethod_name, testMethod in sorted(testCase.items()):
-                    self.tree.insert(
+                    self.all_tests_tree.insert(
                         testCase_node, 'end', testMethod.path,
                         text=testMethod.name,
                         tags=['TestMethod', 'active'],
@@ -353,7 +354,6 @@ class MainWindow(object):
         # Listen for any status updates on nodes in the tree.
         TestMethod.bind('status_update', self.on_nodeStatusUpdate)
 
-
     ######################################################
     # TK Main loop
     ######################################################
@@ -374,7 +374,7 @@ class MainWindow(object):
 
     def on_testAppClicked(self, event):
         "Event handler: an app has been clicked in the tree"
-        testApp = self.project[self.tree.focus()]
+        testApp = self.project[self.all_tests_tree.focus()]
 
         if testApp.active:
             for testCase_name, testCase in testApp.items():
@@ -387,7 +387,7 @@ class MainWindow(object):
 
     def on_testCaseClicked(self, event):
         "Event handler: a test case has been clicked in the tree"
-        testApp_name, testCase_name = self.tree.focus().split('.')
+        testApp_name, testCase_name = self.all_tests_tree.focus().split('.')
         testCase = self.project[testApp_name][testCase_name]
 
         if testCase.active:
@@ -399,15 +399,15 @@ class MainWindow(object):
 
     def on_testMethodClicked(self, event):
         "Event handler: a test case has been clicked in the tree"
-        testApp_name, testCase_name, testMethod_name = self.tree.focus().split('.')
+        testApp_name, testCase_name, testMethod_name = self.all_tests_tree.focus().split('.')
         testMethod = self.project[testApp_name][testCase_name][testMethod_name]
 
         testMethod.toggle_active()
 
     def on_testMethodSelected(self, event):
         "Event handler: a test case has been selected in the tree"
-        if len(self.tree.selection()) == 1:
-            parts = self.tree.selection()[0].split('.')
+        if len(self.all_tests_tree.selection()) == 1:
+            parts = self.all_tests_tree.selection()[0].split('.')
             if len(parts) == 3:
                 # Individual test selected.
                 testApp_name, testCase_name, testMethod_name = parts
@@ -465,7 +465,7 @@ class MainWindow(object):
 
     def on_nodeAdded(self, node):
         "Event handler: a new node has been added to the tree"
-        self.tree.insert(
+        self.all_tests_tree.insert(
             node.parent.path, 'end', node.path,
             text=node.name,
             tags=[node.__class__.__name__, 'active'],
@@ -474,17 +474,17 @@ class MainWindow(object):
 
     def on_nodeActive(self, node):
         "Event handler: a node on the tree has been made active"
-        self.tree.item(node.path, tags=[node.__class__.__name__, 'active'])
-        self.tree.item(node.path, open=True)
+        self.all_tests_tree.item(node.path, tags=[node.__class__.__name__, 'active'])
+        self.all_tests_tree.item(node.path, open=True)
 
     def on_nodeInactive(self, node):
         "Event handler: a node on the tree has been made inactive"
-        self.tree.item(node.path, tags=[node.__class__.__name__, 'inactive'])
-        self.tree.item(node.path, open=False)
+        self.all_tests_tree.item(node.path, tags=[node.__class__.__name__, 'inactive'])
+        self.all_tests_tree.item(node.path, open=False)
 
     def on_nodeStatusUpdate(self, node):
         "Event handler: a node on the tree has received a status update"
-        self.tree.item(node.path, tags=['TestMethod', STATUS[node.status]['tag']])
+        self.all_tests_tree.item(node.path, tags=['TestMethod', STATUS[node.status]['tag']])
 
     def on_stop(self, event=None):
         "Event handler: The stop button has been pressed"
@@ -501,7 +501,7 @@ class MainWindow(object):
         "Event handler: The 'run selected' button has been pressed"
 
         # If a node is selected, it needs to be made active
-        for path in self.tree.selection():
+        for path in self.all_tests_tree.selection():
             parts = path.split('.')
             if len(parts) == 1:
                 self.project[parts[0]].active = True
@@ -513,7 +513,7 @@ class MainWindow(object):
         # If the executor isn't currently running, we can
         # start a test run.
         if not self.executor or not self.executor.is_running:
-            self.run(labels=set(self.tree.selection()))
+            self.run(labels=set(self.all_tests_tree.selection()))
 
     def on_rerun(self, event=None):
         "Event handler: The run/stop button has been pressed"
@@ -536,9 +536,9 @@ class MainWindow(object):
         "The executor has started running a new test."
         # Update status line, and set the tree item to active.
         self.run_status.set('Running %s...' % test_path)
-        self.tree.item(test_path, tags=['TestMethod', 'active'])
+        self.all_tests_tree.item(test_path, tags=['TestMethod', 'active'])
 
-    def on_executorTestEnd(self, event, test_path, remaining_time):
+    def on_executorTestEnd(self, event, test_path, result, remaining_time):
         "The executor has finished running a test."
         # Update the progress meter
         self.progress_value.set(self.progress_value.get() + 1)
@@ -556,7 +556,7 @@ class MainWindow(object):
 
         # If the test that just fininshed is the one (and only one)
         # selected on the tree, update the display.
-        if len(self.tree.selection()) == 1 and self.tree.selection()[0] == test_path:
+        if len(self.all_tests_tree.selection()) == 1 and self.all_tests_tree.selection()[0] == test_path:
             self.on_testMethodSelected(None)
 
     def on_executorSuiteEnd(self, event):
@@ -658,7 +658,7 @@ class MainWindow(object):
         "Hide the test output panel on the test results page"
         self.output_label.grid_remove()
         self.output.grid_remove()
-        self.outputScrollbar.grid_remove()
+        self.output_scrollbar.grid_remove()
         self.details_frame.rowconfigure(3, weight=0)
 
     def _show_test_output(self, content):
@@ -668,14 +668,14 @@ class MainWindow(object):
 
         self.output_label.grid()
         self.output.grid()
-        self.outputScrollbar.grid()
+        self.output_scrollbar.grid()
         self.details_frame.rowconfigure(3, weight=5)
 
     def _hide_test_errors(self):
         "Hide the test error panel on the test results page"
         self.error_label.grid_remove()
         self.error.grid_remove()
-        self.errorScrollbar.grid_remove()
+        self.error_scrollbar.grid_remove()
 
     def _show_test_errors(self, content):
         "Show the test error panel on the test results page"
@@ -684,7 +684,7 @@ class MainWindow(object):
 
         self.error_label.grid()
         self.error.grid()
-        self.errorScrollbar.grid()
+        self.error_scrollbar.grid()
 
 
 class StackTraceDialog(Toplevel):
@@ -722,10 +722,10 @@ class StackTraceDialog(Toplevel):
         self.description = ReadOnlyText(self.frame, width=80, height=20)
         self.description.grid(column=0, row=1, pady=5, sticky=(N, S, E, W,))
 
-        self.descriptionScrollbar = Scrollbar(self.frame, orient=VERTICAL)
-        self.descriptionScrollbar.grid(column=1, row=1, pady=5, sticky=(N, S))
-        self.description.config(yscrollcommand=self.descriptionScrollbar.set)
-        self.descriptionScrollbar.config(command=self.description.yview)
+        self.description_scrollbar = Scrollbar(self.frame, orient=VERTICAL)
+        self.description_scrollbar.grid(column=1, row=1, pady=5, sticky=(N, S))
+        self.description.config(yscrollcommand=self.description_scrollbar.set)
+        self.description_scrollbar.config(command=self.description.yview)
 
         self.description.insert('1.0', trace)
 

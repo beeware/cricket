@@ -176,7 +176,7 @@ class Executor(EventSource):
                     self.result_count[status] = self.result_count[status] + 1
 
                     # Notify the display to update.
-                    self.emit('test_end', test_path=self.current_test.path, remaining_time=remaining)
+                    self.emit('test_end', test_path=self.current_test.path, result=status, remaining_time=remaining)
 
                     # Clear the decks for the next test.
                     self.current_test = None
