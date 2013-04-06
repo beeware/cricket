@@ -129,13 +129,17 @@ class MainWindow(object):
         self.content.grid(column=0, row=1, sticky=(N, S, E, W))
 
         # The left-hand side frame on the main content area
+        # The tabs for the two trees
+        self.tree_notebook = Notebook(self.content, padding=(0, 5, 0, 5))
+        self.content.add(self.tree_notebook)
+
+        # The tree for all tests
         self.all_tests_tree_frame = Frame(self.content)
         self.all_tests_tree_frame.grid(column=0, row=0, sticky=(N, S, E, W))
-        self.content.add(self.all_tests_tree_frame)
+        self.tree_notebook.add(self.all_tests_tree_frame, text='All tests')
 
         self.all_tests_tree = Treeview(self.all_tests_tree_frame)
         self.all_tests_tree.grid(column=0, row=0, sticky=(N, S, E, W))
-        # self.all_tests_tree_frame.add(self.all_tests_tree, text='All tests')
 
         # Set up the tag colors for tree nodes.
         for status, config in STATUS.items():
@@ -159,6 +163,33 @@ class MainWindow(object):
         # to each other.
         self.all_tests_tree.config(yscrollcommand=self.all_tests_tree_scrollbar.set)
         self.all_tests_tree_scrollbar.config(command=self.all_tests_tree.yview)
+
+        # The tree for problem tests
+        self.problems_tree_frame = Frame(self.content)
+        self.problems_tree_frame.grid(column=0, row=0, sticky=(N, S, E, W))
+        self.tree_notebook.add(self.problems_tree_frame, text='Problems')
+
+        self.problems_tree = Treeview(self.problems_tree_frame)
+        self.problems_tree.grid(column=0, row=0, sticky=(N, S, E, W))
+
+        # Set up the tag colors for tree nodes.
+        for status, config in STATUS.items():
+            self.problems_tree.tag_configure(config['tag'], foreground=config['color'])
+        self.problems_tree.tag_configure('inactive', foreground='lightgray')
+
+        # Problem tree only deals with selection, not clicks.
+        self.problems_tree.tag_bind('TestApp', '<<TreeviewSelect>>', self.on_testMethodSelected)
+        self.problems_tree.tag_bind('TestCase', '<<TreeviewSelect>>', self.on_testMethodSelected)
+        self.problems_tree.tag_bind('TestMethod', '<<TreeviewSelect>>', self.on_testMethodSelected)
+
+        # The tree's vertical scrollbar
+        self.problems_tree_scrollbar = Scrollbar(self.problems_tree_frame, orient=VERTICAL)
+        self.problems_tree_scrollbar.grid(column=1, row=0, sticky=(N, S))
+
+        # Tie the scrollbar to the text views, and the text views
+        # to each other.
+        self.problems_tree.config(yscrollcommand=self.problems_tree_scrollbar.set)
+        self.problems_tree_scrollbar.config(command=self.all_tests_tree.yview)
 
         # The right-hand side frame on the main content area
         self.details_frame = Frame(self.content)
@@ -285,6 +316,10 @@ class MainWindow(object):
         self.all_tests_tree_frame.columnconfigure(1, weight=0)
         self.all_tests_tree_frame.rowconfigure(0, weight=1)
 
+        self.problems_tree_frame.columnconfigure(0, weight=1)
+        self.problems_tree_frame.columnconfigure(1, weight=0)
+        self.problems_tree_frame.rowconfigure(0, weight=1)
+
         self.details_frame.columnconfigure(0, weight=0)
         self.details_frame.columnconfigure(1, weight=1)
         self.details_frame.columnconfigure(2, weight=0)
@@ -374,7 +409,7 @@ class MainWindow(object):
 
     def on_testAppClicked(self, event):
         "Event handler: an app has been clicked in the tree"
-        testApp = self.project[self.all_tests_tree.focus()]
+        testApp = self.project[event.widget.focus()]
 
         if testApp.active:
             for testCase_name, testCase in testApp.items():
@@ -387,7 +422,7 @@ class MainWindow(object):
 
     def on_testCaseClicked(self, event):
         "Event handler: a test case has been clicked in the tree"
-        testApp_name, testCase_name = self.all_tests_tree.focus().split('.')
+        testApp_name, testCase_name = event.widget.focus().split('.')
         testCase = self.project[testApp_name][testCase_name]
 
         if testCase.active:
@@ -399,15 +434,15 @@ class MainWindow(object):
 
     def on_testMethodClicked(self, event):
         "Event handler: a test case has been clicked in the tree"
-        testApp_name, testCase_name, testMethod_name = self.all_tests_tree.focus().split('.')
+        testApp_name, testCase_name, testMethod_name = event.widget.focus().split('.')
         testMethod = self.project[testApp_name][testCase_name][testMethod_name]
 
         testMethod.toggle_active()
 
     def on_testMethodSelected(self, event):
         "Event handler: a test case has been selected in the tree"
-        if len(self.all_tests_tree.selection()) == 1:
-            parts = self.all_tests_tree.selection()[0].split('.')
+        if len(event.widget.selection()) == 1:
+            parts = event.widget.selection()[0].split('.')
             if len(parts) == 3:
                 # Individual test selected.
                 testApp_name, testCase_name, testMethod_name = parts
@@ -486,6 +521,46 @@ class MainWindow(object):
         "Event handler: a node on the tree has received a status update"
         self.all_tests_tree.item(node.path, tags=['TestMethod', STATUS[node.status]['tag']])
 
+        if node.status in TestMethod.FAILING_STATES:
+            # Test is in a failing state. Make sure it is on the problem tree,
+            # with the correct current status.
+            if not self.problems_tree.exists(node.path):
+                if not self.problems_tree.exists(node.parent.path):
+                    if not self.problems_tree.exists(node.parent.parent.path):
+                        self.problems_tree.insert(
+                            '', 'end', node.parent.parent.path,
+                            text=node.parent.parent.name,
+                            tags=[node.parent.parent.__class__.__name__, 'active'],
+                            open=True
+                        )
+                    self.problems_tree.insert(
+                        node.parent.parent.path, 'end', node.parent.path,
+                        text=node.parent.name,
+                        tags=[node.parent.__class__.__name__, 'active'],
+                        open=True
+                    )
+
+                self.problems_tree.insert(
+                    node.parent.path, 'end', node.path,
+                    text=node.name,
+                    tags=[node.__class__.__name__, 'active'],
+                    open=True
+                )
+
+            self.problems_tree.item(node.path, tags=['TestMethod', STATUS[node.status]['tag']])
+        else:
+            # Test passed; if it's on the problem tree, remove it.
+            if self.problems_tree.exists(node.path):
+                self.problems_tree.delete(node.path)
+
+                # If the TestCase has no other failing tests, remove the tree node.
+                if not self.problems_tree.get_children(node.parent.path):
+                    self.problems_tree.delete(node.parent.path)
+
+                # If the app has no other failing tests, remove the tree node.
+                if not self.problems_tree.get_children(node.parent.parent.path):
+                    self.problems_tree.delete(node.parent.parent.path)
+
     def on_stop(self, event=None):
         "Event handler: The stop button has been pressed"
         self.stop()
@@ -499,9 +574,16 @@ class MainWindow(object):
 
     def on_run_selected(self, event=None):
         "Event handler: The 'run selected' button has been pressed"
+        # Check the tree notebook to see which tree
+        # is currently selected.
+        current_tree_id = self.tree_notebook.select()
+        if current_tree_id == self.problems_tree_frame._w:
+            current_tree = self.problems_tree
+        else:
+            current_tree = self.all_tests_tree
 
         # If a node is selected, it needs to be made active
-        for path in self.all_tests_tree.selection():
+        for path in current_tree.selection():
             parts = path.split('.')
             if len(parts) == 1:
                 self.project[parts[0]].active = True
@@ -513,7 +595,7 @@ class MainWindow(object):
         # If the executor isn't currently running, we can
         # start a test run.
         if not self.executor or not self.executor.is_running:
-            self.run(labels=set(self.all_tests_tree.selection()))
+            self.run(labels=set(current_tree.selection()))
 
     def on_rerun(self, event=None):
         "Event handler: The run/stop button has been pressed"
@@ -556,8 +638,9 @@ class MainWindow(object):
 
         # If the test that just fininshed is the one (and only one)
         # selected on the tree, update the display.
-        if len(self.all_tests_tree.selection()) == 1 and self.all_tests_tree.selection()[0] == test_path:
-            self.on_testMethodSelected(None)
+        # FIXME
+        # if len(self.all_tests_tree.selection()) == 1 and self.all_tests_tree.selection()[0] == test_path:
+        #     self.on_testMethodSelected(None)
 
     def on_executorSuiteEnd(self, event):
         "The test suite finished running."
