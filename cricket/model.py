@@ -11,6 +11,12 @@ import subprocess
 from cricket.events import EventSource
 
 
+class ModelLoadError(Exception):
+    def __init__(self, trace):
+        super(ModelLoadError, self).__init__()
+        self.trace = trace
+
+
 class TestMethod(EventSource):
     """A data representation of an individual test method.
 
@@ -388,13 +394,20 @@ class Project(dict, EventSource):
             self.discover_commandline(),
             stdin=None,
             stdout=subprocess.PIPE,
-            stderr=None,
+            stderr=subprocess.PIPE,
             shell=False,
         )
 
         test_list = []
         for line in runner.stdout:
             test_list.append(line.strip())
+
+        errors = []
+        for line in runner.stderr:
+            errors.append(line.strip())
+
+        if errors:
+            raise ModelLoadError('\n'.join(errors))
 
         self.refresh(test_list)
 

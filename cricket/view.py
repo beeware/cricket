@@ -62,12 +62,12 @@ STATUS_DEFAULT = {
 
 
 class MainWindow(object):
-    def __init__(self, project):
-        self.project = project
+    def __init__(self, root):
+        self._project = None
         self.executor = None
 
         # Root window
-        self.root = Tk()
+        self.root = root
         self.root.title('Cricket')
         self.root.geometry('1024x768')
 
@@ -136,30 +136,6 @@ class MainWindow(object):
         self.tree = Treeview(self.tree_frame)
         self.tree.grid(column=0, row=0, sticky=(N, S, E, W))
 
-        # Populate the initial tree nodes.
-        for testApp_name, testApp in sorted(self.project.items()):
-            testApp_node = self.tree.insert(
-                '', 'end', testApp.path,
-                text=testApp.name,
-                tags=['TestApp', 'active'],
-                open=True)
-
-            for testCase_name, testCase in sorted(testApp.items()):
-                testCase_node = self.tree.insert(
-                    testApp_node, 'end', testCase.path,
-                    text=testCase.name,
-                    tags=['TestCase', 'active'],
-                    open=True
-                )
-
-                for testMethod_name, testMethod in sorted(testCase.items()):
-                    self.tree.insert(
-                        testCase_node, 'end', testMethod.path,
-                        text=testMethod.name,
-                        tags=['TestMethod', 'active'],
-                        open=True
-                    )
-
         # Set up the tag colors for tree nodes.
         for status, config in STATUS.items():
             self.tree.tag_configure(config['tag'], foreground=config['color'])
@@ -173,23 +149,6 @@ class MainWindow(object):
         self.tree.tag_bind('TestApp', '<<TreeviewSelect>>', self.on_testMethodSelected)
         self.tree.tag_bind('TestCase', '<<TreeviewSelect>>', self.on_testMethodSelected)
         self.tree.tag_bind('TestMethod', '<<TreeviewSelect>>', self.on_testMethodSelected)
-
-        # Listen for any state changes on nodes in the tree
-        TestApp.bind('active', self.on_nodeActive)
-        TestCase.bind('active', self.on_nodeActive)
-        TestMethod.bind('active', self.on_nodeActive)
-
-        TestApp.bind('inactive', self.on_nodeInactive)
-        TestCase.bind('inactive', self.on_nodeInactive)
-        TestMethod.bind('inactive', self.on_nodeInactive)
-
-        # Listen for new nodes added to the tree
-        TestApp.bind('new', self.on_nodeAdded)
-        TestCase.bind('new', self.on_nodeAdded)
-        TestMethod.bind('new', self.on_nodeAdded)
-
-        # Listen for any status updates on nodes in the tree.
-        TestMethod.bind('status_update', self.on_nodeStatusUpdate)
 
         # The tree's vertical scrollbar
         self.treeScrollbar = Scrollbar(self.tree_frame, orient=VERTICAL)
@@ -340,6 +299,60 @@ class MainWindow(object):
         # until we actually have an error/output to display
         self._hide_test_output()
         self._hide_test_errors()
+
+    ######################################################
+    # Handlers for setting a new project
+    ######################################################
+
+    @property
+    def project(self):
+        return self._project
+
+    @project.setter
+    def project(self, project):
+        self._project = project
+
+        # Populate the initial tree nodes.
+        for testApp_name, testApp in sorted(project.items()):
+            testApp_node = self.tree.insert(
+                '', 'end', testApp.path,
+                text=testApp.name,
+                tags=['TestApp', 'active'],
+                open=True)
+
+            for testCase_name, testCase in sorted(testApp.items()):
+                testCase_node = self.tree.insert(
+                    testApp_node, 'end', testCase.path,
+                    text=testCase.name,
+                    tags=['TestCase', 'active'],
+                    open=True
+                )
+
+                for testMethod_name, testMethod in sorted(testCase.items()):
+                    self.tree.insert(
+                        testCase_node, 'end', testMethod.path,
+                        text=testMethod.name,
+                        tags=['TestMethod', 'active'],
+                        open=True
+                    )
+
+        # Listen for any state changes on nodes in the tree
+        TestApp.bind('active', self.on_nodeActive)
+        TestCase.bind('active', self.on_nodeActive)
+        TestMethod.bind('active', self.on_nodeActive)
+
+        TestApp.bind('inactive', self.on_nodeInactive)
+        TestCase.bind('inactive', self.on_nodeInactive)
+        TestMethod.bind('inactive', self.on_nodeInactive)
+
+        # Listen for new nodes added to the tree
+        TestApp.bind('new', self.on_nodeAdded)
+        TestCase.bind('new', self.on_nodeAdded)
+        TestMethod.bind('new', self.on_nodeAdded)
+
+        # Listen for any status updates on nodes in the tree.
+        TestMethod.bind('status_update', self.on_nodeStatusUpdate)
+
 
     ######################################################
     # TK Main loop
@@ -581,9 +594,9 @@ class MainWindow(object):
 
     def on_executorSuiteError(self, event, error):
         "An error occurred running the test suite."
-        # Display the error
+        # Display the error in a dialog
         self.run_status.set('Error running test suite.')
-        tkMessageBox.showerror(message='Error running test suite:\n' + error)
+        FailedTestDialog(self.root, error)
 
         # Reset the buttons
         self.stop_button.configure(state=DISABLED)
@@ -672,3 +685,127 @@ class MainWindow(object):
         self.error_label.grid()
         self.error.grid()
         self.errorScrollbar.grid()
+
+
+class StackTraceDialog(Toplevel):
+    def __init__(self, parent, title, label, trace, button_text='OK'):
+        '''Show a dialog with a scrollable stack trace.
+
+        Arguments:
+
+            parent -- a parent window (the application window)
+            title -- the title for the stack trace window
+            label -- the label describing the stack trace
+            trace -- the stack trace content to display.
+            button_text -- the label for the button text ("OK" by default)
+        '''
+        Toplevel.__init__(self, parent)
+
+        self.withdraw()  # remain invisible for now
+
+        # If the master is not viewable, don't
+        # make the child transient, or else it
+        # would be opened withdrawn
+        if parent.winfo_viewable():
+            self.transient(parent)
+
+        self.title(title)
+
+        self.parent = parent
+
+        self.frame = Frame(self)
+        self.frame.grid(column=0, row=0, sticky=(N, S, E, W))
+
+        self.label = Label(self.frame, text=label)
+        self.label.grid(column=0, row=0, padx=5, pady=5, sticky=(W, E))
+
+        self.description = ReadOnlyText(self.frame, width=80, height=20)
+        self.description.grid(column=0, row=1, pady=5, sticky=(N, S, E, W,))
+
+        self.descriptionScrollbar = Scrollbar(self.frame, orient=VERTICAL)
+        self.descriptionScrollbar.grid(column=1, row=1, pady=5, sticky=(N, S))
+        self.description.config(yscrollcommand=self.descriptionScrollbar.set)
+        self.descriptionScrollbar.config(command=self.description.yview)
+
+        self.description.insert('1.0', trace)
+
+        self.ok_button = Button(self.frame, text=button_text, command=self.ok, default=ACTIVE)
+        self.ok_button.grid(column=0, row=2, padx=5, pady=5, sticky=(E,))
+
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+
+        self.frame.columnconfigure(0, weight=1)
+        self.frame.columnconfigure(1, weight=0)
+
+        self.frame.rowconfigure(0, weight=0)
+        self.frame.rowconfigure(1, weight=1)
+        self.frame.rowconfigure(2, weight=0)
+
+        self.protocol("WM_DELETE_WINDOW", self.cancel)
+        self.bind('<Return>', self.ok)
+
+        if self.parent is not None:
+            self.geometry("+%d+%d" % (parent.winfo_rootx()+50,
+                                      parent.winfo_rooty()+50))
+
+        self.deiconify()  # become visible now
+
+        self.ok_button.focus_set()
+
+        # wait for window to appear on screen before calling grab_set
+        self.wait_visibility()
+        self.grab_set()
+        self.wait_window(self)
+
+    def ok(self, event=None):
+        self.withdraw()
+        self.update_idletasks()
+
+        if self.parent is not None:
+            self.parent.focus_set()
+        self.destroy()
+
+    def cancel(self, event=None):
+        # put focus back to the parent window
+        if self.parent is not None:
+            self.parent.focus_set()
+
+        self.destroy()
+
+
+class FailedTestDialog(StackTraceDialog):
+    def __init__(self, parent, trace):
+        '''Report an error when running a test suite.
+
+        Arguments:
+
+            parent -- a parent window (the application window)
+            trace -- the stack trace content to display.
+        '''
+        StackTraceDialog.__init__(
+            self,
+            parent,
+            'Error running test suite',
+            'The following stack trace was generated when attempting to run the test suite:',
+            trace,
+        )
+
+
+class TestLoadErrorDialog(StackTraceDialog):
+    def __init__(self, parent, trace):
+        '''Show a dialog with a scrollable stack trace.
+
+        Arguments:
+
+            parent -- a parent window (the application window)
+            trace -- the stack trace content to display.
+        '''
+        StackTraceDialog.__init__(
+            self,
+            parent,
+            'Error discovering test suite',
+            'The following stack trace was generated when attempting to discover the test suite:',
+            trace,
+            button_text='Retry'
+        )
