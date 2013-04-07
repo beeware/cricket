@@ -27,10 +27,6 @@ class Executor(EventSource):
         fcntl.fcntl(self.proc.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
         fcntl.fcntl(self.proc.stderr.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
 
-        # Data storage for test results.
-        #  - lines is an accumulator of extra test output.
-        #    If lines is None, there's no test currently under execution
-
         # The TestMethod object currently under execution.
         self.current_test = None
 

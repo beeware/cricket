@@ -20,16 +20,16 @@ class TestDiscoverer(DjangoTestSuiteRunner):
         return 0
 
 
-class TestDatabaseSetup(DjangoTestSuiteRunner):
-    """A Django test runner that sets up the test databases.
+# class TestDatabaseSetup(DjangoTestSuiteRunner):
+#     """A Django test runner that sets up the test databases.
 
-    Doesn't actually run any of the tests.
+#     Doesn't actually run any of the tests.
 
-    TODO: Actually use this.
-    """
-    def run_tests(self, test_labels, extra_tests=None, **kwargs):
-        old_config = self.setup_databases()
-        return 0
+#     TODO: Actually use this.
+#     """
+#     def run_tests(self, test_labels, extra_tests=None, **kwargs):
+#         old_config = self.setup_databases()
+#         return 0
 
 
 class TestExecutor(DjangoTestSuiteRunner):
@@ -45,6 +45,30 @@ class TestExecutor(DjangoTestSuiteRunner):
 
     #     Returns the number of tests that failed.
     #     """
+    #     try:
+    #         config_json = raw_input()
+    #         print 'CONFIG', config_json
+    #         db_mappings, mirrors = json.loads(config_json)
+
+    #         for alias in connections:
+    #             connection = connections[alias]
+    #             if connection.settings_dict['NAME'] in db_mappings:
+    #                 connection.settings_dict['NAME'] = db_mappings[connection.settings_dict['NAME']][0]
+
+    #         for alias, mirror_alias in mirrors.items():
+    #             connections[alias].settings_dict['NAME'] = (
+    #                 connections[mirror_alias].settings_dict['NAME'])
+
+    #     except ValueError:
+    #         print 'VALUE ERROR'
+
+    #         old_config, mirrors = self.setup_databases()
+    #         db_mappings = dict(
+    #             (old_name, (connection.settings_dict['NAME'], destroy))
+    #             for connection, old_name, destroy in old_config
+    #         )
+    #         print json.dumps([db_mappings, mirrors])
+
     #     self.setup_test_environment()
     #     suite = self.build_suite(test_labels, extra_tests)
     #     result = PipedTestRunner().run(suite)
@@ -52,13 +76,13 @@ class TestExecutor(DjangoTestSuiteRunner):
     #     return self.suite_result(suite, result)
 
 
-class TestDatabaseTeardown(DjangoTestSuiteRunner):
-    """A Django test runner that tears down the test databases.
+# class TestDatabaseTeardown(DjangoTestSuiteRunner):
+#     """A Django test runner that tears down the test databases.
 
-    Doesn't actually run any of the tests.
+#     Doesn't actually run any of the tests.
 
-    TODO: Actually use this.
-    """
-    def run_tests(self, test_labels, extra_tests=None, **kwargs):
-        self.teardown_databases(old_config)
-        return 0
+#     TODO: Actually use this.
+#     """
+#     def run_tests(self, test_labels, extra_tests=None, **kwargs):
+#         self.teardown_databases(old_config)
+#         return 0
