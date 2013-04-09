@@ -638,9 +638,16 @@ class MainWindow(object):
 
         # If the test that just fininshed is the one (and only one)
         # selected on the tree, update the display.
-        # FIXME
-        # if len(self.all_tests_tree.selection()) == 1 and self.all_tests_tree.selection()[0] == test_path:
-        #     self.on_testMethodSelected(None)
+        current_tree_id = self.tree_notebook.select()
+        if current_tree_id == self.problems_tree_frame._w:
+            current_tree = self.problems_tree
+        else:
+            current_tree = self.all_tests_tree
+
+        if len(current_tree.selection()) == 1 and current_tree.selection()[0] == test_path:
+            # Force reset the selection, which will generate a selection event,
+            # forcing a refresh of the result page.
+            current_tree.selection_set(current_tree.selection())
 
     def on_executorSuiteEnd(self, event):
         "The test suite finished running."
