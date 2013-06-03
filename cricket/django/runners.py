@@ -1,26 +1,37 @@
 from __future__ import absolute_import
 
+from django.conf import settings
 from django.test.simple import DjangoTestSuiteRunner
+from django.test.utils import get_runner
 
 from cricket.pipes import PipedTestRunner
 
+# Dynamically retrieve the test runner class for this project.
+TestRunnerClass = get_runner(settings, None)
 
-class TestDiscoverer(DjangoTestSuiteRunner):
+
+class TestDiscoverer(TestRunnerClass):
     """A Django test runner that prints out all the test that will be run.
 
     Doesn't actually run any of the tests.
     """
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
         for test in self.build_suite([]):
-            parts = test.id().split('.')
-            tests_index = parts.index('tests')
-
-            print '%s.%s.%s' % (parts[tests_index - 1], parts[-2], parts[-1])
+            # Django 1.6 introduce the new-style test runner.
+            # If that test runner is in use, we use the full test name.
+            # If we're still using a pre 1.6-style runner, we need to
+            # drop out all everything between the app name and the test module.
+            if issubclass(TestRunnerClass, DjangoTestSuiteRunner):
+                parts = test.id().split('.')
+                tests_index = parts.index('tests')
+                print '%s.%s.%s' % (parts[tests_index - 1], parts[-2], parts[-1])
+            else:
+                print test.id()
 
         return 0
 
 
-# class TestDatabaseSetup(DjangoTestSuiteRunner):
+# class TestDatabaseSetup(TestRunnerClass):
 #     """A Django test runner that sets up the test databases.
 
 #     Doesn't actually run any of the tests.
@@ -32,13 +43,18 @@ class TestDiscoverer(DjangoTestSuiteRunner):
 #         return 0
 
 
-class TestExecutor(DjangoTestSuiteRunner):
+class TestExecutor(TestRunnerClass):
     """A Django test runner that runs the test suite.
 
     Formats output in a machine-readable format.
     """
     def run_suite(self, suite, **kwargs):
-        return PipedTestRunner().run(suite)
+        # Django 1.6 introduce the new-style test runner.
+        # If that test runner is in use, we use the full test name.
+        # If we're still using a pre 1.6-style runner, we need to
+        # drop out all everything between the app name and the test module.
+        use_old_discovery = issubclass(TestRunnerClass, DjangoTestSuiteRunner)
+        return PipedTestRunner(use_old_discovery=use_old_discovery).run(suite)
 
     # def run_tests(self, test_labels, extra_tests=None, **kwargs):
     #     """Run the test in the test suite.
@@ -76,7 +92,7 @@ class TestExecutor(DjangoTestSuiteRunner):
     #     return self.suite_result(suite, result)
 
 
-# class TestDatabaseTeardown(DjangoTestSuiteRunner):
+# class TestDatabaseTeardown(TestRunnerClass):
 #     """A Django test runner that tears down the test databases.
 
 #     Doesn't actually run any of the tests.
