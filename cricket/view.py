@@ -657,12 +657,15 @@ class MainWindow(object):
         else:
             current_tree = self.all_tests_tree
 
-        if len(current_tree.selection()) == 1 and current_tree.selection()[0] == test_path:
-            # Force reset the selection, which will generate a selection event,
-            # forcing a refresh of the result page.
-            current_tree.selection_set(current_tree.selection())
+        if len(current_tree.selection()) == 1:
+            # One test selected.
+            if current_tree.selection()[0] == test_path:
+                # If the test that just finished running is the selected
+                # test, force reset the selection, which will generate a
+                # selection event, forcing a refresh of the result page.
+                current_tree.selection_set(current_tree.selection())
         else:
-            # Multiple tests selected
+            # No or Multiple tests selected
             self.name.set('')
             self.test_status.set('')
 
