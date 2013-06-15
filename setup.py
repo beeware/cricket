@@ -1,6 +1,6 @@
 #/usr/bin/env python
 from setuptools import setup
-from xero import VERSION
+from cricket import VERSION
 
 try:
     readme = open('README.rst')

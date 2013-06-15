@@ -17,17 +17,11 @@ little detail while the suite is running. As a result:
 
  * It can be hard (or cumbersome) to re-run any tests that have failed.
 
-If you're running a test suite with an expensive suite setup/teardown method,
-there may also be performance optimizations that can be made. For example, if
-you're running a Django test suite, and the test database isn't changing
-between runs,  you only need to create the database once, then re-use it.
-Depending on your database setup, this can save a lot of running time.
-
 Why the name ``cricket``? `Test Cricket`_ is the most prestigious version of
 the game of cricket. Games last for up to 5 days... just like running some
 test suites. The usual approach for making cricket watchable is a generous
 dose of beer; in programming, `Balmer Peak`_ limits come into effect, so
-something else is required... :-)
+something else is required...
 
 .. _Test Cricket: http://en.wikipedia.org/wiki/Test_cricket
 .. _Balmer Peak: http://xkcd.com/323/
@@ -36,6 +30,8 @@ Quickstart
 ----------
 
 At present, Cricket only has support for Django project test suites.
+It supports both the Django 1.6 unittest2-based test discovery scheme,
+and the pre-Django 1.6 test discovery scheme.
 
 In your Django project, install cricket, and then run it:
 
@@ -59,4 +55,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
