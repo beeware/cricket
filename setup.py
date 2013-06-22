@@ -16,7 +16,10 @@ setup(
     author='Russell Keith-Magee',
     author_email='russell@keith-magee.com',
     url='http://github.com/freakboy3742/cricket',
-    packages=['cricket'],
+    packages=[
+        'cricket',
+        'cricket.django'
+    ],
     license='New BSD',
     classifiers=[
         'Development Status :: 4 - Beta',
