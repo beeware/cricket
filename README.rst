@@ -26,7 +26,7 @@ Quickstart
 
 At present, Cricket only has support for Django project test suites.
 
-In your Django project, install cricket, and then run it:
+In your Django project, install cricket, and then run it::
 
     $ pip install cricket
     $ python -m cricket.django
