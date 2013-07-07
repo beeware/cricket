@@ -26,7 +26,7 @@ Quickstart
 
 At present, Cricket only has support for Django project test suites.
 
-In your Django project, install cricket, and then run it:
+In your Django project, install cricket, and then run it::
 
     $ pip install cricket
     $ python -m cricket.django
@@ -39,3 +39,14 @@ While the suite is running, you can click on test names to see the output
 of that test. If the test passed, it will be displayed in green; other test
 results will be shown in other colors.
 
+Required on Ubuntu
+------------------
+
+Ubuntu apparently provide the python library ``idlelib`` as a separate
+package that needs to be installed via ``apt-get``. To make ``cricket``
+run on Ubuntu, you need to run::
+
+    $ sudo apt-get install idle-python2.7 # or your version of python
+
+This has been tested on Ubuntu 13.04. Check for the correct package name
+if the above doesn't find the right package.
