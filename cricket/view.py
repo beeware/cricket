@@ -804,7 +804,8 @@ class MainWindow(object):
 
 
 class StackTraceDialog(Toplevel):
-    def __init__(self, parent, title, label, trace, button_text='OK'):
+    def __init__(self, parent, title, label, trace, button_text='OK',
+                 cancel_text='Cancel'):
         '''Show a dialog with a scrollable stack trace.
 
         Arguments:
@@ -836,10 +837,10 @@ class StackTraceDialog(Toplevel):
         self.label.grid(column=0, row=0, padx=5, pady=5, sticky=(W, E))
 
         self.description = ReadOnlyText(self.frame, width=80, height=20)
-        self.description.grid(column=0, row=1, pady=5, sticky=(N, S, E, W,))
+        self.description.grid(column=0, columnspan=2, row=1, pady=5, sticky=(N, S, E, W,))
 
         self.description_scrollbar = Scrollbar(self.frame, orient=VERTICAL)
-        self.description_scrollbar.grid(column=1, row=1, pady=5, sticky=(N, S))
+        self.description_scrollbar.grid(column=1, row=1, pady=5, sticky=(N, S, E))
         self.description.config(yscrollcommand=self.description_scrollbar.set)
         self.description_scrollbar.config(command=self.description.yview)
 
@@ -847,6 +848,9 @@ class StackTraceDialog(Toplevel):
 
         self.ok_button = Button(self.frame, text=button_text, command=self.ok, default=ACTIVE)
         self.ok_button.grid(column=0, row=2, padx=5, pady=5, sticky=(E,))
+
+        self.cancel_button = Button(self.frame, text=cancel_text, command=self.cancel)
+        self.cancel_button.grid(column=1, row=2, padx=5, pady=5, sticky=(E,))
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -923,5 +927,9 @@ class TestLoadErrorDialog(StackTraceDialog):
             'Error discovering test suite',
             'The following stack trace was generated when attempting to discover the test suite:',
             trace,
-            button_text='Retry'
+            button_text='Retry',
+            cancel_text='Quit',
         )
+
+    def cancel(self, event=None):
+        self.parent.destroy()
