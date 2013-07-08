@@ -18,7 +18,8 @@ import subprocess
 RAW_EXPR = '\'\S*\''
 
 # TODO: This would almost certainly be FAR simpler 
-# using unittest.TestLoader.discover()
+# using unittest.TestLoader.discover() except I can't quite
+# figure it out. This is far too much of a diry hack
 
 def get_fname(line):
     '''
@@ -35,9 +36,6 @@ def get_fname(line):
     return fname
 
 class PyTestDiscoverer:
-    '''
-
-    '''
 
     def __init__(self):
 
@@ -49,6 +47,9 @@ class PyTestDiscoverer:
 
 
     def __str__(self):
+        '''
+        Builds the dotted namespace expected by cricket
+        '''
 
         resultstr = ''
 
