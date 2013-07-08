@@ -21,6 +21,7 @@ setup(
         'cricket.django',
         'cricket.unittest',
     ],
+    install_requires=['argparse'],
     license='New BSD',
     classifiers=[
         'Development Status :: 4 - Beta',
