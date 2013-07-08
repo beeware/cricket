@@ -423,8 +423,6 @@ class Project(dict, EventSource):
         If it doesn't, create a representation for it.
         """
 
-        import ipdb; ipdb.set_trace()
-
         parts = test_label.split('.')
         parentModule = self
         for testModule_name in parts[:-2]:
