@@ -458,12 +458,12 @@ class Project(dict, EventSource):
         for line in runner.stdout:
             test_list.append(line.strip())
 
-        errors = []
+        self.errors = []
         for line in runner.stderr:
-            errors.append(line.strip())
+            self.errors.append(line.strip())
 
-        if errors:
-            raise ModelLoadError('\n'.join(errors))
+        if self.errors and not test_list:
+            raise ModelLoadError(self.render_errors())
 
         self.refresh(test_list)
 
@@ -482,6 +482,14 @@ class Project(dict, EventSource):
             testModule._purge(timestamp)
             if len(testModule) == 0:
                 self.pop(testModule_name)
+
+    def render_errors(self):
+        """Render the error list as text, returns emtpy string if no errors
+        are present.
+        """
+        if self.errors:
+            return '\n'.join(self.errors)
+        return ''
 
     def _update_active(self):
         "Exists for API consistency"

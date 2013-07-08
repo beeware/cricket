@@ -940,8 +940,33 @@ class TestLoadErrorDialog(StackTraceDialog):
             self,
             parent,
             'Error discovering test suite',
-            'The following stack trace was generated when attempting to discover the test suite:',
+            ('The following stack trace was generated when attempting to '
+             'discover the test suite:'),
             trace,
             button_text='Retry',
             cancel_text='Quit',
+        )
+
+    def cancel(self, event=None):
+        self.parent.destroy()
+
+
+class IgnorableTestLoadErrorDialog(TestLoadErrorDialog):
+    def __init__(self, parent, trace):
+        '''Show a dialog with a scrollable stack trace when loading
+           tests turned up errors in stderr but they can safely be ignored.
+
+        Arguments:
+
+            parent -- a parent window (the application window)
+            trace -- the stack trace content to display.
+        '''
+        StackTraceDialog.__init__(
+            self,
+            parent,
+            'Error discovering test suite',
+            ('The following error where captured during test discovery '
+             'but running the tests might still work:'),
+            trace,
+            button_text='Continue'
         )

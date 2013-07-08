@@ -1,6 +1,7 @@
 from Tkinter import *
 
-from cricket.view import MainWindow, TestLoadErrorDialog
+from cricket.view import (MainWindow, TestLoadErrorDialog,
+                          IgnorableTestLoadErrorDialog)
 from cricket.model import ModelLoadError
 from cricket.django.model import DjangoProject
 
@@ -22,6 +23,9 @@ def main():
             dialog = TestLoadErrorDialog(root, e.trace)
             if dialog.status == dialog.CANCEL:
                 sys.exit(1)
+
+    if project.errors:
+        IgnorableTestLoadErrorDialog(root, project.render_errors())
 
     # Set the project for the main window.
     # This populates the tree, and sets listeners for
