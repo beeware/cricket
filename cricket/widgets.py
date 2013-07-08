@@ -3,9 +3,9 @@ try:
 except ImportError:
     import platform
     import sys
-    if platform.linux_distribution() == 'Ubuntu':
+    if platform.linux_distribution()[0] == 'Ubuntu':
         raise Exception("idlelib could not be found. " +
-            "You may need to install IDLE - try running 'sudo apt-get install idle-python%s%s'" % (
+            "You may need to install IDLE - try running 'sudo apt-get install idle-python%s.%s'" % (
                 sys.version_info[0:2]))
     else:
         raise Exception("idlelib could not be found. " +
