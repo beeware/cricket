@@ -65,6 +65,21 @@ the window, along with an estimate of time remaining.</p>
 <p>While the suite is running, you can click on test names to see the output
 of that test. If the test passed, it will be displayed in green; other test
 results will be shown in other colors.</p>
+
+<h3>
+<a name="problems-under-ubuntu" class="anchor" href="#problems-under-ubuntu"><span class="octicon octicon-link"></span></a>Problems under Ubuntu</h3>
+
+<p>Ubuntu's packaging of Python omits the <code>idlelib</code> library from it's base
+packge. If you're using Python 2.7 on Ubuntu 13.04, you can install
+<code>idlelib</code> by running:<p/>
+
+<pre><code>$ sudo apt-get install idle-python2.7
+</code></pre>
+
+<p>For other versions of Python and Ubuntu, you'll need to adjust this as
+appropriate.</p>
+
+
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/freakboy3742">freakboy3742</a></p>
