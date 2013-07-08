@@ -818,6 +818,7 @@ class StackTraceDialog(Toplevel):
             label -- the label describing the stack trace
             trace -- the stack trace content to display.
             button_text -- the label for the button text ("OK" by default)
+            cancel_text -- the label for the cancel button ("Cancel" by default)
         '''
         Toplevel.__init__(self, parent)
 
@@ -849,11 +850,12 @@ class StackTraceDialog(Toplevel):
 
         self.description.insert('1.0', trace)
 
-        self.ok_button = Button(self.frame, text=button_text, command=self.ok, default=ACTIVE)
-        self.ok_button.grid(column=0, row=2, padx=5, pady=5, sticky=(E,))
-
         self.cancel_button = Button(self.frame, text=cancel_text, command=self.cancel)
-        self.cancel_button.grid(column=1, row=2, padx=5, pady=5, sticky=(E,))
+        self.cancel_button.grid(column=0, row=2, padx=5, pady=5, sticky=(E,))
+
+        self.ok_button = Button(self.frame, text=button_text, command=self.ok, default=ACTIVE)
+        self.ok_button.grid(column=1, row=2, padx=5, pady=5, sticky=(E,))
+
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -891,7 +893,9 @@ class StackTraceDialog(Toplevel):
         self.status = self.OK
 
     def cancel(self, event=None):
-        # put focus back to the parent window
+        self.withdraw()
+        self.update_idletasks()
+
         if self.parent is not None:
             self.parent.focus_set()
 
@@ -914,7 +918,13 @@ class FailedTestDialog(StackTraceDialog):
             'Error running test suite',
             'The following stack trace was generated when attempting to run the test suite:',
             trace,
+            button_text='OK',
+            cancel_text='Quit',
         )
+
+    def cancel(self, event=None):
+        StackTraceDialog.cancel(self, event=event)
+        self.parent.quit()
 
 
 class TestLoadErrorDialog(StackTraceDialog):
