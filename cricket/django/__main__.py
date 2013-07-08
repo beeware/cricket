@@ -1,3 +1,10 @@
+'''
+The purpose of this module is to set up the Cricket GUI,
+load a "project" for discovering and executing tests, and 
+to initiate the GUI main loop
+'''
+
+
 from Tkinter import *
 
 from cricket.view import MainWindow, TestLoadErrorDialog

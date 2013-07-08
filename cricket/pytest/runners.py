@@ -1,3 +1,4 @@
+import subprocess
 
 class PyTestDiscoverer:
 
@@ -5,7 +6,8 @@ class PyTestDiscoverer:
 
         self.testoutput = None
         self.pytest_commandline = [
-            'py.test'
+            'py.test',
+            '--collectonly'
             ]
 
 
@@ -14,7 +16,7 @@ class PyTestDiscoverer:
         Just capturing runnable test modules at this stage
         '''
 
-        if '<Module' in line:
+        if '<TestCaseFunction' in line:
             return True
 
         return False
@@ -43,7 +45,3 @@ class PyTestDiscoverer:
 
         return self.testoutput
             
-
-    def gather_tests():
-
-        for line in 
