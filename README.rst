@@ -39,3 +39,14 @@ While the suite is running, you can click on test names to see the output
 of that test. If the test passed, it will be displayed in green; other test
 results will be shown in other colors.
 
+Problems under Ubuntu
+~~~~~~~~~~~~~~~~~~~~~
+
+Ubuntu's packaging of Python omits the ``idlelib`` library from it's base
+packge. If you're using Python 2.7 on Ubuntu 13.04, you can install
+``idlelib`` by running::
+
+    $ sudo apt-get install idle-python2.7
+
+For other versions of Python and Ubuntu, you'll need to adjust this as
+appropriate.
