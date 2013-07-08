@@ -446,6 +446,7 @@ class Project(dict, EventSource):
 
     def discover_tests(self):
         "Discover all available tests in a project."
+
         runner = subprocess.Popen(
             self.discover_commandline(),
             stdin=None,
