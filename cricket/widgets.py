@@ -1,4 +1,11 @@
-from idlelib.WidgetRedirector import WidgetRedirector
+try:
+    from idlelib.WidgetRedirector import WidgetRedirector
+except ImportError:
+    raise ImportError(
+        "you are missing the required 'idlelib' package, make sure you have "
+        "IDLE installed and setup correctly"
+    )
+
 from Tkinter import *
 from ttk import *
 
