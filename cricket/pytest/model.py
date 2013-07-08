@@ -4,7 +4,7 @@ class PyTestProject(Project):
 
     def discover_commandline(self):
         "Command line: Discover all available tests in a project."
-        return ['py.test', 'tests', '--collectonly']
+        return ['python', '-m', 'cricket.pytest.runners']
 
     def execute_commandline(self, labels):
         "Return the command line to execute the specified test labels"
