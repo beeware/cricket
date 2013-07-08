@@ -52,15 +52,18 @@ class PipedTestResult(result.TestResult):
         self.use_old_discovery = use_old_discovery
         self._first = True
 
+    def startTest(self, test):
+        super(PipedTestResult, self).startTest(test)
+
     def _setupStdout(self):
         # Create a clean buffer for stdout content.
         self._stdout = StringIO()
         self.old_stdout = sys.stdout
-        self.stdout = self._stdout
+        sys.stdout = self._stdout
 
     def _restoreStdout(self):
         # Remember stdout reference so it can be restored later
-        self.stdout = self.old_stdout
+        sys.stdout = self.old_stdout
 
     def description(self, test):
         if test._testMethodDoc:
