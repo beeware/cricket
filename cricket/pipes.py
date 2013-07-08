@@ -52,9 +52,6 @@ class PipedTestResult(result.TestResult):
         self.use_old_discovery = use_old_discovery
         self._first = True
 
-    def startTest(self, test):
-        super(PipedTestResult, self).startTest(test)
-
     def _setupStdout(self):
         # Create a clean buffer for stdout content.
         self._stdout = StringIO()
