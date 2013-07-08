@@ -18,8 +18,10 @@ def main():
     while project is None:
         try:
             project = DjangoProject()
-        except ModelLoadError, e:
-            TestLoadErrorDialog(root, e.trace)
+        except ModelLoadError as e:
+            dialog = TestLoadErrorDialog(root, e.trace)
+            if dialog.status == dialog.CANCEL:
+                sys.exit(1)
 
     # Set the project for the main window.
     # This populates the tree, and sets listeners for

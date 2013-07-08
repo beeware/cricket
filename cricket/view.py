@@ -804,6 +804,9 @@ class MainWindow(object):
 
 
 class StackTraceDialog(Toplevel):
+    OK = 1
+    CANCEL = 2
+
     def __init__(self, parent, title, label, trace, button_text='OK',
                  cancel_text='Cancel'):
         '''Show a dialog with a scrollable stack trace.
@@ -885,6 +888,7 @@ class StackTraceDialog(Toplevel):
         if self.parent is not None:
             self.parent.focus_set()
         self.destroy()
+        self.status = self.OK
 
     def cancel(self, event=None):
         # put focus back to the parent window
@@ -892,6 +896,7 @@ class StackTraceDialog(Toplevel):
             self.parent.focus_set()
 
         self.destroy()
+        self.status = self.CANCEL
 
 
 class FailedTestDialog(StackTraceDialog):
@@ -930,6 +935,3 @@ class TestLoadErrorDialog(StackTraceDialog):
             button_text='Retry',
             cancel_text='Quit',
         )
-
-    def cancel(self, event=None):
-        self.parent.destroy()
