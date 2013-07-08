@@ -951,7 +951,7 @@ class TestLoadErrorDialog(StackTraceDialog):
         self.parent.destroy()
 
 
-class IgnorableTestLoadErrorDialog(TestLoadErrorDialog):
+class IgnorableTestLoadErrorDialog(StackTraceDialog):
     def __init__(self, parent, trace):
         '''Show a dialog with a scrollable stack trace when loading
            tests turned up errors in stderr but they can safely be ignored.
@@ -968,5 +968,6 @@ class IgnorableTestLoadErrorDialog(TestLoadErrorDialog):
             ('The following error where captured during test discovery '
              'but running the tests might still work:'),
             trace,
-            button_text='Continue'
+            button_text='Continue',
+            cancel_text='Quit',
         )
