@@ -32,7 +32,7 @@ def main():
                 sys.exit(1)
 
     if project.errors:
-        dialog = IgnorableTestLoadErrorDialog(root, project.render_errors())
+        dialog = IgnorableTestLoadErrorDialog(root, '\n'.join(project.errors))
         if dialog.status == dialog.CANCEL:
             sys.exit(1)
 
