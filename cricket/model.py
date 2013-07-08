@@ -380,7 +380,7 @@ class Project(dict, EventSource):
     """
     def __init__(self):
         super(Project, self).__init__()
-
+        self.errors = []
         self.discover_tests()
 
     def __repr__(self):
@@ -458,12 +458,11 @@ class Project(dict, EventSource):
         for line in runner.stdout:
             test_list.append(line.strip())
 
-        self.errors = []
         for line in runner.stderr:
             self.errors.append(line.strip())
 
         if self.errors and not test_list:
-            raise ModelLoadError(self.render_errors())
+            raise ModelLoadError('\n'.join(self.errors))
 
         self.refresh(test_list)
 
@@ -482,14 +481,6 @@ class Project(dict, EventSource):
             testModule._purge(timestamp)
             if len(testModule) == 0:
                 self.pop(testModule_name)
-
-    def render_errors(self):
-        """Render the error list as text, returns emtpy string if no errors
-        are present.
-        """
-        if self.errors:
-            return '\n'.join(self.errors)
-        return ''
 
     def _update_active(self):
         "Exists for API consistency"

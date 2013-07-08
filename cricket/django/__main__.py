@@ -25,7 +25,9 @@ def main():
                 sys.exit(1)
 
     if project.errors:
-        IgnorableTestLoadErrorDialog(root, project.render_errors())
+        dialog = IgnorableTestLoadErrorDialog(root, project.render_errors())
+        if dialog.status == dialog.CANCEL:
+            sys.exit(1)
 
     # Set the project for the main window.
     # This populates the tree, and sets listeners for
