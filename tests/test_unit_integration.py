@@ -1,3 +1,4 @@
+import subprocess
 import unittest
 
 import cricket
@@ -39,6 +40,35 @@ class TestDiscoverer(unittest.TestCase):
         found = cricket.pytest.test_discoverer.get_fname(sample_input)
 
         self.assertEqual(expected, found)
+
+
+class TestExecutorCmdLine(unittest.TestCase):
+
+    def test_labels(self):
+        '''
+        Test that the command-line API is respecting the labels
+        being targetted for testing
+        '''
+
+        labels = ['tests.test_unit_integration.TestCollection']
+        cmdline = ['python', '-m', 'cricket.pytest.test_executor'] + labels
+
+        runner = subprocess.Popen(
+            cmdline,
+            stdin=None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=False,
+        )  
+
+        output = ''
+        for line in runner.stdout:
+            output += line
+
+        assert 'tests.test_unit_integration.TestCollection' in output
+        assert 'tests.test_unit_integration.TestExecutorCmdLine' not in output
+
+
 
 
 # This is a magic test which can be un-commented and run manually.

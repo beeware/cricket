@@ -55,5 +55,12 @@ class PyTestExecutor:
 
 if __name__ == '__main__':
 
+    run_only = None
+    if len(sys.argv) > 1:
+        run_only = sys.argv[1:]
+
     PTE = PyTestExecutor()
+
+    if run_only:
+        PTE.run_only(run_only)
     PTE.stream_results()
