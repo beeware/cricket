@@ -52,6 +52,16 @@ class PipedTestResult(result.TestResult):
         self.use_old_discovery = use_old_discovery
         self._first = True
 
+    def _setupStdout(self):
+        # Create a clean buffer for stdout content.
+        self._stdout = StringIO()
+        self.old_stdout = sys.stdout
+        sys.stdout = self._stdout
+
+    def _restoreStdout(self):
+        # Remember stdout reference so it can be restored later
+        sys.stdout = self.old_stdout
+
     def description(self, test):
         if test._testMethodDoc:
             return trim_docstring(test._testMethodDoc)
@@ -60,10 +70,6 @@ class PipedTestResult(result.TestResult):
 
     def startTest(self, test):
         super(PipedTestResult, self).startTest(test)
-
-        # # Create a clean buffer for stdout content.
-        self._stdout = StringIO()
-        sys.stdout = self._stdout
 
         if self.use_old_discovery:
             parts = test.id().split('.')
@@ -170,9 +176,6 @@ class PipedTestRunner(unittest.TextTestRunner):
 
     def run(self, test):
         "Run the given test case or test suite."
-        # Remeber stdout reference so it can be restored later
-        old_stdout = sys.stdout
-
         # Create the result pipe, and run the tests with it.
         result = PipedTestResult(self.stream, self.use_old_discovery)
         test(result)
@@ -180,8 +183,5 @@ class PipedTestRunner(unittest.TextTestRunner):
         # Report end of test run
         self.stream.write(self.END_TEST_RESULTS + '\n')
         self.stream.flush()
-
-        # Restore the stdout reference
-        sys.stdout = old_stdout
 
         return result
