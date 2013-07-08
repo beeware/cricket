@@ -14,61 +14,6 @@ import unittest
 
 from cricket.pipes import PipedTestRunner
 
-
-START_SYMBOL = '\x02'  # <--- Start of test outputs but not first line
-SEP_SYMBOL = '\x1f'  # <--- Separator
-END_SYMBOL = '\x03'  # <--- Last blank line
-
-class WellFormedResult:
-    '''
-    A class which renders to:
-
-    {   "path": "auth.AnonymousUserBackendTest.test_get_all_permissions", 
-        "start_time": 1373247333.570757
-    }
-    {
-        "status": "OK", 
-        "output": "", 
-        "end_time": 1373247333.570895, 
-        "description": "No description"
-    }
-    <SEP_SYMBOL>
-    '''
-
-    def __init__(self, **params):
-        '''
-        We know how to handle:
-            -- alias
-            -- path
-            -- magicdots
-            -- status
-        '''
-
-        # Fail gracefully-ish
-        self.params = defaultdict('not recorded')
-        
-        for item in params:
-            self.params = params[item]
-
-    def __str__(self):
-
-        part1_str = {'path': self.params['path'], 
-                     'start_time': self.params['start_time']
-                    }
-
-        part2_str = {
-            'status': self.params['status'],
-            'output': self.params['output'],
-            'end_time': self.params['end_time'],
-            'description': self.params['description']
-        }
-
-        valuestr = '\n'.join([part1_str, part2_str, SEP_SYMBOL])
-
-        return valuestr
-
-
-
 class PyTestExecutor:
     '''
     This is a thing which, when run, produces a stream

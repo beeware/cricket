@@ -83,6 +83,8 @@ class PyTestDiscoverer:
 
             if '<Module' in line:
                 modulename = get_fname(line)
+                modulename = modulename[:-3]
+                modulename = modulename.replace('/', '.')
                 self.test_output[modulename] = {}
                 last_modulename = modulename
 
