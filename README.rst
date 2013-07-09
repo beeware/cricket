@@ -26,8 +26,9 @@ Quickstart
 
 At present, Cricket has support for:
 
-    * unittest project test suites
-    * Django project test suites.
+    * Pre-Django 1.6 project test suites,
+    * Django 1.6+ project test suites using unittest2-style discovery, and
+    * unittest project test suites.
 
 In your Django project, install cricket, and then run it::
 
