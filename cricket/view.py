@@ -11,6 +11,7 @@ import tkMessageBox
 from cricket.widgets import ReadOnlyText
 from cricket.model import TestMethod, TestCase, TestModule
 from cricket.executor import Executor
+from cricket.finder import Finder
 
 
 # Display constants for test status
@@ -63,8 +64,29 @@ STATUS_DEFAULT = {
 
 class MainWindow(object):
     def __init__(self, root):
+        '''
+
+        -----------------------------------------------------
+        | main button toolbar                               |
+        -----------------------------------------------------
+        |       < ma | in content area >                    |
+        |            |                                      |
+        |  left      |              right                   |
+        |  control   |              details frame           |
+        |  tree      |              / output viewer         |
+        |  area      |                                      |
+        -----------------------------------------------------
+        |     status bar area                               |
+        -----------------------------------------------------
+
+
+        '''
+
+
+
         self._project = None
         self.executor = None
+        self.finder = None
 
         # Root window
         self.root = root
@@ -107,6 +129,59 @@ class MainWindow(object):
         # last step - configure the menubar
         self.root['menu'] = self.menubar
 
+        self._setup_btn_toolbar()
+        self._setup_main_content()
+
+        # Create the tree/control area on the left frame
+        self._setup_left_frame()
+
+        # Create the output/viewer area on the right frame
+        self._setup_right_frame()
+
+        # Create the status bar area at the bottom
+        self._setup_status_bar()
+
+        # Test progress
+        self.progress_value = IntVar()
+        self.progress = Progressbar(self.statusbar, orient=HORIZONTAL, length=200, mode='determinate', maximum=100, variable=self.progress_value)
+        self.progress.grid(column=2, row=0, sticky=(W, E))
+
+        # Set up listeners for runner events.
+        Executor.bind('test_status_update', self.on_executorStatusUpdate)
+        Executor.bind('test_start', self.on_executorTestStart)
+        Executor.bind('test_end', self.on_executorTestEnd)
+        Executor.bind('suite_end', self.on_executorSuiteEnd)
+        Executor.bind('suite_error', self.on_executorSuiteError)
+
+        # Main window resize handle
+        self.grip = Sizegrip(self.statusbar)
+        self.grip.grid(column=3, row=0, sticky=(S, E))
+
+        # Configure the weights of the frame grids
+        self._configure_gui_weights()
+
+        # Now that we've laid out the grid, hide the error and output text
+        # until we actually have an error/output to display
+        self._hide_test_output()
+        self._hide_test_errors()
+
+    ######################################################
+    # Handlers for setting a new project
+    ######################################################
+
+    def _setup_btn_toolbar(self):
+        '''
+        The button toolbar runs as a horizontal area at the top of the GUI.
+        It is a persistent GUI component
+
+        Grid Layout:
+        ----------------------------------------------------------------------
+        |   0  |   1     |    2         |  3    |    4   |  5   |  6         |
+        | stop | run_all | run_selected | rerun | filter | find | find_entry |
+        ----------------------------------------------------------------------
+
+        '''
+
         # Main toolbar
         self.toolbar = Frame(self.root)
         self.toolbar.grid(column=0, row=0, sticky=(W, E))
@@ -124,9 +199,34 @@ class MainWindow(object):
         self.rerun_button = Button(self.toolbar, text='Re-run', command=self.on_rerun, state=DISABLED)
         self.rerun_button.grid(column=3, row=0)
 
+        # The search bar
+        # TODO: Under active construction by @tleeuwenburg
+        # self.filter_button = Button(self.toolbar, text="Restrict")
+        # self.filter_button.grid(column=4, row=0, sticky=E)
+
+        self.find_button = Button(self.toolbar, text="Find", 
+                                  command=self.on_find)
+
+        self.find_button.grid(column=5, row=0, sticky=E)
+
+        self.search_str = StringVar()
+        self.search_entry = Entry(self.toolbar, 
+                                  textvariable=self.search_str)
+        self.search_entry.grid(row=0, column=6, sticky=E) 
+
+    def _setup_main_content(self):
+        '''
+        Sets up the main content area. It is a persistent GUI component
+        '''
+
         # Main content area
         self.content = PanedWindow(self.root, orient=HORIZONTAL)
         self.content.grid(column=0, row=1, sticky=(N, S, E, W))
+
+    def _setup_left_frame(self):
+        '''
+        The left frame mostly consists of the tree widget
+        '''
 
         # The left-hand side frame on the main content area
         # The tabs for the two trees
@@ -135,7 +235,7 @@ class MainWindow(object):
 
         # The tree for all tests
         self.all_tests_tree_frame = Frame(self.content)
-        self.all_tests_tree_frame.grid(column=0, row=0, sticky=(N, S, E, W))
+        self.all_tests_tree_frame.grid(column=0, row=1, sticky=(N, S, E, W))
         self.tree_notebook.add(self.all_tests_tree_frame, text='All tests')
 
         self.all_tests_tree = Treeview(self.all_tests_tree_frame)
@@ -190,6 +290,12 @@ class MainWindow(object):
         # to each other.
         self.problems_tree.config(yscrollcommand=self.problems_tree_scrollbar.set)
         self.problems_tree_scrollbar.config(command=self.all_tests_tree.yview)
+
+
+    def _setup_right_frame(self):
+        '''
+        The right frame is basically the "output viewer" space
+        '''
 
         # The right-hand side frame on the main content area
         self.details_frame = Frame(self.content)
@@ -259,6 +365,8 @@ class MainWindow(object):
         self.error.config(yscrollcommand=self.error_scrollbar.set)
         self.error_scrollbar.config(command=self.error.yview)
 
+
+    def _setup_status_bar(self):
         # Status bar
         self.statusbar = Frame(self.root)
         self.statusbar.grid(column=0, row=2, sticky=(W, E))
@@ -275,22 +383,7 @@ class MainWindow(object):
         self.run_summary_label.grid(column=1, row=0, sticky=(W, E))
         self.run_summary.set('P:0 F:0 E:0 X:0 U:0 S:0')
 
-        # Test progress
-        self.progress_value = IntVar()
-        self.progress = Progressbar(self.statusbar, orient=HORIZONTAL, length=200, mode='determinate', maximum=100, variable=self.progress_value)
-        self.progress.grid(column=2, row=0, sticky=(W, E))
-
-        # Set up listeners for runner events.
-        Executor.bind('test_status_update', self.on_executorStatusUpdate)
-        Executor.bind('test_start', self.on_executorTestStart)
-        Executor.bind('test_end', self.on_executorTestEnd)
-        Executor.bind('suite_end', self.on_executorSuiteEnd)
-        Executor.bind('suite_error', self.on_executorSuiteError)
-
-        # Main window resize handle
-        self.grip = Sizegrip(self.statusbar)
-        self.grip.grid(column=3, row=0, sticky=(S, E))
-
+    def _configure_gui_weights(self):
         # Now configure the weights for the frame grids
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=0)
@@ -331,14 +424,6 @@ class MainWindow(object):
         self.details_frame.rowconfigure(3, weight=5)
         self.details_frame.rowconfigure(4, weight=10)
 
-        # Now that we've laid out the grid, hide the error and output text
-        # until we actually have an error/output to display
-        self._hide_test_output()
-        self._hide_test_errors()
-
-    ######################################################
-    # Handlers for setting a new project
-    ######################################################
 
     @property
     def project(self):
@@ -407,6 +492,26 @@ class MainWindow(object):
     ######################################################
     # GUI Callbacks
     ######################################################
+
+    def on_find(self, event=None):
+        '''
+        Event handler for when the user clicks "find" on the toolbar
+        '''
+
+        search_str = self.search_str.get()
+
+        if not self.finder:
+            self.finder = Finder(search_str, self.all_tests_tree)
+
+        if self.finder.needle != search_str:
+            self.finder = Finder(search_str, self.all_tests_tree)
+
+        last = self.finder.find_current()
+        next = self.finder.find_next()
+
+        self.all_tests_tree.selection_remove(last)
+        self.all_tests_tree.selection_add(next)
+
 
     def on_quit(self):
         "Event handler: Quit"
