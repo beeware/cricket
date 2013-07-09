@@ -380,7 +380,7 @@ class Project(dict, EventSource):
     """
     def __init__(self):
         super(Project, self).__init__()
-
+        self.errors = []
         self.discover_tests()
 
     def __repr__(self):
@@ -460,12 +460,11 @@ class Project(dict, EventSource):
         for line in runner.stdout:
             test_list.append(line.strip())
 
-        errors = []
         for line in runner.stderr:
-            errors.append(line.strip())
+            self.errors.append(line.strip())
 
-        if errors:
-            raise ModelLoadError('\n'.join(errors))
+        if self.errors and not test_list:
+            raise ModelLoadError('\n'.join(self.errors))
 
         self.refresh(test_list)
 

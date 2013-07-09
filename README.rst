@@ -59,3 +59,29 @@ packge. If you're using Python 2.7 on Ubuntu 13.04, you can install
 
 For other versions of Python and Ubuntu, you'll need to adjust this as
 appropriate.
+
+Development
+-----------
+
+The recommended way of setting up your development envrionment for ``cricket``
+is to install a virtual environment, install the required dependencies and
+start coding. Assuming that you are using ``virtualenvwrapper``, you only have
+to run::
+
+    $ git clone git@github.com:freakboy3742/cricket.git
+    $ cde cricket
+    $ mkvirtualenv cricket
+
+Cricket uses ``unittest`` (or ``unittest2`` for Python < 2.7) for its own test
+suite as well as additional helper modules for testing. To install all the
+requirements for cricket, you have to run the following commands within your
+virutal envrionment::
+
+    $ pip install -e .
+    $ pip install -r requirements_dev.txt
+
+In case you are running a python version ``< 2.7`` please use the
+``requirements_dev_python2.7.txt`` instead because ``unittest2`` is not part
+of the standard library for these version.
+
+Now you are ready to start hacking! Have fun!
