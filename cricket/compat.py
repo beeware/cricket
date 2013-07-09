@@ -8,6 +8,7 @@
 # to make versions work with all version of Python. This will be slowly
 # deprecated in the future as Python < 2.7 becomes more and mor
 # obsolete.
+from __future__ import absolute_import
 import unittest
 if not hasattr(unittest.TestCase, 'assertIsNotNone'):
     import unittest2 as unittest
