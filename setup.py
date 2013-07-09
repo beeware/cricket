@@ -1,4 +1,6 @@
 #/usr/bin/env python
+import sys
+
 from setuptools import setup
 from cricket import VERSION
 
@@ -7,6 +9,10 @@ try:
     long_description = str(readme.read())
 finally:
     readme.close()
+
+required_pkgs = []
+if sys.version_info < (2, 7):
+    required_pkgs.append('argparse')
 
 setup(
     name='cricket',
@@ -21,7 +27,7 @@ setup(
         'cricket.django',
         'cricket.unittest',
     ],
-    install_requires=['argparse'],
+    install_requires=required_pkgs,
     license='New BSD',
     classifiers=[
         'Development Status :: 4 - Beta',
