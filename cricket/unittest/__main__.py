@@ -1,15 +1,8 @@
-'''
-The purpose of this module is to set up the Cricket GUI,
-load a "project" for discovering and executing tests, and 
-to initiate the GUI main loop
-'''
-
-
 from Tkinter import *
 
 from cricket.view import MainWindow, TestLoadErrorDialog
 from cricket.model import ModelLoadError
-from cricket.django.model import DjangoProject
+from cricket.unittest.model import PyTestProject
 
 
 def main():
@@ -24,11 +17,9 @@ def main():
     project = None
     while project is None:
         try:
-            project = DjangoProject()
-        except ModelLoadError as e:
-            dialog = TestLoadErrorDialog(root, e.trace)
-            if dialog.status == dialog.CANCEL:
-                sys.exit(1)
+            project = PyTestProject()
+        except ModelLoadError, e:
+            TestLoadErrorDialog(root, e.trace)
 
     # Set the project for the main window.
     # This populates the tree, and sets listeners for
