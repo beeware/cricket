@@ -60,7 +60,9 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
+   :glob:
 
+   internals/*
 
 
 Indices and tables
