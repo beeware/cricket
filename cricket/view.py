@@ -948,7 +948,8 @@ class TestLoadErrorDialog(StackTraceDialog):
         )
 
     def cancel(self, event=None):
-        self.parent.destroy()
+        StackTraceDialog.cancel(self, event=event)
+        self.parent.quit()
 
 
 class IgnorableTestLoadErrorDialog(StackTraceDialog):
