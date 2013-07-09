@@ -35,9 +35,9 @@ class PyTestExecutor:
 
     def stream_results(self):        
         '''
-        1.) Execute the call to py.test
-        2.) Scrape the output
-        3.) Stream a sequence of well-formed outputs
+        1.) Discover all tests if necessary
+        2.) Otherwise fetch specific tests
+        3.) Execute-and-stream
         '''
 
         loader = unittest.TestLoader()

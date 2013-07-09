@@ -23,24 +23,6 @@ class TestCollection(unittest.TestCase):
             test_found |= 'test_testCollection' in test
         self.assertTrue(test_found)
 
-if __name__ == '__main__':
-    unittest.main()
-
-
-class TestDiscoverer(unittest.TestCase):
-
-    def test_function_naming(self):
-        '''
-        Confirm the test discoverer can strip the useful name out of the pytest
-        output
-        '''
-
-        sample_input = '''<TestCaseFunction 'test_testCollection'>'''
-        expected = 'test_testCollection'
-        found = cricket.pytest.test_discoverer.get_fname(sample_input)
-
-        self.assertEqual(expected, found)
-
 
 class TestExecutorCmdLine(unittest.TestCase):
 
@@ -65,8 +47,10 @@ class TestExecutorCmdLine(unittest.TestCase):
         for line in runner.stdout:
             output += line
 
-        assert 'tests.test_unit_integration.TestCollection' in output
-        assert 'tests.test_unit_integration.TestExecutorCmdLine' not in output
+        self.assertIn('tests.test_unit_integration.TestCollection',
+                       output)
+        self.assertNotIn('tests.test_unit_integration.TestExecutorCmdLine',
+                          output)
 
 
 
@@ -93,3 +77,6 @@ class TestExecutorCmdLine(unittest.TestCase):
 #         PTE = test_executor.PyTestExecutor()
 #         PTE.run_only(run_only)
 #         PTE.stream_results()
+
+if __name__ == '__main__':
+    unittest.main()

@@ -12,38 +12,24 @@ Its primary API is the command-line, but it can
 just as easily be called programmatically (see __main__)
 '''
 
-import re
-import subprocess
+import unittest
 
-RAW_EXPR = '\'\S*\''
 
-# TODO: This would almost certainly be FAR simpler 
-# using unittest.TestLoader.discover() except I can't quite
-# figure it out. This is far too much of a diry hack
-
-def get_fname(line):
-    '''
-    Transform e.g. <TestCaseFunction 'test_testCollection'>
-    into
-    test_testCollection
-    '''
-  
-    c_expr = re.compile(RAW_EXPR)
-    match = c_expr.search(line)
-    fname = match.group()
-    fname = fname [1:-1]
-
-    return fname
+def consume(iterable):
+    input = list(iterable)
+    while input:
+        item = input.pop(0)
+        try:
+            data = iter(item)
+            input = list(data) + input
+        except:
+            yield item
 
 class PyTestDiscoverer:
 
     def __init__(self):
 
-        self.test_output = {}
-        self.pytest_commandline = [
-            'py.test',
-            '--collectonly'
-            ]
+        self.collected_tests = []
 
 
     def __str__(self):
@@ -51,14 +37,7 @@ class PyTestDiscoverer:
         Builds the dotted namespace expected by cricket
         '''
 
-        resultstr = ''
-
-        for module in self.test_output.keys():
-            for case in self.test_output[module]:
-                for fname in self.test_output[module][case]:
-
-                    resultstr += '\n' 
-                    resultstr += '.'.join([module, case, fname])
+        resultstr = '\n'.join(self.collected_tests)
 
         return resultstr.strip()
 
@@ -68,36 +47,11 @@ class PyTestDiscoverer:
         Collect a list of potentially runnable tests
         '''
         
-        runner = subprocess.Popen(
-            self.pytest_commandline,
-            stdin=None,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=False,
-        )        
-
-        self.testoutput = []
-        for line in runner.stdout:
-            line = line.strip()
-            last_modulename = "ERROR"
-            last_casename = "NONE"
-
-            if '<Module' in line:
-                modulename = get_fname(line)
-                modulename = modulename[:-3]
-                modulename = modulename.replace('/', '.')
-                self.test_output[modulename] = {}
-                last_modulename = modulename
-
-            if '<UnitTestCase' in line:
-                casename = get_fname(line)
-                self.test_output[modulename][casename] = []
-                last_casename = casename
-
-            if '<TestCaseFunction' in line:
-                fname = get_fname(line)
-                self.test_output[modulename][casename].append(fname)
-
+        loader = unittest.TestLoader()
+        suite = loader.discover('.')
+        flatresults = list(consume(suite))
+        named = [r.id() for r in flatresults]
+        self.collected_tests = named
 
             
 if __name__ == '__main__':
