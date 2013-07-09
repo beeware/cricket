@@ -15,8 +15,7 @@ class DjangoProject(Project):
 
     def __init__(self, options=None):
         self.settings = None
-        if not options and hasattr(options, 'settings'):
-            print options.settings
+        if options and hasattr(options, 'settings'):
             self.settings = options.settings
         super(DjangoProject, self).__init__()
 
