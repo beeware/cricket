@@ -3,8 +3,8 @@ import unittest
 
 import cricket
 
-from cricket.unittest import test_discoverer
-from cricket.unittest import test_executor
+from cricket.unittest import discoverer
+from cricket.unittest import executor
 
 class TestCollection(unittest.TestCase):
 
@@ -14,7 +14,7 @@ class TestCollection(unittest.TestCase):
         finding this test
         '''
 
-        PTD = test_discoverer.PyTestDiscoverer()
+        PTD = discoverer.PyTestDiscoverer()
         PTD.collect_tests()
         tests = str(PTD).split('\n')
 
@@ -33,7 +33,7 @@ class TestExecutorCmdLine(unittest.TestCase):
         '''
 
         labels = ['tests.test_unit_integration.TestCollection']
-        cmdline = ['python', '-m', 'cricket.unittest.test_executor'] + labels
+        cmdline = ['python', '-m', 'cricket.unittest.executor'] + labels
 
         runner = subprocess.Popen(
             cmdline,
