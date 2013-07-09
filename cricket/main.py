@@ -3,6 +3,8 @@ The purpose of this module is to set up the Cricket GUI,
 load a "project" for discovering and executing tests, and
 to initiate the GUI main loop.
 '''
+from argparse import ArgumentParser
+
 from Tkinter import *
 
 from cricket.view import (
@@ -19,6 +21,10 @@ def main(Model):
     Take the project Model as the argument. This model will be
     instantiated as part of the main loop.
     """
+    parser = ArgumentParser()
+    Model.add_arguments(parser)
+    options = parser.parse_args()
+
     # Set up the root Tk context
     root = Tk()
 
@@ -30,7 +36,7 @@ def main(Model):
     project = None
     while project is None:
         try:
-            project = Model()
+            project = Model(options)
         except ModelLoadError as e:
             dialog = TestLoadErrorDialog(root, e.trace)
             if dialog.status == dialog.CANCEL:
