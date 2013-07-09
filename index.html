@@ -46,12 +46,22 @@ test suites. The usual approach for making cricket watchable is a generous dose 
 <h2>
 <a name="quickstart" class="anchor" href="#quickstart"><span class="octicon octicon-link"></span></a>Quickstart</h2>
 
-<p>At present, Cricket only has support for Django project test suites.</p>
+<p>At present, Cricket has support for:</p>
+<ul>
+<li><p>Django project test suites</p></li>
+<li><p>unittest test suites</p></li>
+</ul>
 
 <p>In your Django project, install cricket, and then run it:</p>
 
 <pre><code>$ pip install cricket
 $ python -m cricket.django
+</code></pre>
+
+<p>In your unittest project, install cricket, and then run it:</p>
+
+<pre><code>$ pip install cricket
+$ python -m cricket.unittest
 </code></pre>
 
 <p>This will pop up a GUI window:
