@@ -11,6 +11,7 @@ import tkMessageBox
 from cricket.widgets import ReadOnlyText
 from cricket.model import TestMethod, TestCase, TestModule
 from cricket.executor import Executor
+from cricket.finder import Finder
 
 
 # Display constants for test status
@@ -85,6 +86,7 @@ class MainWindow(object):
 
         self._project = None
         self.executor = None
+        self.finder = None
 
         # Root window
         self.root = root
@@ -190,6 +192,20 @@ class MainWindow(object):
         self.rerun_button = Button(self.toolbar, text='Re-run', command=self.on_rerun, state=DISABLED)
         self.rerun_button.grid(column=3, row=0)
 
+        # The search bar
+        self.filter_button = Button(self.toolbar, text="Restrict")
+        self.filter_button.grid(column=4, row=0, sticky=E)
+
+        self.find_button = Button(self.toolbar, text="Find", 
+                                  command=self.on_find)
+
+        self.find_button.grid(column=5, row=0, sticky=E)
+
+        self.search_str = StringVar()
+        self.search_entry = Entry(self.toolbar, 
+                                  textvariable=self.search_str)
+        self.search_entry.grid(row=0, column=6, sticky=E) 
+
     def _setup_main_content(self):
         '''
         Sets up the main content area. It is a persistent GUI component
@@ -211,7 +227,7 @@ class MainWindow(object):
 
         # The tree for all tests
         self.all_tests_tree_frame = Frame(self.content)
-        self.all_tests_tree_frame.grid(column=0, row=0, sticky=(N, S, E, W))
+        self.all_tests_tree_frame.grid(column=0, row=1, sticky=(N, S, E, W))
         self.tree_notebook.add(self.all_tests_tree_frame, text='All tests')
 
         self.all_tests_tree = Treeview(self.all_tests_tree_frame)
@@ -468,6 +484,19 @@ class MainWindow(object):
     ######################################################
     # GUI Callbacks
     ######################################################
+
+    def on_find(self, event=None):
+        '''
+        Event handler for when the user clicks "find" on the toolbar
+        '''
+
+        search_str = self.search_str.get()
+
+        self.finder = Finder(search_str, self.all_tests_tree)
+        matching = self.finder.find_all()
+
+        print matching
+
 
     def on_quit(self):
         "Event handler: Quit"
