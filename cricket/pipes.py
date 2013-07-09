@@ -7,10 +7,6 @@ import time
 import traceback
 import unittest
 
-from django.utils.unittest import result
-
-#TODO: I'm pretty sure this file should be in the django dir
-
 
 def trim_docstring(docstring):
     """Trim leading spaces in docstring indentation.
@@ -41,7 +37,7 @@ def trim_docstring(docstring):
     return '\n'.join(trimmed)
 
 
-class PipedTestResult(result.TestResult):
+class PipedTestResult(unittest.result.TestResult):
     """A test result class that can print test results in a machine-parseable format.
 
     Used by PipedTestRunner.
