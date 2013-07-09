@@ -422,6 +422,7 @@ class Project(dict, EventSource):
 
         If it doesn't, create a representation for it.
         """
+
         parts = test_label.split('.')
         parentModule = self
         for testModule_name in parts[:-2]:
@@ -446,6 +447,7 @@ class Project(dict, EventSource):
 
     def discover_tests(self):
         "Discover all available tests in a project."
+
         runner = subprocess.Popen(
             self.discover_commandline(),
             stdin=None,
