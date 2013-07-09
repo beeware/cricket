@@ -173,6 +173,13 @@ class MainWindow(object):
         '''
         The button toolbar runs as a horizontal area at the top of the GUI.
         It is a persistent GUI component
+
+        Grid Layout:
+        ----------------------------------------------------------------------
+        |   0  |   1     |    2         |  3    |    4   |  5   |  6         |
+        | stop | run_all | run_selected | rerun | filter | find | find_entry |
+        ----------------------------------------------------------------------
+
         '''
 
         # Main toolbar
@@ -193,8 +200,9 @@ class MainWindow(object):
         self.rerun_button.grid(column=3, row=0)
 
         # The search bar
-        self.filter_button = Button(self.toolbar, text="Restrict")
-        self.filter_button.grid(column=4, row=0, sticky=E)
+        # TODO: Under active construction by @tleeuwenburg
+        # self.filter_button = Button(self.toolbar, text="Restrict")
+        # self.filter_button.grid(column=4, row=0, sticky=E)
 
         self.find_button = Button(self.toolbar, text="Find", 
                                   command=self.on_find)
@@ -492,10 +500,17 @@ class MainWindow(object):
 
         search_str = self.search_str.get()
 
-        self.finder = Finder(search_str, self.all_tests_tree)
-        matching = self.finder.find_all()
+        if not self.finder:
+            self.finder = Finder(search_str, self.all_tests_tree)
 
-        print matching
+        if self.finder.needle != search_str:
+            self.finder = Finder(search_str, self.all_tests_tree)
+
+        last = self.finder.find_current()
+        next = self.finder.find_next()
+
+        self.all_tests_tree.selection_remove(last)
+        self.all_tests_tree.selection_add(next)
 
 
     def on_quit(self):
