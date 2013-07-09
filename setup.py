@@ -18,7 +18,8 @@ setup(
     url='http://github.com/freakboy3742/cricket',
     packages=[
         'cricket',
-        'cricket.django'
+        'cricket.django',
+        'cricket.unittest',
     ],
     license='New BSD',
     classifiers=[
