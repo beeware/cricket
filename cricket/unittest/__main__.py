@@ -2,7 +2,7 @@ from Tkinter import *
 
 from cricket.view import MainWindow, TestLoadErrorDialog
 from cricket.model import ModelLoadError
-from cricket.pytest.model import PyTestProject
+from cricket.unittest.model import PyTestProject
 
 
 def main():

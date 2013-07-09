@@ -3,8 +3,8 @@ import unittest
 
 import cricket
 
-from cricket.pytest import test_discoverer
-from cricket.pytest import test_executor
+from cricket.unittest import test_discoverer
+from cricket.unittest import test_executor
 
 class TestCollection(unittest.TestCase):
 
@@ -33,7 +33,7 @@ class TestExecutorCmdLine(unittest.TestCase):
         '''
 
         labels = ['tests.test_unit_integration.TestCollection']
-        cmdline = ['python', '-m', 'cricket.pytest.test_executor'] + labels
+        cmdline = ['python', '-m', 'cricket.unittest.test_executor'] + labels
 
         runner = subprocess.Popen(
             cmdline,
