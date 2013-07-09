@@ -1,11 +1,10 @@
 import mock
 
-from unittest2 import TestCase
-
+from cricket.compat import unittest
 from cricket.model import Project, ModelLoadError
 
 
-class TestProject(TestCase):
+class TestProject(unittest.TestCase):
 
     def setUp(self):
         super(TestProject, self).setUp()
