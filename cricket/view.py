@@ -118,7 +118,8 @@ class MainWindow(object):
         self.run_all_button = Button(self.toolbar, text='Run all', command=self.on_run_all)
         self.run_all_button.grid(column=1, row=0)
 
-        self.run_selected_button = Button(self.toolbar, text='Run selected', command=self.on_run_selected)
+        self.run_selected_button = Button(self.toolbar, text='Run selected',
+            command=self.on_run_selected, state=DISABLED)
         self.run_selected_button.grid(column=2, row=0)
 
         self.rerun_button = Button(self.toolbar, text='Re-run', command=self.on_rerun, state=DISABLED)
@@ -336,6 +337,15 @@ class MainWindow(object):
         self._hide_test_output()
         self._hide_test_errors()
 
+    @property
+    def current_test_tree(self):
+        "Check the tree notebook to return the currently selected tree."
+        current_tree_id = self.tree_notebook.select()
+        if current_tree_id == self.problems_tree_frame._w:
+            return self.problems_tree
+        else:
+            return self.all_tests_tree
+
     ######################################################
     # Handlers for setting a new project
     ######################################################
@@ -453,6 +463,9 @@ class MainWindow(object):
         self._hide_test_output()
         self._hide_test_errors()
 
+        # update "run selected" button enabled state
+        self.set_selected_button_state()
+
     def on_testCaseSelected(self, event):
         "Event handler: a test case has been selected in the tree"
         self.name.set('')
@@ -463,6 +476,9 @@ class MainWindow(object):
 
         self._hide_test_output()
         self._hide_test_errors()
+
+        # update "run selected" button enabled state
+        self.set_selected_button_state()
 
     def on_testMethodSelected(self, event):
         "Event handler: a test case has been selected in the tree"
@@ -514,6 +530,9 @@ class MainWindow(object):
 
             self._hide_test_output()
             self._hide_test_errors()
+
+        # update "run selected" button enabled state
+        self.set_selected_button_state()
 
     def on_nodeAdded(self, node):
         "Event handler: a new node has been added to the tree"
@@ -588,13 +607,7 @@ class MainWindow(object):
 
     def on_run_selected(self, event=None):
         "Event handler: The 'run selected' button has been pressed"
-        # Check the tree notebook to see which tree
-        # is currently selected.
-        current_tree_id = self.tree_notebook.select()
-        if current_tree_id == self.problems_tree_frame._w:
-            current_tree = self.problems_tree
-        else:
-            current_tree = self.all_tests_tree
+        current_tree = self.current_test_tree
 
         # If a node is selected, it needs to be made active
         for path in current_tree.selection():
@@ -651,12 +664,7 @@ class MainWindow(object):
 
         # If the test that just fininshed is the one (and only one)
         # selected on the tree, update the display.
-        current_tree_id = self.tree_notebook.select()
-        if current_tree_id == self.problems_tree_frame._w:
-            current_tree = self.problems_tree
-        else:
-            current_tree = self.all_tests_tree
-
+        current_tree = self.current_test_tree
         if len(current_tree.selection()) == 1:
             # One test selected.
             if current_tree.selection()[0] == test_path:
@@ -679,7 +687,7 @@ class MainWindow(object):
         "The test suite finished running."
         # Display the final results
         self.run_status.set('Finished.')
-        if sum(self.executor.result_count.get(state, 0) for state in TestMethod.FAILING_STATES):
+        if self.executor.any_failed:
             dialog = tkMessageBox.showerror
         else:
             dialog = tkMessageBox.showinfo
@@ -700,10 +708,7 @@ class MainWindow(object):
             })
 
         # Reset the buttons
-        self.stop_button.configure(state=DISABLED)
-        self.run_all_button.configure(state=NORMAL)
-        self.run_selected_button.configure(state=NORMAL)
-        self.rerun_button.configure(state=NORMAL)
+        self.reset_button_states_on_end()
 
         # Drop the reference to the executor
         self.executor = None
@@ -715,13 +720,29 @@ class MainWindow(object):
         FailedTestDialog(self.root, error)
 
         # Reset the buttons
-        self.stop_button.configure(state=DISABLED)
-        self.run_all_button.configure(state=NORMAL)
-        self.run_selected_button.configure(state=NORMAL)
-        self.rerun_button.configure(state=NORMAL)
+        self.reset_button_states_on_end()
 
         # Drop the reference to the executor
         self.executor = None
+
+    def reset_button_states_on_end(self):
+        "A test run has ended and we should enable or disable buttons as appropriate."
+        self.stop_button.configure(state=DISABLED)
+        self.run_all_button.configure(state=NORMAL)
+        self.set_selected_button_state()
+        if self.executor.any_failed:
+            self.rerun_button.configure(state=NORMAL)
+        else:
+            self.rerun_button.configure(state=DISABLED)
+
+    def set_selected_button_state(self):
+        if self.executor and self.executor.is_running:
+            self.run_selected_button.configure(state=DISABLED)
+        elif self.current_test_tree.selection():
+            self.run_selected_button.configure(state=NORMAL)
+        else:
+            self.run_selected_button.configure(state=DISABLED)
+
 
     ######################################################
     # GUI utility methods
@@ -765,10 +786,7 @@ class MainWindow(object):
 
             self.run_status.set('Stopped.')
 
-            self.stop_button.configure(state=DISABLED)
-            self.run_all_button.configure(state=NORMAL)
-            self.run_selected_button.configure(state=NORMAL)
-            self.rerun_button.configure(state=NORMAL)
+            self.reset_button_states_on_end()
 
     def _hide_test_output(self):
         "Hide the test output panel on the test results page"
