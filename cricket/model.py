@@ -131,6 +131,7 @@ class TestMethod(EventSource):
         }
         self.emit('status_update')
 
+
 class TestCase(dict, EventSource):
     """A data representation of a test case, wrapping multiple test methods.
 
