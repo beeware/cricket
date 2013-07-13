@@ -93,6 +93,38 @@ class MainWindow(object):
         self.root.protocol("WM_DELETE_WINDOW", self.on_quit)
         # Catch the "quit" event.
         self.root.createcommand('exit', self.on_quit)
+
+        # Setup the menu
+        self._setup_menubar()
+
+        # Set up the main content for the window.
+        self._setup_button_toolbar()
+        self._setup_main_content()
+        self._setup_status_bar()
+
+        # Now configure the weights for the root frame
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=0)
+        self.root.rowconfigure(1, weight=1)
+        self.root.rowconfigure(2, weight=0)
+
+        # Set up listeners for runner events.
+        Executor.bind('test_status_update', self.on_executorStatusUpdate)
+        Executor.bind('test_start', self.on_executorTestStart)
+        Executor.bind('test_end', self.on_executorTestEnd)
+        Executor.bind('suite_end', self.on_executorSuiteEnd)
+        Executor.bind('suite_error', self.on_executorSuiteError)
+
+        # Now that we've laid out the grid, hide the error and output text
+        # until we actually have an error/output to display
+        self._hide_test_output()
+        self._hide_test_errors()
+
+    ######################################################
+    # Internal GUI layout methods.
+    ######################################################
+
+    def _setup_menubar(self):
         # Menubar
         self.menubar = Menu(self.root)
 
@@ -123,47 +155,7 @@ class MainWindow(object):
         # last step - configure the menubar
         self.root['menu'] = self.menubar
 
-        self._setup_btn_toolbar()
-        self._setup_main_content()
-
-        # Create the tree/control area on the left frame
-        self._setup_left_frame()
-
-        # Create the output/viewer area on the right frame
-        self._setup_right_frame()
-
-        # Create the status bar area at the bottom
-        self._setup_status_bar()
-
-        # Test progress
-        self.progress_value = IntVar()
-        self.progress = Progressbar(self.statusbar, orient=HORIZONTAL, length=200, mode='determinate', maximum=100, variable=self.progress_value)
-        self.progress.grid(column=2, row=0, sticky=(W, E))
-
-        # Set up listeners for runner events.
-        Executor.bind('test_status_update', self.on_executorStatusUpdate)
-        Executor.bind('test_start', self.on_executorTestStart)
-        Executor.bind('test_end', self.on_executorTestEnd)
-        Executor.bind('suite_end', self.on_executorSuiteEnd)
-        Executor.bind('suite_error', self.on_executorSuiteError)
-
-        # Main window resize handle
-        self.grip = Sizegrip(self.statusbar)
-        self.grip.grid(column=3, row=0, sticky=(S, E))
-
-        # Configure the weights of the frame grids
-        self._configure_gui_weights()
-
-        # Now that we've laid out the grid, hide the error and output text
-        # until we actually have an error/output to display
-        self._hide_test_output()
-        self._hide_test_errors()
-
-    ######################################################
-    # Handlers for setting a new project
-    ######################################################
-
-    def _setup_btn_toolbar(self):
+    def _setup_button_toolbar(self):
         '''
         The button toolbar runs as a horizontal area at the top of the GUI.
         It is a persistent GUI component
@@ -187,6 +179,9 @@ class MainWindow(object):
         self.rerun_button = Button(self.toolbar, text='Re-run', command=self.on_rerun, state=DISABLED)
         self.rerun_button.grid(column=3, row=0)
 
+        self.toolbar.columnconfigure(0, weight=0)
+        self.toolbar.rowconfigure(0, weight=1)
+
     def _setup_main_content(self):
         '''
         Sets up the main content area. It is a persistent GUI component
@@ -195,6 +190,21 @@ class MainWindow(object):
         # Main content area
         self.content = PanedWindow(self.root, orient=HORIZONTAL)
         self.content.grid(column=0, row=1, sticky=(N, S, E, W))
+
+        # Create the tree/control area on the left frame
+        self._setup_left_frame()
+        self._setup_all_tests_tree()
+        self._setup_problem_tests_tree()
+
+        # Create the output/viewer area on the right frame
+        self._setup_right_frame()
+
+        # Set up weights for the left frame's content
+        self.content.columnconfigure(0, weight=1)
+        self.content.rowconfigure(0, weight=1)
+
+        self.content.pane(0, weight=1)
+        self.content.pane(1, weight=2)
 
     def _setup_left_frame(self):
         '''
@@ -206,6 +216,7 @@ class MainWindow(object):
         self.tree_notebook = Notebook(self.content, padding=(0, 5, 0, 5))
         self.content.add(self.tree_notebook)
 
+    def _setup_all_tests_tree(self):
         # The tree for all tests
         self.all_tests_tree_frame = Frame(self.content)
         self.all_tests_tree_frame.grid(column=0, row=0, sticky=(N, S, E, W))
@@ -237,32 +248,43 @@ class MainWindow(object):
         self.all_tests_tree.config(yscrollcommand=self.all_tests_tree_scrollbar.set)
         self.all_tests_tree_scrollbar.config(command=self.all_tests_tree.yview)
 
-        # The tree for problem tests
-        self.problems_tree_frame = Frame(self.content)
-        self.problems_tree_frame.grid(column=0, row=0, sticky=(N, S, E, W))
-        self.tree_notebook.add(self.problems_tree_frame, text='Problems')
+        # Setup weights for the "All Tests" tree
+        self.all_tests_tree_frame.columnconfigure(0, weight=1)
+        self.all_tests_tree_frame.columnconfigure(1, weight=0)
+        self.all_tests_tree_frame.rowconfigure(0, weight=1)
 
-        self.problems_tree = Treeview(self.problems_tree_frame)
-        self.problems_tree.grid(column=0, row=0, sticky=(N, S, E, W))
+    def _setup_problem_tests_tree(self):
+        # The tree for problem tests
+        self.problem_tests_tree_frame = Frame(self.content)
+        self.problem_tests_tree_frame.grid(column=0, row=0, sticky=(N, S, E, W))
+        self.tree_notebook.add(self.problem_tests_tree_frame, text='Problems')
+
+        self.problem_tests_tree = Treeview(self.problem_tests_tree_frame)
+        self.problem_tests_tree.grid(column=0, row=0, sticky=(N, S, E, W))
 
         # Set up the tag colors for tree nodes.
         for status, config in STATUS.items():
-            self.problems_tree.tag_configure(config['tag'], foreground=config['color'])
-        self.problems_tree.tag_configure('inactive', foreground='lightgray')
+            self.problem_tests_tree.tag_configure(config['tag'], foreground=config['color'])
+        self.problem_tests_tree.tag_configure('inactive', foreground='lightgray')
 
         # Problem tree only deals with selection, not clicks.
-        self.problems_tree.tag_bind('TestModule', '<<TreeviewSelect>>', self.on_testModuleSelected)
-        self.problems_tree.tag_bind('TestCase', '<<TreeviewSelect>>', self.on_testCaseSelected)
-        self.problems_tree.tag_bind('TestMethod', '<<TreeviewSelect>>', self.on_testMethodSelected)
+        self.problem_tests_tree.tag_bind('TestModule', '<<TreeviewSelect>>', self.on_testModuleSelected)
+        self.problem_tests_tree.tag_bind('TestCase', '<<TreeviewSelect>>', self.on_testCaseSelected)
+        self.problem_tests_tree.tag_bind('TestMethod', '<<TreeviewSelect>>', self.on_testMethodSelected)
 
         # The tree's vertical scrollbar
-        self.problems_tree_scrollbar = Scrollbar(self.problems_tree_frame, orient=VERTICAL)
-        self.problems_tree_scrollbar.grid(column=1, row=0, sticky=(N, S))
+        self.problem_tests_tree_scrollbar = Scrollbar(self.problem_tests_tree_frame, orient=VERTICAL)
+        self.problem_tests_tree_scrollbar.grid(column=1, row=0, sticky=(N, S))
 
         # Tie the scrollbar to the text views, and the text views
         # to each other.
-        self.problems_tree.config(yscrollcommand=self.problems_tree_scrollbar.set)
-        self.problems_tree_scrollbar.config(command=self.all_tests_tree.yview)
+        self.problem_tests_tree.config(yscrollcommand=self.problem_tests_tree_scrollbar.set)
+        self.problem_tests_tree_scrollbar.config(command=self.all_tests_tree.yview)
+
+        # Setup weights for the problems tree
+        self.problem_tests_tree_frame.columnconfigure(0, weight=1)
+        self.problem_tests_tree_frame.columnconfigure(1, weight=0)
+        self.problem_tests_tree_frame.rowconfigure(0, weight=1)
 
     def _setup_right_frame(self):
         '''
@@ -337,6 +359,17 @@ class MainWindow(object):
         self.error.config(yscrollcommand=self.error_scrollbar.set)
         self.error_scrollbar.config(command=self.error.yview)
 
+        # Set up GUI weights for the details frame
+        self.details_frame.columnconfigure(0, weight=0)
+        self.details_frame.columnconfigure(1, weight=1)
+        self.details_frame.columnconfigure(2, weight=0)
+        self.details_frame.columnconfigure(3, weight=0)
+        self.details_frame.columnconfigure(4, weight=0)
+        self.details_frame.rowconfigure(0, weight=0)
+        self.details_frame.rowconfigure(1, weight=0)
+        self.details_frame.rowconfigure(2, weight=1)
+        self.details_frame.rowconfigure(3, weight=5)
+        self.details_frame.rowconfigure(4, weight=10)
 
     def _setup_status_bar(self):
         # Status bar
@@ -355,58 +388,32 @@ class MainWindow(object):
         self.run_summary_label.grid(column=1, row=0, sticky=(W, E))
         self.run_summary.set('P:0 F:0 E:0 X:0 U:0 S:0')
 
-    def _configure_gui_weights(self):
-        # Now configure the weights for the frame grids
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=0)
-        self.root.rowconfigure(1, weight=1)
-        self.root.rowconfigure(2, weight=0)
+        # Test progress
+        self.progress_value = IntVar()
+        self.progress = Progressbar(self.statusbar, orient=HORIZONTAL, length=200, mode='determinate', maximum=100, variable=self.progress_value)
+        self.progress.grid(column=2, row=0, sticky=(W, E))
 
-        self.toolbar.columnconfigure(0, weight=0)
-        self.toolbar.rowconfigure(0, weight=1)
+        # Main window resize handle
+        self.grip = Sizegrip(self.statusbar)
+        self.grip.grid(column=3, row=0, sticky=(S, E))
 
-        self.content.columnconfigure(0, weight=1)
-        self.content.rowconfigure(0, weight=1)
-
-        self.content.pane(0, weight=1)
-        self.content.pane(1, weight=2)
-
+        # Set up weights for status bar frame
         self.statusbar.columnconfigure(0, weight=1)
         self.statusbar.columnconfigure(1, weight=0)
         self.statusbar.columnconfigure(2, weight=0)
         self.statusbar.columnconfigure(3, weight=0)
         self.statusbar.rowconfigure(0, weight=1)
 
-        self.all_tests_tree_frame.columnconfigure(0, weight=1)
-        self.all_tests_tree_frame.columnconfigure(1, weight=0)
-        self.all_tests_tree_frame.rowconfigure(0, weight=1)
-
-        self.problems_tree_frame.columnconfigure(0, weight=1)
-        self.problems_tree_frame.columnconfigure(1, weight=0)
-        self.problems_tree_frame.rowconfigure(0, weight=1)
-
-        self.details_frame.columnconfigure(0, weight=0)
-        self.details_frame.columnconfigure(1, weight=1)
-        self.details_frame.columnconfigure(2, weight=0)
-        self.details_frame.columnconfigure(3, weight=0)
-        self.details_frame.columnconfigure(4, weight=0)
-        self.details_frame.rowconfigure(0, weight=0)
-        self.details_frame.rowconfigure(1, weight=0)
-        self.details_frame.rowconfigure(2, weight=1)
-        self.details_frame.rowconfigure(3, weight=5)
-        self.details_frame.rowconfigure(4, weight=10)
-
-        # Now that we've laid out the grid, hide the error and output text
-        # until we actually have an error/output to display
-        self._hide_test_output()
-        self._hide_test_errors()
+    ######################################################
+    # Utility methods for inspecting current GUI state
+    ######################################################
 
     @property
     def current_test_tree(self):
         "Check the tree notebook to return the currently selected tree."
         current_tree_id = self.tree_notebook.select()
-        if current_tree_id == self.problems_tree_frame._w:
-            return self.problems_tree
+        if current_tree_id == self.problem_tests_tree_frame._w:
+            return self.problem_tests_tree
         else:
             return self.all_tests_tree
 
@@ -631,8 +638,8 @@ class MainWindow(object):
                 path = '.'.join(parts[:pos+1])
                 testModule = parentModule[part]
 
-                if not self.problems_tree.exists(path):
-                    self.problems_tree.insert(
+                if not self.problem_tests_tree.exists(path):
+                    self.problem_tests_tree.insert(
                         parentModule.path, 'end', testModule.path,
                         text=testModule.name,
                         tags=[testModule.__class__.__name__, 'active'],
@@ -641,19 +648,19 @@ class MainWindow(object):
 
                 parentModule = testModule
 
-            self.problems_tree.item(node.path, tags=['TestMethod', STATUS[node.status]['tag']])
+            self.problem_tests_tree.item(node.path, tags=['TestMethod', STATUS[node.status]['tag']])
         else:
             # Test passed; if it's on the problem tree, remove it.
-            if self.problems_tree.exists(node.path):
-                self.problems_tree.delete(node.path)
+            if self.problem_tests_tree.exists(node.path):
+                self.problem_tests_tree.delete(node.path)
 
                 # Check all parents of this node. Recursively remove
                 # any parent has no children as a result of this deletion.
                 has_children = False
                 node = node.parent
                 while node.path and not has_children:
-                    if not self.problems_tree.get_children(node.path):
-                        self.problems_tree.delete(node.path)
+                    if not self.problem_tests_tree.get_children(node.path):
+                        self.problem_tests_tree.delete(node.path)
                     else:
                         has_children = True
                     node = node.parent
