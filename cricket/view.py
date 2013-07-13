@@ -63,6 +63,22 @@ STATUS_DEFAULT = {
 
 class MainWindow(object):
     def __init__(self, root):
+        '''
+        -----------------------------------------------------
+        | main button toolbar                               |
+        -----------------------------------------------------
+        |       < ma | in content area >                    |
+        |            |                                      |
+        |  left      |              right                   |
+        |  control   |              details frame           |
+        |  tree      |              / output viewer         |
+        |  area      |                                      |
+        -----------------------------------------------------
+        |     status bar area                               |
+        -----------------------------------------------------
+
+        '''
+
         self._project = None
         self.executor = None
 
@@ -107,6 +123,52 @@ class MainWindow(object):
         # last step - configure the menubar
         self.root['menu'] = self.menubar
 
+        self._setup_btn_toolbar()
+        self._setup_main_content()
+
+        # Create the tree/control area on the left frame
+        self._setup_left_frame()
+
+        # Create the output/viewer area on the right frame
+        self._setup_right_frame()
+
+        # Create the status bar area at the bottom
+        self._setup_status_bar()
+
+        # Test progress
+        self.progress_value = IntVar()
+        self.progress = Progressbar(self.statusbar, orient=HORIZONTAL, length=200, mode='determinate', maximum=100, variable=self.progress_value)
+        self.progress.grid(column=2, row=0, sticky=(W, E))
+
+        # Set up listeners for runner events.
+        Executor.bind('test_status_update', self.on_executorStatusUpdate)
+        Executor.bind('test_start', self.on_executorTestStart)
+        Executor.bind('test_end', self.on_executorTestEnd)
+        Executor.bind('suite_end', self.on_executorSuiteEnd)
+        Executor.bind('suite_error', self.on_executorSuiteError)
+
+        # Main window resize handle
+        self.grip = Sizegrip(self.statusbar)
+        self.grip.grid(column=3, row=0, sticky=(S, E))
+
+        # Configure the weights of the frame grids
+        self._configure_gui_weights()
+
+        # Now that we've laid out the grid, hide the error and output text
+        # until we actually have an error/output to display
+        self._hide_test_output()
+        self._hide_test_errors()
+
+    ######################################################
+    # Handlers for setting a new project
+    ######################################################
+
+    def _setup_btn_toolbar(self):
+        '''
+        The button toolbar runs as a horizontal area at the top of the GUI.
+        It is a persistent GUI component
+        '''
+
         # Main toolbar
         self.toolbar = Frame(self.root)
         self.toolbar.grid(column=0, row=0, sticky=(W, E))
@@ -125,9 +187,19 @@ class MainWindow(object):
         self.rerun_button = Button(self.toolbar, text='Re-run', command=self.on_rerun, state=DISABLED)
         self.rerun_button.grid(column=3, row=0)
 
+    def _setup_main_content(self):
+        '''
+        Sets up the main content area. It is a persistent GUI component
+        '''
+
         # Main content area
         self.content = PanedWindow(self.root, orient=HORIZONTAL)
         self.content.grid(column=0, row=1, sticky=(N, S, E, W))
+
+    def _setup_left_frame(self):
+        '''
+        The left frame mostly consists of the tree widget
+        '''
 
         # The left-hand side frame on the main content area
         # The tabs for the two trees
@@ -191,6 +263,11 @@ class MainWindow(object):
         # to each other.
         self.problems_tree.config(yscrollcommand=self.problems_tree_scrollbar.set)
         self.problems_tree_scrollbar.config(command=self.all_tests_tree.yview)
+
+    def _setup_right_frame(self):
+        '''
+        The right frame is basically the "output viewer" space
+        '''
 
         # The right-hand side frame on the main content area
         self.details_frame = Frame(self.content)
@@ -260,6 +337,8 @@ class MainWindow(object):
         self.error.config(yscrollcommand=self.error_scrollbar.set)
         self.error_scrollbar.config(command=self.error.yview)
 
+
+    def _setup_status_bar(self):
         # Status bar
         self.statusbar = Frame(self.root)
         self.statusbar.grid(column=0, row=2, sticky=(W, E))
@@ -276,22 +355,7 @@ class MainWindow(object):
         self.run_summary_label.grid(column=1, row=0, sticky=(W, E))
         self.run_summary.set('P:0 F:0 E:0 X:0 U:0 S:0')
 
-        # Test progress
-        self.progress_value = IntVar()
-        self.progress = Progressbar(self.statusbar, orient=HORIZONTAL, length=200, mode='determinate', maximum=100, variable=self.progress_value)
-        self.progress.grid(column=2, row=0, sticky=(W, E))
-
-        # Set up listeners for runner events.
-        Executor.bind('test_status_update', self.on_executorStatusUpdate)
-        Executor.bind('test_start', self.on_executorTestStart)
-        Executor.bind('test_end', self.on_executorTestEnd)
-        Executor.bind('suite_end', self.on_executorSuiteEnd)
-        Executor.bind('suite_error', self.on_executorSuiteError)
-
-        # Main window resize handle
-        self.grip = Sizegrip(self.statusbar)
-        self.grip.grid(column=3, row=0, sticky=(S, E))
-
+    def _configure_gui_weights(self):
         # Now configure the weights for the frame grids
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=0)
