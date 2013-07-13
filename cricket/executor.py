@@ -52,6 +52,10 @@ class Executor(EventSource):
         "Return True if this runner currently running."
         return self.proc.poll() is None
 
+    @property
+    def any_failed(self):
+        return sum(self.result_count.get(state, 0) for state in TestMethod.FAILING_STATES)
+
     def terminate(self):
         "Stop the executor."
         self.proc.terminate()
