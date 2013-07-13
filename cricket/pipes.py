@@ -50,6 +50,15 @@ class PipedTestResult(unittest.result.TestResult):
         self.use_old_discovery = use_old_discovery
         self._first = True
 
+        # Create a clean buffer for stdout content.
+        self._stdout = StringIO()
+
+        # The test runner is very lightly stateful. It's possible
+        # for a test to raise an error before the test has actually
+        # started; we need to make sure that we output a header line
+        # for the misbehaving test.
+        self._current_test = None
+
     def description(self, test):
         if test._testMethodDoc:
             return trim_docstring(test._testMethodDoc)
@@ -58,10 +67,8 @@ class PipedTestResult(unittest.result.TestResult):
 
     def startTest(self, test):
         super(PipedTestResult, self).startTest(test)
-
-        # # Create a clean buffer for stdout content.
-        self._stdout = StringIO()
-        sys.stdout = self._stdout
+        # We know we're starting a new test - record it.
+        self._current_test = test
 
         if self.use_old_discovery:
             parts = test.id().split('.')
@@ -92,8 +99,14 @@ class PipedTestResult(unittest.result.TestResult):
         }
         self.stream.write('%s\n' % json.dumps(body))
         self.stream.flush()
+        self._current_test = None
 
     def addError(self, test, err):
+        # If there's no current test, the error occurred during test
+        # setup. Output a test start line so the protocol isn't confused.
+        if self._current_test is None:
+            self.startTest(test)
+
         super(PipedTestResult, self).addError(test, err)
         body = {
             'status': 'E',
@@ -104,6 +117,7 @@ class PipedTestResult(unittest.result.TestResult):
         }
         self.stream.write('%s\n' % json.dumps(body))
         self.stream.flush()
+        self._current_test = None
 
     def addFailure(self, test, err):
         super(PipedTestResult, self).addFailure(test, err)
@@ -116,6 +130,7 @@ class PipedTestResult(unittest.result.TestResult):
         }
         self.stream.write('%s\n' % json.dumps(body))
         self.stream.flush()
+        self._current_test = None
 
     def addSkip(self, test, reason):
         super(PipedTestResult, self).addSkip(test, reason)
@@ -128,6 +143,7 @@ class PipedTestResult(unittest.result.TestResult):
         }
         self.stream.write('%s\n' % json.dumps(body))
         self.stream.flush()
+        self._current_test = None
 
     def addExpectedFailure(self, test, err):
         super(PipedTestResult, self).addExpectedFailure(test, err)
@@ -140,6 +156,7 @@ class PipedTestResult(unittest.result.TestResult):
         }
         self.stream.write('%s\n' % json.dumps(body))
         self.stream.flush()
+        self._current_test = None
 
     def addUnexpectedSuccess(self, test):
         super(PipedTestResult, self).addUnexpectedSuccess(test)
@@ -151,6 +168,7 @@ class PipedTestResult(unittest.result.TestResult):
         }
         self.stream.write('%s\n' % json.dumps(body))
         self.stream.flush()
+        self._current_test = None
 
 
 class PipedTestRunner(unittest.TextTestRunner):
