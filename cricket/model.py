@@ -378,13 +378,20 @@ class TestModule(dict, EventSource):
 class Project(dict, EventSource):
     """A data representation of an project, containing 1+ test apps.
     """
-    def __init__(self):
+    def __init__(self, options=None):
         super(Project, self).__init__()
         self.errors = []
         self.discover_tests()
 
     def __repr__(self):
         return u'Project'
+
+    @classmethod
+    def add_arguments(cls, parser):
+        """Add project specific commandline arguments to the *parser*
+        object. *parser* is an instance of argparse.ArgumentParser.
+        """
+        pass
 
     @property
     def path(self):
@@ -422,8 +429,10 @@ class Project(dict, EventSource):
 
         If it doesn't, create a representation for it.
         """
-
         parts = test_label.split('.')
+        if len(parts) < 2:
+            return
+
         parentModule = self
         for testModule_name in parts[:-2]:
             try:
