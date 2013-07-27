@@ -60,6 +60,9 @@ class Executor(EventSource):
         # setup/teardown.
         self.buffer = None
 
+        # An accumulator for error output from the tests.
+        self.error_buffer = []
+
         # The timestamp when current_test started
         self.start_time = None
 
@@ -101,10 +104,9 @@ class Executor(EventSource):
             pass
 
         # Read from stderr, building a buffer.
-        errors = []
         try:
             while True:
-                lines.append(self.stderr.get(block=False))
+                self.error_buffer.append(self.stderr.get(block=False))
         except Empty:
             # queue.get() raises an exception when the queue is empty.
             # This means there is no more output to consume at this time.
@@ -220,13 +222,16 @@ class Executor(EventSource):
 
         # If we're not finished, requeue the event.
         if finished:
-            self.emit('suite_end')
+            if self.error_buffer:
+                self.emit('suite_end', error='\n'.join(self.error_buffer))
+            else:
+                self.emit('suite_end')
             return False
 
         elif stopped:
             # Suite has stopped producing output.
-            if errors:
-                self.emit('suite_error', error='\n'.join(errors))
+            if self.error_buffer:
+                self.emit('suite_error', error='\n'.join(self.error_buffer))
             else:
                 self.emit('suite_error', error='Test output ended unexpectedly')
 

@@ -754,10 +754,14 @@ class MainWindow(object):
             self._hide_test_output()
             self._hide_test_errors()
 
-    def on_executorSuiteEnd(self, event):
+    def on_executorSuiteEnd(self, event, error=None):
         "The test suite finished running."
         # Display the final results
         self.run_status.set('Finished.')
+
+        if error:
+            TestErrorsDialog(self.root, error)
+
         if self.executor.any_failed:
             dialog = tkMessageBox.showerror
         else:
@@ -939,8 +943,9 @@ class StackTraceDialog(Toplevel):
 
         self.description.insert('1.0', trace)
 
-        self.cancel_button = Button(self.frame, text=cancel_text, command=self.cancel)
-        self.cancel_button.grid(column=0, row=2, padx=5, pady=5, sticky=(E,))
+        if cancel_text is not None:
+            self.cancel_button = Button(self.frame, text=cancel_text, command=self.cancel)
+            self.cancel_button.grid(column=0, row=2, padx=5, pady=5, sticky=(E,))
 
         self.ok_button = Button(self.frame, text=button_text, command=self.ok, default=ACTIVE)
         self.ok_button.grid(column=1, row=2, padx=5, pady=5, sticky=(E,))
@@ -1009,6 +1014,30 @@ class FailedTestDialog(StackTraceDialog):
             trace,
             button_text='OK',
             cancel_text='Quit',
+        )
+
+    def cancel(self, event=None):
+        StackTraceDialog.cancel(self, event=event)
+        self.parent.quit()
+
+
+class TestErrorsDialog(StackTraceDialog):
+    def __init__(self, parent, trace):
+        '''Show a dialog with a scrollable list of errors.
+
+        Arguments:
+
+            parent -- a parent window (the application window)
+            error -- the error content to display.
+        '''
+        StackTraceDialog.__init__(
+            self,
+            parent,
+            'Errors during test suite',
+            ('The following errors were generated while running the test suite:'),
+            trace,
+            button_text='OK',
+            cancel_text=None,
         )
 
     def cancel(self, event=None):
