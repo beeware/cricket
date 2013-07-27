@@ -1,11 +1,27 @@
-import fcntl
 import json
-import os
 import subprocess
+import sys
+from threading import Thread
+
+try:
+    from Queue import Queue, Empty
+except ImportError:
+    from queue import Queue, Empty  # python 3.x
 
 from cricket.events import EventSource
 from cricket.model import TestMethod
 from cricket.pipes import PipedTestResult, PipedTestRunner
+
+
+def enqueue_output(out, queue):
+    """A utility method for consuming piped output from a subprocess.
+
+    Reads content from `out` one line at a time, and puts it onto
+    queue for consumption in a separate thread.
+    """
+    for line in iter(out.readline, b''):
+        queue.put(line.strip())
+    out.close()
 
 
 class Executor(EventSource):
@@ -20,12 +36,21 @@ class Executor(EventSource):
             stderr=subprocess.PIPE,
             shell=False,
             bufsize=1,
+            close_fds='posix' in sys.builtin_module_names
         )
 
-        # Probably only works on UNIX-alikes.
-        # Windows users should feel free to suggest an alternative.
-        fcntl.fcntl(self.proc.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
-        fcntl.fcntl(self.proc.stderr.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+        # Piped stdout/stderr reads are blocking; therefore, we need to
+        # do all our readline calls in a background thread, and use a
+        # queue object to store lines that have been read.
+        self.stdout = Queue()
+        t = Thread(target=enqueue_output, args=(self.proc.stdout, self.stdout))
+        t.daemon = True
+        t.start()
+
+        self.stderr = Queue()
+        t = Thread(target=enqueue_output, args=(self.proc.stderr, self.stderr))
+        t.daemon = True
+        t.start()
 
         # The TestMethod object currently under execution.
         self.current_test = None
@@ -68,35 +93,21 @@ class Executor(EventSource):
         # Read from stdout, building a buffer.
         lines = []
         try:
-            chunk = self.proc.stdout.read()
-            if chunk != '':
-                # If the last character in the chunk is a newline, drop it
-                # because it will cause an empty line to be registered.
-                if chunk[-1] == '\n':
-                    chunk = chunk[:-1]
-                lines = chunk.split('\n')
-        except IOError:
-            # If there's no data available, an IOError will be raised.
-            pass
-        except AttributeError:
-            # If the process has been stopped, there won't be a pipe anymore.
+            while True:
+                lines.append(self.stdout.get(block=False))
+        except Empty:
+            # queue.get() raises an exception when the queue is empty.
+            # This means there is no more output to consume at this time.
             pass
 
         # Read from stderr, building a buffer.
         errors = []
         try:
-            chunk = self.proc.stderr.read()
-            if chunk != '':
-                # If the last character in the chunk is a newline, drop it
-                # because it will cause an empty line to be registered.
-                if chunk[-1] == '\n':
-                    chunk = chunk[:-1]
-                errors = chunk.split('\n')
-        except IOError:
-            # If there's no data available, an IOError will be raised.
-            pass
-        except AttributeError:
-            # If the process has been stopped, there won't be a pipe anymore.
+            while True:
+                lines.append(self.stderr.get(block=False))
+        except Empty:
+            # queue.get() raises an exception when the queue is empty.
+            # This means there is no more output to consume at this time.
             pass
 
         # Check to see if the subprocess is still running.
