@@ -52,6 +52,7 @@ class PipedTestResult(unittest.result.TestResult):
 
         # Create a clean buffer for stdout content.
         self._stdout = StringIO()
+        sys.stdout = self._stdout
 
         # The test runner is very lightly stateful. It's possible
         # for a test to raise an error before the test has actually
@@ -69,6 +70,8 @@ class PipedTestResult(unittest.result.TestResult):
         super(PipedTestResult, self).startTest(test)
         # We know we're starting a new test - record it.
         self._current_test = test
+        self._stdout = StringIO()
+        sys.stdout = self._stdout
 
         if self.use_old_discovery:
             parts = test.id().split('.')
