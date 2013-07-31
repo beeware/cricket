@@ -32,7 +32,7 @@ class DjangoProject(Project):
     def discover_commandline(self):
         "Command lineDiscover all available tests in a project."
         command = ['python', 'manage.py', 'test',
-                 '--testrunner=cricket.django.discoverer.TestDiscoverer']
+                   '--testrunner=cricket.django.discoverer.TestDiscoverer']
         if self.settings:
             command.append('--settings={0}'.format(self.settings))
         return command
@@ -40,7 +40,7 @@ class DjangoProject(Project):
     def execute_commandline(self, labels):
         "Return the command line to execute the specified test labels"
         command = ['python', 'manage.py', 'test',
-                   '--testrunner=cricket.django.runners.TestExecutor',
+                   '--testrunner=cricket.django.executor.TestExecutor',
                    '--noinput'] + labels
         if self.settings:
             command.append('--settings={0}'.format(self.settings))
