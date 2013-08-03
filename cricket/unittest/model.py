@@ -1,6 +1,6 @@
 from cricket.model import Project
 
-class PyTestProject(Project):
+class UnittestProject(Project):
 
     def discover_commandline(self):
         "Command line: Discover all available tests in a project."

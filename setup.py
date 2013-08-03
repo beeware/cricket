@@ -28,6 +28,13 @@ setup(
         'cricket.unittest',
     ],
     install_requires=required_pkgs,
+    scripts=[],
+    entry_points={
+        'console_scripts': [
+            'cricket-django = cricket.django.__main__:main',
+            'cricket-unittest = cricket.unittest.__main__:main',
+        ]
+    },
     license='New BSD',
     classifiers=[
         'Development Status :: 4 - Beta',

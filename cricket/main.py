@@ -22,8 +22,17 @@ def main(Model):
     instantiated as part of the main loop.
     """
     parser = ArgumentParser()
+
+    parser.add_argument("--version", help="Display version number and exit", action="store_true")
+
     Model.add_arguments(parser)
     options = parser.parse_args()
+
+    # Check the shortcut options
+    if options.version:
+        import cricket
+        print cricket.VERSION
+        return
 
     # Set up the root Tk context
     root = Tk()
