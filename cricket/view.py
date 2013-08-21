@@ -7,6 +7,7 @@ from Tkinter import *
 from tkFont import *
 from ttk import *
 import tkMessageBox
+import webbrowser
 
 from tkreadonly import ReadOnlyText
 
@@ -138,8 +139,8 @@ class MainWindow(object):
         self.menu_edit = Menu(self.menubar)
         self.menubar.add_cascade(menu=self.menu_edit, label='Edit')
 
-        # self.menu_help = Menu(self.menubar, name='help')
-        # self.menubar.add_cascade(menu=self.menu_help)
+        self.menu_help = Menu(self.menubar)
+        self.menubar.add_cascade(menu=self.menu_help, label='Help')
 
         # self.menu_Apple.add_command(label='Test', command=self.cmd_dummy)
 
@@ -151,7 +152,9 @@ class MainWindow(object):
         # self.menu_edit.add_command(label='Open...', command=self.cmd_dummy)
         # self.menu_edit.add_command(label='Close', command=self.cmd_dummy)
 
-        # self.menu_help.add_command(label='Test', command=self.cmd_dummy)
+        self.menu_help.add_command(label='Open Documentation', command=self.cmd_cricket_docs)
+        self.menu_help.add_command(label='Open Cricket project page', command=self.cmd_cricket_page)
+        self.menu_help.add_command(label='Open Cricket on GitHub', command=self.cmd_cricket_github)
 
         # last step - configure the menubar
         self.root['menu'] = self.menubar
@@ -818,6 +821,18 @@ class MainWindow(object):
             self.run_selected_button.configure(state=NORMAL)
         else:
             self.run_selected_button.configure(state=DISABLED)
+
+    def cmd_cricket_page(self):
+        "Show the Cricket project page"
+        webbrowser.open_new('http://freakboy3742.github.io/cricket/')
+
+    def cmd_cricket_github(self):
+        "Show the Cricket GitHub repo"
+        webbrowser.open_new('http://github.com/freakboy3742/cricket')
+
+    def cmd_cricket_docs(self):
+        "Show the Cricket documentation"
+        webbrowser.open_new('http://freakboy3742.github.io/cricket/')
 
     ######################################################
     # GUI utility methods
