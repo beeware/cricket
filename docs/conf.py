@@ -12,6 +12,9 @@
 # serve to show the default.
 
 import sys, os
+
+sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import cricket
 
 # If extensions (or modules to document with autodoc) are in another directory,
