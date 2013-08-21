@@ -92,9 +92,9 @@ class MainWindow(object):
         # Prevent the menus from having the empty tearoff entry
         self.root.option_add('*tearOff', FALSE)
         # Catch the close button
-        self.root.protocol("WM_DELETE_WINDOW", self.on_quit)
+        self.root.protocol("WM_DELETE_WINDOW", self.cmd_quit)
         # Catch the "quit" event.
-        self.root.createcommand('exit', self.on_quit)
+        self.root.createcommand('exit', self.cmd_quit)
 
         # Setup the menu
         self._setup_menubar()
@@ -170,17 +170,17 @@ class MainWindow(object):
         self.toolbar.grid(column=0, row=0, sticky=(W, E))
 
         # Buttons on the toolbar
-        self.stop_button = Button(self.toolbar, text='Stop', command=self.on_stop, state=DISABLED)
+        self.stop_button = Button(self.toolbar, text='Stop', command=self.cmd_stop, state=DISABLED)
         self.stop_button.grid(column=0, row=0)
 
-        self.run_all_button = Button(self.toolbar, text='Run all', command=self.on_run_all)
+        self.run_all_button = Button(self.toolbar, text='Run all', command=self.cmd_run_all)
         self.run_all_button.grid(column=1, row=0)
 
         self.run_selected_button = Button(self.toolbar, text='Run selected',
-            command=self.on_run_selected, state=DISABLED)
+            command=self.cmd_run_selected, state=DISABLED)
         self.run_selected_button.grid(column=2, row=0)
 
-        self.rerun_button = Button(self.toolbar, text='Re-run', command=self.on_rerun, state=DISABLED)
+        self.rerun_button = Button(self.toolbar, text='Re-run', command=self.cmd_rerun, state=DISABLED)
         self.rerun_button.grid(column=3, row=0)
 
         self.toolbar.columnconfigure(0, weight=0)
@@ -490,15 +490,67 @@ class MainWindow(object):
         self.root.mainloop()
 
     ######################################################
-    # GUI Callbacks
+    # User commands
     ######################################################
 
-    def on_quit(self):
-        "Event handler: Quit"
+    def cmd_quit(self):
+        "Command: Quit"
         # If the runner is currently running, kill it.
         self.stop()
 
         self.root.quit()
+
+    def cmd_stop(self, event=None):
+        "Command: The stop button has been pressed"
+        self.stop()
+
+    def cmd_run_all(self, event=None):
+        "Command: The Run all button has been pressed"
+        # If the executor isn't currently running, we can
+        # start a test run.
+        if not self.executor or not self.executor.is_running:
+            self.run(active=True)
+
+    def cmd_run_selected(self, event=None):
+        "Command: The 'run selected' button has been pressed"
+        current_tree = self.current_test_tree
+
+        # If a node is selected, it needs to be made active
+        for path in current_tree.selection():
+            parts = path.split('.')
+            testModule = self.project
+            for part in parts:
+                testModule = testModule[part]
+
+            testModule.set_active(True)
+
+        # If the executor isn't currently running, we can
+        # start a test run.
+        if not self.executor or not self.executor.is_running:
+            self.run(labels=set(current_tree.selection()))
+
+    def cmd_rerun(self, event=None):
+        "Command: The run/stop button has been pressed"
+        # If the executor isn't currently running, we can
+        # start a test run.
+        if not self.executor or not self.executor.is_running:
+            self.run(status=set(TestMethod.FAILING_STATES))
+
+    def cmd_cricket_page(self):
+        "Show the Cricket project page"
+        webbrowser.open_new('http://freakboy3742.github.io/cricket/')
+
+    def cmd_cricket_github(self):
+        "Show the Cricket GitHub repo"
+        webbrowser.open_new('http://github.com/freakboy3742/cricket')
+
+    def cmd_cricket_docs(self):
+        "Show the Cricket documentation"
+        webbrowser.open_new('http://freakboy3742.github.io/cricket/')
+
+    ######################################################
+    # GUI Callbacks
+    ######################################################
 
     def on_testModuleClicked(self, event):
         "Event handler: a module has been clicked in the tree"
@@ -669,42 +721,6 @@ class MainWindow(object):
                         has_children = True
                     node = node.parent
 
-    def on_stop(self, event=None):
-        "Event handler: The stop button has been pressed"
-        self.stop()
-
-    def on_run_all(self, event=None):
-        "Event handler: The Run all button has been pressed"
-        # If the executor isn't currently running, we can
-        # start a test run.
-        if not self.executor or not self.executor.is_running:
-            self.run(active=True)
-
-    def on_run_selected(self, event=None):
-        "Event handler: The 'run selected' button has been pressed"
-        current_tree = self.current_test_tree
-
-        # If a node is selected, it needs to be made active
-        for path in current_tree.selection():
-            parts = path.split('.')
-            testModule = self.project
-            for part in parts:
-                testModule = testModule[part]
-
-            testModule.set_active(True)
-
-        # If the executor isn't currently running, we can
-        # start a test run.
-        if not self.executor or not self.executor.is_running:
-            self.run(labels=set(current_tree.selection()))
-
-    def on_rerun(self, event=None):
-        "Event handler: The run/stop button has been pressed"
-        # If the executor isn't currently running, we can
-        # start a test run.
-        if not self.executor or not self.executor.is_running:
-            self.run(status=set(TestMethod.FAILING_STATES))
-
     def on_testProgress(self):
         "Event handler: a periodic update to poll the runner for output, generating GUI updates"
         if self.executor and self.executor.poll():
@@ -821,18 +837,6 @@ class MainWindow(object):
             self.run_selected_button.configure(state=NORMAL)
         else:
             self.run_selected_button.configure(state=DISABLED)
-
-    def cmd_cricket_page(self):
-        "Show the Cricket project page"
-        webbrowser.open_new('http://freakboy3742.github.io/cricket/')
-
-    def cmd_cricket_github(self):
-        "Show the Cricket GitHub repo"
-        webbrowser.open_new('http://github.com/freakboy3742/cricket')
-
-    def cmd_cricket_docs(self):
-        "Show the Cricket documentation"
-        webbrowser.open_new('http://freakboy3742.github.io/cricket/')
 
     ######################################################
     # GUI utility methods
