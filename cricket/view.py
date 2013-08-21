@@ -8,7 +8,8 @@ from tkFont import *
 from ttk import *
 import tkMessageBox
 
-from cricket.widgets import ReadOnlyText
+from tkreadonly import ReadOnlyText
+
 from cricket.model import TestMethod, TestCase, TestModule
 from cricket.executor import Executor
 
@@ -817,7 +818,6 @@ class MainWindow(object):
             self.run_selected_button.configure(state=NORMAL)
         else:
             self.run_selected_button.configure(state=DISABLED)
-
 
     ######################################################
     # GUI utility methods

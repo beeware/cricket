@@ -10,7 +10,9 @@ try:
 finally:
     readme.close()
 
-required_pkgs = []
+required_pkgs = [
+    'tkreadonly',
+]
 if sys.version_info < (2, 7):
     required_pkgs.append('argparse')
 
