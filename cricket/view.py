@@ -156,6 +156,7 @@ class MainWindow(object):
         self.menu_help.add_command(label='Open Documentation', command=self.cmd_cricket_docs)
         self.menu_help.add_command(label='Open Cricket project page', command=self.cmd_cricket_page)
         self.menu_help.add_command(label='Open Cricket on GitHub', command=self.cmd_cricket_github)
+        self.menu_help.add_command(label='Open BeeWare project page', command=self.cmd_beeware_page)
 
         # last step - configure the menubar
         self.root['menu'] = self.menubar
@@ -540,6 +541,10 @@ class MainWindow(object):
     def cmd_cricket_page(self):
         "Show the Cricket project page"
         webbrowser.open_new('http://pybee.org/cricket/')
+
+    def cmd_beeware_page(self):
+        "Show the Beeware project page"
+        webbrowser.open_new('http://pybee.org/')
 
     def cmd_cricket_github(self):
         "Show the Cricket GitHub repo"
