@@ -16,6 +16,7 @@
         font-family: 'Cutive', serif;
         font-size: 64px;
         padding-top: 12px;
+        text-align: center;
       }
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
@@ -23,6 +24,7 @@
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
+    <!-- Fav and touch icons -->
     <link rel="apple-touch-icon-precomposed" sizes="144x144" href="static/images/cricket-144.png">
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="static/images/cricket-114.png">
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="static/images/cricket-72.png">
@@ -35,20 +37,20 @@
       <header>
         <img src="static/images/cricket-270.png" alt="Cricket logo">
         <h1>cricket</h1>
-        <p>A GUI tool for running Python test suites.</p>
+        <p>A GUI tool for running Python test suites. Part of the <a href="http://pybee.org">BeeWare suite</a>.</p>
 
-        <p class="view"><a href="https://github.com/freakboy3742/cricket">View the Project on GitHub <small>freakboy3742/cricket</small></a></p>
-
+        <p class="view"><a href="https://github.com/pybee/cricket">View the Project on GitHub <small>pybee/cricket</small></a></p>
 
         <ul>
-          <li><a href="https://github.com/freakboy3742/cricket/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/freakboy3742/cricket/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/freakboy3742/cricket">View On <strong>GitHub</strong></a></li>
+          <li><a href="https://github.com/pybee/cricket/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/pybee/cricket/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/pybee/cricket">View On <strong>GitHub</strong></a></li>
         </ul>
       </header>
       <section>
-        <h1>
-<a name="cricket" class="anchor" href="#cricket"><span class="octicon octicon-link"></span></a>cricket</h1>
+        <h1><a name="cricket" class="anchor" href="#cricket"></a>cricket</h1>
+
+<p><strong>Part of the <a href="http://pybee.org"><img src="static/images/brutus-16.png" alt="BeeWare logo">BeeWare suite</a>.</strong></p>
 
 <p>Cricket a graphical tool that helps you run your test suites.</p>
 
@@ -65,7 +67,7 @@ test suites. The usual approach for making cricket watchable is a generous dose 
 <h2>
 <a name="quickstart" class="anchor" href="#quickstart"><span class="octicon octicon-link"></span></a>Quickstart</h2>
 
-<p>At present, Cricket has support for:</p>
+<p>Cricket has support for:</p>
 <ul>
 <li><p>Pre-Django 1.6 project test suites,</p></li>
 <li><p>Django 1.6+ project test suites using unittest2-style discovery, and</p></li>
@@ -75,17 +77,17 @@ test suites. The usual approach for making cricket watchable is a generous dose 
 <p>In your Django project, install cricket, and then run it:</p>
 
 <pre><code>$ pip install cricket
-$ python -m cricket.django
+$ cricket-django
 </code></pre>
 
 <p>In your unittest project, install cricket, and then run it:</p>
 
 <pre><code>$ pip install cricket
-$ python -m cricket.unittest
+$ cricket-unittest
 </code></pre>
 
 <p>This will pop up a GUI window:
-<img src="static/images/screenshot.png" alt="Screenshot of Cricket GUI after running a test suite.">
+<a href="static/images/screenshot.png"><img src="static/images/screenshot-mini.png" alt="Screenshot of Cricket GUI after running a test suite."></a>
 </p>
 
 <p>Hit "Run all", and watch your test suite
@@ -96,23 +98,29 @@ the window, along with an estimate of time remaining.</p>
 of that test. If the test passed, it will be displayed in green; other test
 results will be shown in other colors.</p>
 
-<h3>
-<a name="problems-under-ubuntu" class="anchor" href="#problems-under-ubuntu"><span class="octicon octicon-link"></span></a>Problems under Ubuntu</h3>
+<h2>
+<a name="documentation" class="anchor" href="#documentation"><span class="octicon octicon-link"></span></a>Documentation</h2>
 
-<p>Ubuntu's packaging of Python omits the <code>idlelib</code> library from it's base
-packge. If you're using Python 2.7 on Ubuntu 13.04, you can install
-<code>idlelib</code> by running:<p/>
+<p>Documentation for cricket can be found on <a href="http://cricket.readthedocs.org">Read The Docs</a>.</p>
 
-<pre><code>$ sudo apt-get install idle-python2.7
-</code></pre>
+<h2>
+<a name="community" class="anchor" href="#community"><span class="octicon octicon-link"></span></a>Community</h2>
 
-<p>For other versions of Python and Ubuntu, you'll need to adjust this as
-appropriate.</p>
+<p>Cricket is part of the <a href="http://pybee.org">BeeWare suite</a>. You can talk to the community through:</p>
+<ul>
+<li><p><a href="https://twitter.com/pybeeware"><strong>@pybeeware</strong> on Twitter</a></p></li>
+<li><p>The <a href="https://groups.google.com/forum/#!forum/beeware-users">BeeWare Users Mailing list</a>, for questions about how to use the BeeWare suite.</p></li>
+<li><p>The <a href="https://groups.google.com/forum/#!forum/beeware-developers">BeeWare Developers Mailing list</a>, for discussing the development of new features in the BeeWare suite, and ideas for new tools for the suite.</p></li>
+</ul>
 
+<h2>
+<a name="contributing" class="anchor" href="#contributing"><span class="octicon octicon-link"></span></a>Contributing</h2>
+
+<p>If you experience problems with cricket, you can <a href="https://github.com/pybee/cricket/issues">log them on GitHub</a>. If you want to contribute code, please <a href="https://github.com/pybee/cricket">fork the code</a> and <a href="https://github.com/pybee/cricket/pulls">submit a pull request</a>.</p>
 
       </section>
       <footer>
-        <p>This project is maintained by <a href="https://github.com/freakboy3742">freakboy3742</a></p>
+        <p>This project is maintained by <a href="https://github.com/pybee">pybee</a></p>
         <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
       </footer>
     </div>
