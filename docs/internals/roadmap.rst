@@ -22,6 +22,9 @@ you'd like to contribute, providing a patch for one of these features:
 
    - search
 
+ * Integrate with coverage, and use tkreadonly to display coverage stats
+   overlaid on actual code
+
  * Add historical tracking of test results
 
  * Integrate with testr

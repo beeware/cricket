@@ -23,7 +23,7 @@ setup(
     long_description=long_description,
     author='Russell Keith-Magee',
     author_email='russell@keith-magee.com',
-    url='http://github.com/freakboy3742/cricket',
+    url='http://pybee.org/cricket',
     packages=[
         'cricket',
         'cricket.django',

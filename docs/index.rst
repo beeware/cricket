@@ -33,12 +33,12 @@ At present, Cricket has support for:
 In your Django project, install cricket, and then run it::
 
     $ pip install cricket
-    $ python -m cricket.django
+    $ cricket-django
 
 In a unittest project, install cricket, and then run it::
 
     $ pip install cricket
-    $ python -m cricket.unittest
+    $ cricket-unittest
 
 This will pop up a GUI window. Hit "Run all", and watch your test suite
 execute.
@@ -55,15 +55,16 @@ packge. If you're using Python 2.7 on Ubuntu 13.04, you can install
 For other versions of Python and Ubuntu, you'll need to adjust this as
 appropriate.
 
-
 Contents:
 
 .. toctree::
    :maxdepth: 2
    :glob:
 
-   internals/*
-
+   internals/contributing
+   internals/backends
+   internals/roadmap
+   releases
 
 Indices and tables
 ==================

@@ -11,6 +11,7 @@ import webbrowser
 
 from tkreadonly import ReadOnlyText
 
+from cricket import VERSION, NUM_VERSION
 from cricket.model import TestMethod, TestCase, TestModule
 from cricket.executor import Executor
 
@@ -136,8 +137,8 @@ class MainWindow(object):
         self.menu_file = Menu(self.menubar)
         self.menubar.add_cascade(menu=self.menu_file, label='File')
 
-        self.menu_edit = Menu(self.menubar)
-        self.menubar.add_cascade(menu=self.menu_edit, label='Edit')
+        self.menu_test = Menu(self.menubar)
+        self.menubar.add_cascade(menu=self.menu_test, label='Test')
 
         self.menu_help = Menu(self.menubar)
         self.menubar.add_cascade(menu=self.menu_help, label='Help')
@@ -148,9 +149,9 @@ class MainWindow(object):
         # self.menu_file.add_command(label='Open...', command=self.cmd_dummy)
         # self.menu_file.add_command(label='Close', command=self.cmd_dummy)
 
-        # self.menu_edit.add_command(label='New', command=self.cmd_dummy)
-        # self.menu_edit.add_command(label='Open...', command=self.cmd_dummy)
-        # self.menu_edit.add_command(label='Close', command=self.cmd_dummy)
+        self.menu_test.add_command(label='Run all', command=self.cmd_run_all)
+        self.menu_test.add_command(label='Run selected tests', command=self.cmd_run_selected)
+        self.menu_test.add_command(label='Re-run failed tests', command=self.cmd_rerun)
 
         self.menu_help.add_command(label='Open Documentation', command=self.cmd_cricket_docs)
         self.menu_help.add_command(label='Open Cricket project page', command=self.cmd_cricket_page)
@@ -538,15 +539,20 @@ class MainWindow(object):
 
     def cmd_cricket_page(self):
         "Show the Cricket project page"
-        webbrowser.open_new('http://freakboy3742.github.io/cricket/')
+        webbrowser.open_new('http://pybee.org/cricket/')
 
     def cmd_cricket_github(self):
         "Show the Cricket GitHub repo"
-        webbrowser.open_new('http://github.com/freakboy3742/cricket')
+        webbrowser.open_new('http://github.com/pybee/cricket')
 
     def cmd_cricket_docs(self):
         "Show the Cricket documentation"
-        webbrowser.open_new('http://freakboy3742.github.io/cricket/')
+        # If this is a formal release, show the docs for that
+        # version. otherwise, just show the head docs.
+        if len(NUM_VERSION) == 3:
+            webbrowser.open_new('http://cricket.readthedocs.org/en/v%s/' % VERSION)
+        else:
+            webbrowser.open_new('http://cricket.readthedocs.org/')
 
     ######################################################
     # GUI Callbacks

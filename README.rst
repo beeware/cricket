@@ -1,6 +1,8 @@
 Cricket
 =======
 
+Cricket is part of the `BeeWare suite`_. The project website is `http://pybee.org/cricket`_.
+
 Cricket a graphical tool that helps you run your test suites.
 
 Normal unittest test runners dump all output to the console, and provide very
@@ -18,8 +20,11 @@ test suites. The usual approach for making cricket watchable is a generous
 dose of beer; in programming, `Balmer Peak`_ limits come into effect, so
 something else is required...
 
+.. _BeeWare suite: http://pybee.org/
+.. _http://pybee.org/cricket: http://pybee.org/cricket
 .. _Test Cricket: http://en.wikipedia.org/wiki/Test_cricket
 .. _Balmer Peak: http://xkcd.com/323/
+
 
 Quickstart
 ----------
@@ -33,12 +38,12 @@ At present, Cricket has support for:
 In your Django project, install cricket, and then run it::
 
     $ pip install cricket
-    $ python -m cricket.django
+    $ cricket-django
 
 In a unittest project, install cricket, and then run it::
 
     $ pip install cricket
-    $ python -m cricket.unittest
+    $ cricket-unittest
 
 This will pop up a GUI window. Hit "Run all", and watch your test suite
 execute. A progress bar is displayed in the bottom right hand corner of
@@ -60,28 +65,32 @@ packge. If you're using Python 2.7 on Ubuntu 13.04, you can install
 For other versions of Python and Ubuntu, you'll need to adjust this as
 appropriate.
 
-Development
------------
+Documentation
+-------------
 
-The recommended way of setting up your development envrionment for ``cricket``
-is to install a virtual environment, install the required dependencies and
-start coding. Assuming that you are using ``virtualenvwrapper``, you only have
-to run::
+Documentation for cricket can be found on `Read The Docs`_.
 
-    $ git clone git@github.com:freakboy3742/cricket.git
-    $ cde cricket
-    $ mkvirtualenv cricket
+Community
+---------
 
-Cricket uses ``unittest`` (or ``unittest2`` for Python < 2.7) for its own test
-suite as well as additional helper modules for testing. To install all the
-requirements for cricket, you have to run the following commands within your
-virutal envrionment::
+Cricket is part of the `BeeWare suite`_. You can talk to the community through:
 
-    $ pip install -e .
-    $ pip install -r requirements_dev.txt
+ * `@pybeeware on Twitter`_
 
-In case you are running a python version ``< 2.7`` please use the
-``requirements_dev_python2.7.txt`` instead because ``unittest2`` is not part
-of the standard library for these version.
+ * The `BeeWare Users Mailing list`_, for questions about how to use the BeeWare suite.
 
-Now you are ready to start hacking! Have fun!
+ * The `BeeWare Developers Mailing list`_, for discussing the development of new features in the BeeWare suite, and ideas for new tools for the suite.
+
+Contributing
+------------
+
+If you experience problems with cricket, `log them on GitHub`_. If you want to contribute code, please `fork the code`_ and `submit a pull request`_.
+
+.. _Read The Docs: http://cricket.readthedocs.org
+.. _@pybeeware on Twitter: https://twitter.com/pybeeware
+.. _BeeWare Users Mailing list: https://groups.google.com/forum/#!forum/beeware-users
+.. _BeeWare Developers Mailing list: https://groups.google.com/forum/#!forum/beeware-developers
+.. _log them on Github: https://github.com/pybee/cricket/issues
+.. _fork the code: https://github.com/pybee/cricket
+.. _submit a pull request: https://github.com/pybee/cricket/pulls
+
