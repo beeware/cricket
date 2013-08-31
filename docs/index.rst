@@ -1,6 +1,8 @@
 Cricket
 =======
 
+Cricket is part of the `BeeWare suite`_. The project website is `http://pybee.org/cricket`_.
+
 Cricket a graphical tool that helps you run your test suites.
 
 Normal unittest test runners dump all output to the console, and provide very
@@ -18,6 +20,8 @@ test suites. The usual approach for making cricket watchable is a generous
 dose of beer; in programming, `Balmer Peak`_ limits come into effect, so
 something else is required...
 
+.. _BeeWare suite: http://pybee.org/
+.. _http://pybee.org/cricket: http://pybee.org/cricket
 .. _Test Cricket: http://en.wikipedia.org/wiki/Test_cricket
 .. _Balmer Peak: http://xkcd.com/323/
 
