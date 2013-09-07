@@ -836,7 +836,7 @@ class MainWindow(object):
         self.stop_button.configure(state=DISABLED)
         self.run_all_button.configure(state=NORMAL)
         self.set_selected_button_state()
-        if self.executor.any_failed:
+        if self.executor and self.executor.any_failed:
             self.rerun_button.configure(state=NORMAL)
         else:
             self.rerun_button.configure(state=DISABLED)
