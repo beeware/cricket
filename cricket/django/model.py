@@ -3,7 +3,7 @@ In general, you would expect that there would only be one project class
 specified in this file. It provides the interface to executing test
 collecetion and execution.
 '''
-
+import os
 from cricket.model import Project
 
 
@@ -29,19 +29,41 @@ class DjangoProject(Project):
                          "used.")
         parser.add_argument('--settings', help=settings_help)
 
+    @property
+    def script(self):
+        if os.path.exists(os.path.join(os.getcwd(), 'manage.py')):
+            # We're running the test suite on a normal Django project
+            script = ['manage.py', 'test', '--noinput']
+        elif os.path.exists(os.path.join(os.getcwd(), 'runtests.py')):
+            # We're running Django's own test script
+            script = [os.path.join(os.path.dirname(__file__), 'django_runtests.py')]
+            os.environ['PYTHONPATH'] = os.getcwd()
+            if self.settings is None:
+                self.settings = 'test_sqlite'
+        else:
+            raise Exception("Can't find a Django test suite to execute.")
+        return script
+
     def discover_commandline(self):
         "Command lineDiscover all available tests in a project."
-        command = ['python', 'manage.py', 'test',
-                   '--testrunner=cricket.django.discoverer.TestDiscoverer']
+
+        command = ['python'] + self.script
+
         if self.settings:
             command.append('--settings={0}'.format(self.settings))
+
+        command.append('--testrunner=cricket.django.discoverer.TestDiscoverer')
+
         return command
 
     def execute_commandline(self, labels):
         "Return the command line to execute the specified test labels"
-        command = ['python', 'manage.py', 'test',
-                   '--testrunner=cricket.django.executor.TestExecutor',
-                   '--noinput'] + labels
+        command = ['python'] + self.script
+
         if self.settings:
             command.append('--settings={0}'.format(self.settings))
+
+        command.append('--testrunner=cricket.django.executor.TestExecutor')
+        command.extend(labels)
+
         return command

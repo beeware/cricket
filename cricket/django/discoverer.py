@@ -14,7 +14,7 @@ class TestDiscoverer(TestRunnerClass):
     Doesn't actually run any of the tests.
     """
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
-        for test in self.build_suite([]):
+        for test in self.build_suite(test_labels):
             # Django 1.6 introduce the new-style test runner.
             # If that test runner is in use, we use the full test name.
             # If we're still using a pre 1.6-style runner, we need to
