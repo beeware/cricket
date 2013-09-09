@@ -4,6 +4,7 @@ load a "project" for discovering and executing tests, and
 to initiate the GUI main loop.
 '''
 from argparse import ArgumentParser
+import subprocess
 
 from Tkinter import *
 
@@ -45,8 +46,33 @@ def main(Model):
     project = None
     while project is None:
         try:
+            # Create the project objects
             project = Model(options)
+
+            runner = subprocess.Popen(
+                project.discover_commandline(),
+                stdin=None,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=False,
+            )
+
+            test_list = []
+            for line in runner.stdout:
+                test_list.append(line.strip())
+
+            errors = []
+            for line in runner.stderr:
+                errors.append(line.strip())
+
+            if errors and not test_list:
+                raise ModelLoadError('\n'.join(errors))
+
+            project.refresh(test_list, errors)
         except ModelLoadError as e:
+            # Load failed; destroy the project and show an error dialog.
+            # If the user selects cancel, quit.
+            project = None
             dialog = TestLoadErrorDialog(root, e.trace)
             if dialog.status == dialog.CANCEL:
                 sys.exit(1)

@@ -6,7 +6,6 @@ Each object in the model is an event source; views/controllers
 can bind to events on the model to be notified of changes.
 """
 from datetime import datetime
-import subprocess
 
 from cricket.events import EventSource
 
@@ -209,6 +208,7 @@ class TestCase(dict, EventSource):
         """
         tests = []
         count = 0
+
         for testMethod_name, testMethod in self.items():
             include = True
             # If only active tests have been requested, the method
@@ -378,10 +378,9 @@ class TestModule(dict, EventSource):
 class Project(dict, EventSource):
     """A data representation of an project, containing 1+ test apps.
     """
-    def __init__(self, options=None):
+    def __init__(self, test_list=None, errors=None):
         super(Project, self).__init__()
-        self.errors = []
-        self.discover_tests()
+        self.refresh(test_list, errors)
 
     def __repr__(self):
         return u'Project'
@@ -454,30 +453,7 @@ class Project(dict, EventSource):
         testMethod.timestamp = timestamp
         return testMethod
 
-    def discover_tests(self):
-        "Discover all available tests in a project."
-
-        runner = subprocess.Popen(
-            self.discover_commandline(),
-            stdin=None,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=False,
-        )
-
-        test_list = []
-        for line in runner.stdout:
-            test_list.append(line.strip())
-
-        for line in runner.stderr:
-            self.errors.append(line.strip())
-
-        if self.errors and not test_list:
-            raise ModelLoadError('\n'.join(self.errors))
-
-        self.refresh(test_list)
-
-    def refresh(self, test_list):
+    def refresh(self, test_list, errors):
         """Refresh the project representation so that it contains only the tests in test_list
 
         test_list should be a list of dotted-path test names.
@@ -492,6 +468,8 @@ class Project(dict, EventSource):
             testModule._purge(timestamp)
             if len(testModule) == 0:
                 self.pop(testModule_name)
+
+        self.errors = errors if errors is not None else []
 
     def _update_active(self):
         "Exists for API consistency"
