@@ -39,6 +39,10 @@ In your Django project, install cricket, and then run it::
     $ pip install cricket
     $ cricket-django
 
+``cricket-django`` will also work in Django's own tests directory -- i.e., you
+can use ``cricket-django`` to run Django's own test suite (for Django 1.6 or
+later).
+
 In a unittest project, install cricket, and then run it::
 
     $ pip install cricket
