@@ -61,10 +61,15 @@ class PipedTestResult(unittest.result.TestResult):
         self._current_test = None
 
     def description(self, test):
-        if test._testMethodDoc:
-            return trim_docstring(test._testMethodDoc)
-        else:
-            return 'No description'
+        try:
+            # Wrapped _ErrorHolder objects have their own description
+            return trim_docstring(test.description)
+        except AttributeError:
+            # Fall back to the docstring on the method itself.
+            if test._testMethodDoc:
+                return trim_docstring(test._testMethodDoc)
+            else:
+                return 'No description'
 
     def startTest(self, test):
         super(PipedTestResult, self).startTest(test)

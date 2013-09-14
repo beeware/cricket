@@ -210,6 +210,12 @@ class Executor(EventSource):
                     self.emit('test_status_update', update=line)
                 else:
                     # Suite is running - have we got an active test?
+                    # Doctest (and some other tools) output invisible escape sequences.
+                    # Strip these if they exist.
+                    if line.startswith('\x1b'):
+                        line = line[line.find('{'):]
+
+                    # Store the cleaned buffer
                     self.buffer.append(line)
 
                     # If we don't have an currently active test, this line will
@@ -219,7 +225,6 @@ class Executor(EventSource):
                         pre = json.loads(line)
                         self.current_test = self.project.confirm_exists(pre['path'])
                         self.emit('test_start', test_path=pre['path'])
-
         # If we're not finished, requeue the event.
         if finished:
             if self.error_buffer:
