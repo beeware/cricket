@@ -863,7 +863,6 @@ class MainWindow(object):
             be executed
         """
         count, labels = self.project.find_tests(active, status, labels)
-
         self.run_status.set('Running...')
         self.run_summary.set('P:0 F:0 E:0 X:0 U:0 S:0')
 

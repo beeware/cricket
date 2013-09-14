@@ -13,11 +13,11 @@ class DjangoProject(Project):
     to test collection and test execution
     '''
 
-    def __init__(self, options=None, test_list=None, errors=None):
+    def __init__(self, options=None):
         self.settings = None
         if options and hasattr(options, 'settings'):
             self.settings = options.settings
-        super(DjangoProject, self).__init__(test_list=test_list, errors=errors)
+        super(DjangoProject, self).__init__()
 
     @classmethod
     def add_arguments(cls, parser):

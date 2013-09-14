@@ -221,14 +221,9 @@ class TestCase(dict, EventSource):
             if status and testMethod.status not in status:
                 include = False
 
-            # If a list of tests has been provided, either
-            # the full test method or the case or the app must be
-            # mentioned explicitly.
-            if labels and not (
-                        testMethod.path in labels or
-                        self.path in labels or
-                        self.parent.name in labels
-                    ):
+            # If a list of test labels has been provided, the method
+            # must be named explicitly
+            if labels and testMethod.path not in labels:
                 include = False
 
             if include:
@@ -339,15 +334,36 @@ class TestModule(dict, EventSource):
         count = 0
 
         found_partial = False
-        for testCase_name, testCase in self.items():
-            subcount, subtests = testCase.find_tests(active, status, labels)
+        for testModule_name, testModule in self.items():
+            include = True
 
-            count = count + subcount
-            if isinstance(subtests, list):
-                found_partial = True
-                tests.extend(subtests)
+            # If only active tests have been requested, the module
+            # must be active.
+            if active and not testModule.active:
+                include = False
+
+            # If a list of test labels has been provided, either the
+            # module, or a test *in* the module, must be named explicitly.
+            if labels:
+                if testModule.path in labels:
+                    # The module is named explicitly. Include all active
+                    # subtests of this module
+                    subcount, subtests = testModule.find_tests(True, status)
+                else:
+                    # The module isn't named. Look for all subtests.
+                    # Search for subtests that match.
+                    subcount, subtests = testModule.find_tests(active, status, labels)
             else:
-                tests.append(subtests)
+                subcount, subtests = testModule.find_tests(active, status)
+
+            if include:
+                count = count + subcount
+
+                if isinstance(subtests, list):
+                    found_partial = True
+                    tests.extend(subtests)
+                else:
+                    tests.append(subtests)
 
         # No partials found; just reference the app.
         if not found_partial:
@@ -378,9 +394,9 @@ class TestModule(dict, EventSource):
 class Project(dict, EventSource):
     """A data representation of an project, containing 1+ test apps.
     """
-    def __init__(self, test_list=None, errors=None):
+    def __init__(self):
         super(Project, self).__init__()
-        self.refresh(test_list, errors)
+        self.errors = []
 
     def __repr__(self):
         return u'Project'
@@ -408,14 +424,35 @@ class Project(dict, EventSource):
 
         found_partial = False
         for testApp_name, testApp in self.items():
-            subcount, sublabels = testApp.find_tests(active, status, labels)
-            count = count + subcount
+            include = True
 
-            if isinstance(sublabels, list):
-                found_partial = True
-                tests.extend(sublabels)
+            # If only active tests have been requested, the module
+            # must be active.
+            if active and not testApp.active:
+                include = False
+
+            # If a list of test labels has been provided, either the
+            # module, or a test *in* the module, must be named explicitly.
+            if labels:
+                if testApp.path in labels:
+                    # The module is named explicitly. Include all active
+                    # subtests of this module
+                    subcount, subtests = testApp.find_tests(True, status)
+                else:
+                    # The module isn't named. Look for all subtests.
+                    # Search for subtests that match.
+                    subcount, subtests = testApp.find_tests(active, status, labels)
             else:
-                tests.append(sublabels)
+                subcount, subtests = testApp.find_tests(active, status)
+
+            if include:
+                count = count + subcount
+
+                if isinstance(subtests, list):
+                    found_partial = True
+                    tests.extend(subtests)
+                else:
+                    tests.append(subtests)
 
         # No partials found; just reference the app.
         if not found_partial:
@@ -453,7 +490,7 @@ class Project(dict, EventSource):
         testMethod.timestamp = timestamp
         return testMethod
 
-    def refresh(self, test_list, errors):
+    def refresh(self, test_list, errors=None):
         """Refresh the project representation so that it contains only the tests in test_list
 
         test_list should be a list of dotted-path test names.
