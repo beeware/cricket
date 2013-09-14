@@ -392,7 +392,7 @@ class MainWindow(object):
         self.run_summary = StringVar()
         self.run_summary_label = Label(self.statusbar, textvariable=self.run_summary)
         self.run_summary_label.grid(column=1, row=0, sticky=(W, E))
-        self.run_summary.set('P:0 F:0 E:0 X:0 U:0 S:0')
+        self.run_summary.set('T:0 P:0 F:0 E:0 X:0 U:0 S:0')
 
         # Test progress
         self.progress_value = IntVar()
@@ -461,6 +461,10 @@ class MainWindow(object):
     @project.setter
     def project(self, project):
         self._project = project
+
+        # Get a count of active tests to display in the status bar.
+        count, labels = self.project.find_tests(True)
+        self.run_summary.set('T:%s P:0 F:0 E:0 X:0 U:0 S:0' % count)
 
         # Populate the initial tree nodes. This is recursive, because
         # the tree could be of arbitrary depth.
@@ -754,7 +758,8 @@ class MainWindow(object):
         self.progress_value.set(self.progress_value.get() + 1)
 
         # Update the run summary
-        self.run_summary.set('P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s, ~%(remaining)s remaining' % {
+        self.run_summary.set('T:%(total)s P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s, ~%(remaining)s remaining' % {
+                'total': self.executor.total_count,
                 'pass': self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
                 'fail': self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
                 'error': self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
@@ -804,7 +809,8 @@ class MainWindow(object):
         )
 
         # Reset the running summary.
-        self.run_summary.set('P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s' % {
+        self.run_summary.set('T:%(total)s P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s' % {
+                'total': self.executor.total_count,
                 'pass': self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
                 'fail': self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
                 'error': self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
@@ -864,7 +870,7 @@ class MainWindow(object):
         """
         count, labels = self.project.find_tests(active, status, labels)
         self.run_status.set('Running...')
-        self.run_summary.set('P:0 F:0 E:0 X:0 U:0 S:0')
+        self.run_summary.set('T:%s P:0 F:0 E:0 X:0 U:0 S:0' % count)
 
         self.stop_button.configure(state=NORMAL)
         self.run_all_button.configure(state=DISABLED)
