@@ -5,7 +5,7 @@ from cricket.model import Project
 class UnittestProject(Project):
 
     def __init__(self, options=None):
-        super(Project, self).__init__()
+        super(UnittestProject, self).__init__()
 
     def discover_commandline(self):
         "Command line: Discover all available tests in a project."
