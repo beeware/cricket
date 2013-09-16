@@ -1,6 +1,11 @@
 Release History
 ===============
 
+0.2.3 - In development
+----------------------
+
+ * Nothing yet!
+
 0.2.2 - September 17, 2013
 --------------------------
 
