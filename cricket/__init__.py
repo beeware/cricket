@@ -7,7 +7,7 @@
 # NUM_VERSION = (0, 1, 3, ('b', 1), 'dev')
 # NUM_VERSION = (0, 1, 3)
 
-NUM_VERSION = (0, 2, 2)
+NUM_VERSION = (0, 2, 3, 'dev')
 
 
 def get_git_changeset():
