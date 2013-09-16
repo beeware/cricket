@@ -1,8 +1,10 @@
 Release History
 ===============
 
-0.2.2 - In development
-----------------------
+0.2.2 - September 17, 2013
+--------------------------
+
+ * Corrected a problem with starting unittest2 projects.
 
  * Corrected a error raised when unittest2 was manually installed in
    PYTHONPATH.
