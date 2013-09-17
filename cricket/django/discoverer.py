@@ -25,8 +25,9 @@ class TestDiscoverer(TestRunnerClass):
                 # If that test runner is in use, we use the full test name.
                 # If we're still using a pre 1.6-style runner, we need to
                 # drop out all everything between the app name and the test module.
-                if issubclass(TestRunnerClass, DjangoTestSuiteRunner):
-                    parts = test.id().split('.')
+                test_id = test.id()
+                if issubclass(TestRunnerClass, DjangoTestSuiteRunner) and 'tests' in test_id:
+                    parts = test_id.split('.')
                     tests_index = parts.index('tests')
                     print '%s.%s.%s' % (parts[tests_index - 1], parts[-2], parts[-1])
                 else:

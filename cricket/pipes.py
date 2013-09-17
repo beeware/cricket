@@ -78,12 +78,13 @@ class PipedTestResult(unittest.result.TestResult):
         self._stdout = StringIO()
         sys.stdout = self._stdout
 
-        if self.use_old_discovery:
-            parts = test.id().split('.')
+        test_id = test.id()
+        if self.use_old_discovery and 'tests' in test_id:
+            parts = test_id.split('.')
             tests_index = parts.index('tests')
             path = '%s.%s.%s' % (parts[tests_index - 1], parts[-2], parts[-1])
         else:
-            path = test.id()
+            path = test_id
 
         body = {
             'path': path,
