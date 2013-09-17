@@ -23,12 +23,13 @@ class TestDiscoverer(TestRunnerClass):
             # drop out all everything between the app name and the test module.
             if isinstance(test, unittest.TestSuite):
                 self._output_suite(test)
-            elif issubclass(TestRunnerClass, DjangoTestSuiteRunner):
-                parts = test.id().split('.')
+            test_id = test.id()
+            elif issubclass(TestRunnerClass, DjangoTestSuiteRunner) and 'tests' in test_id:
+                parts = test_id.split('.')
                 tests_index = parts.index('tests')
                 print '%s.%s.%s' % (parts[tests_index - 1], parts[-2], parts[-1])
             else:
-                print test.id()
+                print test_id
 
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
         self._output_suite(self.build_suite(test_labels))
