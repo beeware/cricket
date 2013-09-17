@@ -1,6 +1,26 @@
 Release History
 ===============
 
+0.2.3 - In development
+----------------------
+
+ * Nothing yet!
+
+0.2.2 - September 17, 2013
+--------------------------
+
+ * Corrected a problem with starting unittest2 projects.
+
+ * Corrected a error raised when unittest2 was manually installed in
+   PYTHONPATH.
+
+0.2.1 - September 14, 2013
+--------------------------
+
+ * Fixed selection of test modules in unittest2-style suite discovery.
+
+ * Added ability to run Django's own test suite.
+
 0.2.0 - August 31, 2013
 -----------------------
 

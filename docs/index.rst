@@ -63,6 +63,19 @@ packge. If you're using Python 2.7 on Ubuntu 13.04, you can install
 For other versions of Python and Ubuntu, you'll need to adjust this as
 appropriate.
 
+Problems under Windows
+~~~~~~~~~~~~~~~~~~~~~~
+
+If you're running Cricket in a virtualenv, you'll need to set an
+environment variable so that Cricket can find the TCL graphics library::
+
+    $ set TCL_LIBRARY=c:\Python27\tcl\tcl8.5
+
+You'll need to adjust the exact path to reflect your local Python install.
+You may find it helpful to put this line in the ``activate.bat`` script
+for your virtual environment so that it is automatically set whenever the
+virtualenv is activated.
+
 Contents:
 
 .. toctree::
