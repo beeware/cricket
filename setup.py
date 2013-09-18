@@ -14,7 +14,7 @@ required_pkgs = [
     'tkreadonly',
 ]
 if sys.version_info < (2, 7):
-    required_pkgs.append('argparse')
+    required_pkgs.extend(['argparse', 'unittest2', 'pyttk'])
 
 setup(
     name='cricket',

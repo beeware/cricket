@@ -5,7 +5,11 @@ from StringIO import StringIO
 import sys
 import time
 import traceback
-import unittest
+
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 
 
 def trim_docstring(docstring):
