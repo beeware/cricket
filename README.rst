@@ -72,7 +72,7 @@ appropriate.
 Problems under Windows
 ~~~~~~~~~~~~~~~~~~~~~~
 
-If you're running Cricket in a virtualenv, you'll need to set an
+If you're running Cricket in a virtualenv under Windows, you'll need to set an
 environment variable so that Cricket can find the TCL graphics library::
 
     $ set TCL_LIBRARY=c:\Python27\tcl\tcl8.5
@@ -103,6 +103,7 @@ Contributing
 
 If you experience problems with cricket, `log them on GitHub`_. If you want to contribute code, please `fork the code`_ and `submit a pull request`_.
 
+.. _BeeWare suite: http://pybee.org
 .. _Read The Docs: http://cricket.readthedocs.org
 .. _@pybeeware on Twitter: https://twitter.com/pybeeware
 .. _BeeWare Users Mailing list: https://groups.google.com/forum/#!forum/beeware-users
