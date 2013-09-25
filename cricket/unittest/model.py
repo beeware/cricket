@@ -13,4 +13,7 @@ class UnittestProject(Project):
 
     def execute_commandline(self, labels):
         "Return the command line to execute the specified test labels"
-        return [sys.executable, '-m', 'cricket.unittest.executor'] + labels
+        args = [sys.executable, '-m', 'cricket.unittest.executor']
+        if self.coverage:
+            args.append('--coverage')
+        return args + labels

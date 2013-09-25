@@ -65,7 +65,10 @@ class DjangoProject(Project):
         if self.settings:
             command.append('--settings={0}'.format(self.settings))
 
-        command.append('--testrunner=cricket.django.executor.TestExecutor')
+        if self.coverage:
+            command.append('--testrunner=cricket.django.executor.TestCoverageExecutor')
+        else:
+            command.append('--testrunner=cricket.django.executor.TestExecutor')
         command.extend(labels)
 
         return command

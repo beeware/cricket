@@ -6,15 +6,18 @@ initiated by the top-level Executor class.
 Its main API is the command line, but it's just as sensible to
 call into it. See __main__ for usage
 '''
-
-from cricket import pipes
-import subprocess
-import sys
+import argparse
 import unittest
 
-from cricket.pipes import PipedTestRunner
+try:
+    from coverage import coverage
+except ImportError:
+    coverage = None
 
-class PyTestExecutor:
+from cricket import pipes
+
+
+class PyTestExecutor(object):
     '''
     This is a thing which, when run, produces a stream
     of well-formed test result outputs. Its processing is
@@ -33,7 +36,7 @@ class PyTestExecutor:
 
         pipes.PipedTestRunner().run(suite)
 
-    def stream_results(self):        
+    def stream_results(self):
         '''
         1.) Discover all tests if necessary
         2.) Otherwise fetch specific tests
@@ -45,22 +48,40 @@ class PyTestExecutor:
         if not self.specified_list:
             suite = loader.discover('.')
             self.stream_suite(suite)
-
         else:
-
             for module in self.specified_list:
                 suite = loader.loadTestsFromName(module)
                 self.stream_suite(suite)
 
 
+class PyTestCoverageExecutor(PyTestExecutor):
+    '''
+    A version of PyTestExecutor that gathers coverage data.
+    '''
+    def stream_suite(self, suite):
+        cov = coverage()
+        cov.start()
+        super(PyTestCoverageExecutor, self).stream_suite(suite)
+        cov.stop()
+        cov.save()
+
+
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
 
-    run_only = None
-    if len(sys.argv) > 1:
-        run_only = sys.argv[1:]
+    parser.add_argument("--coverage", help="Generate coverage data for the test run", action="store_true")
+    parser.add_argument(
+        'labels', nargs=argparse.REMAINDER,
+        help='Test labels to run.'
+    )
 
-    PTE = PyTestExecutor()
+    options = parser.parse_args()
 
-    if run_only:
-        PTE.run_only(run_only)
+    if options.coverage:
+        PTE = PyTestCoverageExecutor()
+    else:
+        PTE = PyTestExecutor()
+
+    if options.labels:
+        PTE.run_only(options.labels)
     PTE.stream_results()

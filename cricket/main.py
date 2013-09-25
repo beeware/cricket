@@ -5,6 +5,7 @@ to initiate the GUI main loop.
 '''
 from argparse import ArgumentParser
 import subprocess
+import sys
 
 from Tkinter import *
 

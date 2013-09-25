@@ -397,6 +397,7 @@ class Project(dict, EventSource):
     def __init__(self):
         super(Project, self).__init__()
         self.errors = []
+        self.coverage = False
 
     def __repr__(self):
         return u'Project'
