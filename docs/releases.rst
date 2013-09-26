@@ -1,10 +1,12 @@
 Release History
 ===============
 
-0.2.3 - In development
-----------------------
+0.2.3 - September 26, 2013
+--------------------------
 
- * Nothing yet!
+ * Added ability to generate coverage
+
+ * Integration with Duvet
 
 0.2.2 - September 17, 2013
 --------------------------
