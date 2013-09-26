@@ -185,6 +185,20 @@ class MainWindow(object):
         self.rerun_button = Button(self.toolbar, text='Re-run', command=self.cmd_rerun, state=DISABLED)
         self.rerun_button.grid(column=3, row=0)
 
+        self.coverage = StringVar()
+        self.coverage_checkbox = Checkbutton(self.toolbar, text='Generate coverage',
+                                    command=self.on_coverageChange, variable=self.coverage)
+        self.coverage_checkbox.grid(column=4, row=0)
+
+        # If we can't import coverage, disable the widget.
+        # If coverage *is* available, enable it by default.
+        try:
+            import coverage
+            self.coverage.set('1')
+        except ImportError:
+            self.coverage.set('0')
+            self.coverage_checkbox.configure(state=DISABLED)
+
         self.toolbar.columnconfigure(0, weight=0)
         self.toolbar.rowconfigure(0, weight=1)
 
@@ -488,6 +502,9 @@ class MainWindow(object):
         # Listen for any status updates on nodes in the tree.
         TestMethod.bind('status_update', self.on_nodeStatusUpdate)
 
+        # Update the project to make sure coverage status matches the GUI
+        self.on_coverageChange()
+
     ######################################################
     # TK Main loop
     ######################################################
@@ -735,6 +752,10 @@ class MainWindow(object):
                     else:
                         has_children = True
                     node = node.parent
+
+    def on_coverageChange(self):
+        "Event handler: when the coverage checkbox has been toggled"
+        self.project.coverage = self.coverage.get() == '1'
 
     def on_testProgress(self):
         "Event handler: a periodic update to poll the runner for output, generating GUI updates"
