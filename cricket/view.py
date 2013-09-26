@@ -2,12 +2,23 @@
 
 This is the "View" of the MVC world.
 """
-
+import subprocess
 from Tkinter import *
 from tkFont import *
 from ttk import *
 import tkMessageBox
 import webbrowser
+
+# Check for the existence of coverage and duvet
+try:
+    import coverage
+    try:
+        import duvet
+    except ImportError:
+        duvet = None
+except ImportError:
+    coverage = None
+    duvet = None
 
 from tkreadonly import ReadOnlyText
 
@@ -140,6 +151,9 @@ class MainWindow(object):
         self.menu_test = Menu(self.menubar)
         self.menubar.add_cascade(menu=self.menu_test, label='Test')
 
+        self.menu_beeware = Menu(self.menubar)
+        self.menubar.add_cascade(menu=self.menu_beeware, label='BeeWare')
+
         self.menu_help = Menu(self.menubar)
         self.menubar.add_cascade(menu=self.menu_help, label='Help')
 
@@ -152,6 +166,8 @@ class MainWindow(object):
         self.menu_test.add_command(label='Run all', command=self.cmd_run_all)
         self.menu_test.add_command(label='Run selected tests', command=self.cmd_run_selected)
         self.menu_test.add_command(label='Re-run failed tests', command=self.cmd_rerun)
+
+        self.menu_beeware.add_command(label='Open Duvet...', command=self.cmd_open_duvet, state=DISABLED if duvet is None else ACTIVE)
 
         self.menu_help.add_command(label='Open Documentation', command=self.cmd_cricket_docs)
         self.menu_help.add_command(label='Open Cricket project page', command=self.cmd_cricket_page)
@@ -190,12 +206,11 @@ class MainWindow(object):
                                     command=self.on_coverageChange, variable=self.coverage)
         self.coverage_checkbox.grid(column=4, row=0)
 
-        # If we can't import coverage, disable the widget.
-        # If coverage *is* available, enable it by default.
-        try:
-            import coverage
+        # If coverage is available, enable it by default.
+        # Otherwise, disable the widget
+        if coverage:
             self.coverage.set('1')
-        except ImportError:
+        else:
             self.coverage.set('0')
             self.coverage_checkbox.configure(state=DISABLED)
 
@@ -558,6 +573,13 @@ class MainWindow(object):
         # start a test run.
         if not self.executor or not self.executor.is_running:
             self.run(status=set(TestMethod.FAILING_STATES))
+
+    def cmd_open_duvet(self, event=None):
+        "Command: Open Duvet"
+        try:
+            subprocess.Popen('duvet')
+        except Exception, e:
+            tkMessageBox.showerror('Unable to start Duvet: %s' % e)
 
     def cmd_cricket_page(self):
         "Show the Cricket project page"
