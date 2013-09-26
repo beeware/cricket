@@ -103,7 +103,6 @@ Contributing
 
 If you experience problems with cricket, `log them on GitHub`_. If you want to contribute code, please `fork the code`_ and `submit a pull request`_.
 
-.. _BeeWare suite: http://pybee.org
 .. _Read The Docs: http://cricket.readthedocs.org
 .. _@pybeeware on Twitter: https://twitter.com/pybeeware
 .. _BeeWare Users Mailing list: https://groups.google.com/forum/#!forum/beeware-users
