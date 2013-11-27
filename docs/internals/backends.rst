@@ -12,8 +12,8 @@ Helicopter Overview of the Architecture
 ---------------------------------------
 
 The main directory consists of events, executor, model, pipes, view and
-widgets. The once which are the concern of the GUI are events, view and
-widgets. The onces which concern the backend are model, executor and pipes.
+widgets. The ones which are the concern of the GUI are events, view and
+widgets. The ones which concern the backend are model, executor and pipes.
 The one which you need to really understand is pipes, but that's not the best
 starting point.
 
