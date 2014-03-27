@@ -92,4 +92,4 @@ def main(Model):
     try:
         view.mainloop()
     except KeyboardInterrupt:
-        view.on_quit()
+        view.cmd_quit()

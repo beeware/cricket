@@ -163,6 +163,8 @@ class MainWindow(object):
         # self.menu_file.add_command(label='Open...', command=self.cmd_dummy)
         # self.menu_file.add_command(label='Close', command=self.cmd_dummy)
 
+        self.menu_file.add_command(label='Quit', command=self.cmd_quit)
+
         self.menu_test.add_command(label='Run all', command=self.cmd_run_all)
         self.menu_test.add_command(label='Run selected tests', command=self.cmd_run_selected)
         self.menu_test.add_command(label='Re-run failed tests', command=self.cmd_rerun)
