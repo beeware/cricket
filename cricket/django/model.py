@@ -17,8 +17,11 @@ class DjangoProject(Project):
 
     def __init__(self, options=None):
         self.settings = None
+        self.manage = None
         if options and hasattr(options, 'settings'):
             self.settings = options.settings
+        if options and hasattr(options, 'manage'):
+            self.manage = options.manage
         super(DjangoProject, self).__init__()
 
     @classmethod
@@ -29,13 +32,15 @@ class DjangoProject(Project):
                          "\"myproject.settings.main\". If this isn't provided, the "
                          "DJANGO_SETTINGS_MODULE environment variable will be "
                          "used.")
+        manage_help = ("An optional path to manage.py")
         parser.add_argument('--settings', help=settings_help)
+        parser.add_argument('--manage', help=manage_help)
 
     @property
     def script(self):
-        if os.path.exists(os.path.join(os.getcwd(), 'manage.py')):
+        if os.path.exists(os.path.join(os.getcwd(), 'manage.py')) or self.manage:
             # We're running the test suite on a normal Django project
-            script = ['manage.py', 'test', '--noinput']
+            script = [self.manage or 'manage.py', 'test', '--noinput']
         elif os.path.exists(os.path.join(os.getcwd(), 'runtests.py')):
             # We're running Django's own test script
             script = [os.path.join(os.path.dirname(__file__), 'django_runtests.py')]
