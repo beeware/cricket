@@ -28,7 +28,14 @@ class TestDiscoverer(TestRunnerClass):
                 self._output_suite(test)
             elif (DjangoTestSuiteRunner and
                   issubclass(TestRunnerClass, DjangoTestSuiteRunner)):
+                if not callable(test.id):
+                    continue
+                
                 parts = test.id().split('.')
+                
+                if not 'tests' in parts:
+                    continue
+
                 tests_index = parts.index('tests')
                 print '%s.%s.%s' % (parts[tests_index - 1], parts[-2], parts[-1])
             else:
