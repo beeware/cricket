@@ -33,7 +33,7 @@ class TestExecutorCmdLine(unittest.TestCase):
         '''
 
         labels = ['tests.test_unit_integration.TestCollection']
-        cmdline = ['python', '-m', 'cricket.unittest.executor'] + labels
+        cmdline = ['python', '-m', 'cricket.unittest.executor', '-t'] + labels
 
         runner = subprocess.Popen(
             cmdline,

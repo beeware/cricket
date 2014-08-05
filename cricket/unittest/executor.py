@@ -6,6 +6,7 @@ initiated by the top-level Executor class.
 Its main API is the command line, but it's just as sensible to
 call into it. See __main__ for usage
 '''
+
 import argparse
 import unittest
 
@@ -24,16 +25,25 @@ class PyTestExecutor(object):
     initiated by the top-level Executor class
     '''
 
-    def __init__(self):
+    def __init__(self, start='.', pattern='test*.py', top=None, test_names=None):
+        self.start = start
+        self.pattern = pattern
+        self.top = top
+        self.test_names = test_names
 
-        # Allows the executor to run a specified list of tests
-        self.specified_list = None
-
-    def run_only(self, specified_list):
-        self.specified_list = specified_list
+    def load_suite(self):
+        # Use explicit test_names if provided, other wise fall back to
+        # discovery equivalent to the discoverer.
+        loader = unittest.TestLoader()
+        if self.test_names:
+            suite = unittest.TestSuite()
+            for name in self.test_names:
+                suite.addTest(loader.loadTestsFromName(name))
+        else:
+            suite = loader.discover(self.start, self.pattern, self.top)
+        return suite
 
     def stream_suite(self, suite):
-
         pipes.PipedTestRunner().run(suite)
 
     def stream_results(self):
@@ -42,16 +52,8 @@ class PyTestExecutor(object):
         2.) Otherwise fetch specific tests
         3.) Execute-and-stream
         '''
-
-        loader = unittest.TestLoader()
-
-        if not self.specified_list:
-            suite = loader.discover('.')
-            self.stream_suite(suite)
-        else:
-            for module in self.specified_list:
-                suite = loader.loadTestsFromName(module)
-                self.stream_suite(suite)
+        suite = self.load_suite()
+        self.stream_suite(suite)
 
 
 class PyTestCoverageExecutor(PyTestExecutor):
@@ -70,18 +72,26 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--coverage", help="Generate coverage data for the test run", action="store_true")
-    parser.add_argument(
-        'labels', nargs=argparse.REMAINDER,
-        help='Test labels to run.'
-    )
+    parser.add_argument('-t', '--test-names', action='store_true',
+        help='Interpret arguments as test names.')
+    parser.add_argument('labels', nargs=argparse.REMAINDER,
+        help='Test labels to run.')
 
     options = parser.parse_args()
+    options.start = '.'
+    options.pattern = 'test*.py'
+    options.top = None
 
     if options.coverage:
-        PTE = PyTestCoverageExecutor()
+        cls = PyTestCoverageExecutor
     else:
-        PTE = PyTestExecutor()
+        cls = PyTestExecutor
 
-    if options.labels:
-        PTE.run_only(options.labels)
-    PTE.stream_results()
+    if options.test_names:
+        executor = cls(test_names=options.labels)
+    else:
+        for name, value in zip(('start', 'pattern', 'top'), options.labels):
+            setattr(options, name, value)
+        executor = cls(options.start, options.pattern, options.top)
+
+    executor.stream_results()
