@@ -51,6 +51,18 @@ In a unittest project, install cricket, and then run it::
 This will pop up a GUI window. Hit "Run all", and watch your test suite
 execute.
 
+``cricket-unittest`` also accepts the 'discover' arguments for ``unittest``::
+
+    usage: cricket-unittest [-h] [--version] [start] [pattern] [top]
+
+(See also ``cricket-unittest -h``.)
+
+For example this will find tests inside packages.  For example, if you have
+``simplejson`` installed, you can run the tests present in
+``simplejson.tests``::
+
+    $ cricket-unittest simplejson
+
 Problems under Ubuntu
 ~~~~~~~~~~~~~~~~~~~~~
 
