@@ -9,6 +9,6 @@
 # deprecated in the future as Python < 2.7 becomes more and mor
 # obsolete.
 from __future__ import absolute_import
-import unittest
+import unittest  # NOQA
 if not hasattr(unittest.TestCase, 'assertIsNotNone'):
-    import unittest2 as unittest
+    import unittest2 as unittest  # NOQA

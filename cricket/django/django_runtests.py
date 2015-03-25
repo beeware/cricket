@@ -7,6 +7,7 @@ from django.utils import importlib
 
 import runtests
 
+
 def django_tests(runner, labels):
     state = runtests.setup(1, labels)
 

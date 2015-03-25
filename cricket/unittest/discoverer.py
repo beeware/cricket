@@ -25,12 +25,12 @@ def consume(iterable):
         except:
             yield item
 
+
 class PyTestDiscoverer:
 
     def __init__(self):
 
         self.collected_tests = []
-
 
     def __str__(self):
         '''
@@ -41,21 +41,20 @@ class PyTestDiscoverer:
 
         return resultstr.strip()
 
-
     def collect_tests(self):
         '''
         Collect a list of potentially runnable tests
         '''
-        
+
         loader = unittest.TestLoader()
         suite = loader.discover('.')
         flatresults = list(consume(suite))
         named = [r.id() for r in flatresults]
         self.collected_tests = named
 
-            
+
 if __name__ == '__main__':
 
     PTD = PyTestDiscoverer()
     PTD.collect_tests()
-    print str(PTD)
+    print(str(PTD))

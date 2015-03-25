@@ -2,6 +2,7 @@ import sys
 
 from cricket.model import Project
 
+
 class UnittestProject(Project):
 
     def __init__(self, options=None):
