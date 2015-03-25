@@ -236,7 +236,7 @@ class Executor(EventSource):
         elif stopped:
             # Suite has stopped producing output.
             if self.error_buffer:
-                self.emit('suite_error', error='\n'.join(self.error_buffer))
+                self.emit('suite_error', error=b'\n'.join(self.error_buffer))
             else:
                 self.emit('suite_error', error='Test output ended unexpectedly')
 

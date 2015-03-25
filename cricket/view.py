@@ -3,10 +3,16 @@
 This is the "View" of the MVC world.
 """
 import subprocess
-from Tkinter import *
-from tkFont import *
-from ttk import *
-import tkMessageBox
+try:
+    from Tkinter import *
+    from tkFont import *
+    from ttk import *
+    import tkMessageBox
+except ImportError:
+    from tkinter import *
+    from tkinter.font import *
+    from tkinter.ttk import *
+    from tkinter import messagebox as MessageBox
 import webbrowser
 
 # Check for the existence of coverage and duvet

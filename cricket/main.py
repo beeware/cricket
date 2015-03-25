@@ -7,7 +7,10 @@ from argparse import ArgumentParser
 import subprocess
 import sys
 
-from Tkinter import *
+try:
+    from Tkinter import *
+except ImportError:
+    from tkinter import *
 
 from cricket.view import (
     MainWindow,
