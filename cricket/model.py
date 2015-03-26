@@ -466,7 +466,7 @@ class Project(dict, EventSource):
 
         If it doesn't, create a representation for it.
         """
-        parts = test_label.split(b'.')
+        parts = test_label.split('.')
         if len(parts) < 2:
             return
 
