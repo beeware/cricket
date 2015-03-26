@@ -63,7 +63,7 @@ def main(Model):
 
             test_list = []
             for line in runner.stdout:
-                test_list.append(line.strip())
+                test_list.append(line.strip().decode('utf-8'))
 
             errors = []
             for line in runner.stderr:
