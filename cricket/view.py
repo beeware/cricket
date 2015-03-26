@@ -12,7 +12,7 @@ except ImportError:
     from tkinter import *
     from tkinter.font import *
     from tkinter.ttk import *
-    from tkinter import messagebox as MessageBox
+    from tkinter import messagebox as tkMessageBox
 import webbrowser
 
 # Check for the existence of coverage and duvet
