@@ -20,7 +20,7 @@ def enqueue_output(out, queue):
     queue for consumption in a separate thread.
     """
     for line in iter(out.readline, b''):
-        queue.put(line.strip())
+        queue.put(line.strip().decode('utf-8'))
     out.close()
 
 
