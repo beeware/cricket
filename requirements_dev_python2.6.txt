@@ -1,2 +1,0 @@
--r requirements_dev.txt
-unittest2==0.5.1
