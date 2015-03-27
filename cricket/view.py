@@ -389,7 +389,7 @@ class MainWindow(object):
         self.output_scrollbar = Scrollbar(self.details_frame, orient=VERTICAL)
         self.output_scrollbar.grid(column=3, row=3, pady=5, sticky=(N, S))
         self.output.config(yscrollcommand=self.output_scrollbar.set)
-        self.output_scrollbar.config(command=self.description.yview)
+        self.output_scrollbar.config(command=self.output.yview)
 
         # Error message
         self.error_label = Label(self.details_frame, text='Error:')
@@ -588,7 +588,7 @@ class MainWindow(object):
         try:
             subprocess.Popen('duvet')
         except Exception as e:
-            tkMessageBox.showerror('Unable to start Duvet: %s' % e)
+            tkMessageBox.showerror(message='Unable to start Duvet: %s' % e)
 
     def cmd_cricket_page(self):
         "Show the Cricket project page"
