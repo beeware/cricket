@@ -1,35 +1,31 @@
 #/usr/bin/env python
-import sys
+import io
+import re
+from setuptools import setup, find_packages
 
-from setuptools import setup
-from cricket import VERSION
 
-try:
-    readme = open('README.rst')
-    long_description = str(readme.read())
-finally:
-    readme.close()
+with io.open('./cricket/__init__.py', encoding='utf8') as version_file:
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file.read(), re.M)
+    if version_match:
+        version = version_match.group(1)
+    else:
+        raise RuntimeError("Unable to find version string.")
 
-required_pkgs = [
-    'tkreadonly',
-]
-if sys.version_info < (2, 7):
-    required_pkgs.extend(['argparse', 'unittest2', 'pyttk'])
+
+with io.open('README.rst', encoding='utf8') as readme:
+    long_description = readme.read()
+
 
 setup(
     name='cricket',
-    version=VERSION,
+    version=version,
     description='A graphical tool to assist running test suites.',
     long_description=long_description,
     author='Russell Keith-Magee',
     author_email='russell@keith-magee.com',
     url='http://pybee.org/cricket',
-    packages=[
-        'cricket',
-        'cricket.django',
-        'cricket.unittest',
-    ],
-    install_requires=required_pkgs,
+    packages=find_packages(exclude='tests'),
+    install_requires=['tkreadonly'],
     scripts=[],
     entry_points={
         'console_scripts': [
@@ -44,6 +40,10 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
         'Topic :: Software Development',
         'Topic :: Software Development :: Testing',
         'Topic :: Utilities',

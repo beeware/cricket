@@ -28,7 +28,6 @@ except ImportError:
 
 from tkreadonly import ReadOnlyText
 
-from cricket import VERSION, NUM_VERSION
 from cricket.model import TestMethod, TestCase, TestModule
 from cricket.executor import Executor
 
@@ -604,12 +603,7 @@ class MainWindow(object):
 
     def cmd_cricket_docs(self):
         "Show the Cricket documentation"
-        # If this is a formal release, show the docs for that
-        # version. otherwise, just show the head docs.
-        if len(NUM_VERSION) == 3:
-            webbrowser.open_new('http://cricket.readthedocs.org/en/v%s/' % VERSION)
-        else:
-            webbrowser.open_new('http://cricket.readthedocs.org/')
+        webbrowser.open_new('http://cricket.readthedocs.org/')
 
     ######################################################
     # GUI Callbacks
