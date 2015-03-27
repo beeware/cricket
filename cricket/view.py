@@ -3,10 +3,16 @@
 This is the "View" of the MVC world.
 """
 import subprocess
-from Tkinter import *
-from tkFont import *
-from ttk import *
-import tkMessageBox
+try:
+    from Tkinter import *
+    from tkFont import *
+    from ttk import *
+    import tkMessageBox
+except ImportError:
+    from tkinter import *
+    from tkinter.font import *
+    from tkinter.ttk import *
+    from tkinter import messagebox as tkMessageBox
 import webbrowser
 
 # Check for the existence of coverage and duvet
@@ -195,15 +201,18 @@ class MainWindow(object):
         self.run_all_button.grid(column=1, row=0)
 
         self.run_selected_button = Button(self.toolbar, text='Run selected',
-            command=self.cmd_run_selected, state=DISABLED)
+                                          command=self.cmd_run_selected,
+                                          state=DISABLED)
         self.run_selected_button.grid(column=2, row=0)
 
         self.rerun_button = Button(self.toolbar, text='Re-run', command=self.cmd_rerun, state=DISABLED)
         self.rerun_button.grid(column=3, row=0)
 
         self.coverage = StringVar()
-        self.coverage_checkbox = Checkbutton(self.toolbar, text='Generate coverage',
-                                    command=self.on_coverageChange, variable=self.coverage)
+        self.coverage_checkbox = Checkbutton(self.toolbar,
+                                             text='Generate coverage',
+                                             command=self.on_coverageChange,
+                                             variable=self.coverage)
         self.coverage_checkbox.grid(column=4, row=0)
 
         # If coverage is available, enable it by default.
@@ -578,7 +587,7 @@ class MainWindow(object):
         "Command: Open Duvet"
         try:
             subprocess.Popen('duvet')
-        except Exception, e:
+        except Exception as e:
             tkMessageBox.showerror('Unable to start Duvet: %s' % e)
 
     def cmd_cricket_page(self):
@@ -802,15 +811,15 @@ class MainWindow(object):
 
         # Update the run summary
         self.run_summary.set('T:%(total)s P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s, ~%(remaining)s remaining' % {
-                'total': self.executor.total_count,
-                'pass': self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
-                'fail': self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
-                'error': self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
-                'expected': self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
-                'unexpected': self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
-                'skip': self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
-                'remaining': remaining_time
-            })
+            'total': self.executor.total_count,
+            'pass': self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
+            'fail': self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
+            'error': self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
+            'expected': self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
+            'unexpected': self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
+            'skip': self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
+            'remaining': remaining_time
+        })
 
         # If the test that just fininshed is the one (and only one)
         # selected on the tree, update the display.
@@ -853,14 +862,14 @@ class MainWindow(object):
 
         # Reset the running summary.
         self.run_summary.set('T:%(total)s P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s' % {
-                'total': self.executor.total_count,
-                'pass': self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
-                'fail': self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
-                'error': self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
-                'expected': self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
-                'unexpected': self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
-                'skip': self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
-            })
+            'total': self.executor.total_count,
+            'pass': self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
+            'fail': self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
+            'error': self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
+            'expected': self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
+            'unexpected': self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
+            'skip': self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
+        })
 
         # Reset the buttons
         self.reset_button_states_on_end()
@@ -1027,7 +1036,6 @@ class StackTraceDialog(Toplevel):
 
         self.ok_button = Button(self.frame, text=button_text, command=self.ok, default=ACTIVE)
         self.ok_button.grid(column=1, row=2, padx=5, pady=5, sticky=(E,))
-
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)

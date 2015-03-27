@@ -7,7 +7,10 @@ from argparse import ArgumentParser
 import subprocess
 import sys
 
-from Tkinter import *
+try:
+    from Tkinter import *
+except ImportError:
+    from tkinter import *
 
 from cricket.view import (
     MainWindow,
@@ -33,7 +36,7 @@ def main(Model):
     # Check the shortcut options
     if options.version:
         import cricket
-        print cricket.VERSION
+        print(cricket.VERSION)
         return
 
     # Set up the root Tk context
@@ -60,7 +63,7 @@ def main(Model):
 
             test_list = []
             for line in runner.stdout:
-                test_list.append(line.strip())
+                test_list.append(line.strip().decode('utf-8'))
 
             errors = []
             for line in runner.stderr:

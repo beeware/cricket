@@ -20,7 +20,7 @@ def enqueue_output(out, queue):
     queue for consumption in a separate thread.
     """
     for line in iter(out.readline, b''):
-        queue.put(line.strip())
+        queue.put(line.strip().decode('utf-8'))
     out.close()
 
 
@@ -236,7 +236,7 @@ class Executor(EventSource):
         elif stopped:
             # Suite has stopped producing output.
             if self.error_buffer:
-                self.emit('suite_error', error='\n'.join(self.error_buffer))
+                self.emit('suite_error', error=b'\n'.join(self.error_buffer))
             else:
                 self.emit('suite_error', error='Test output ended unexpectedly')
 
