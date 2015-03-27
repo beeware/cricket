@@ -201,7 +201,7 @@ class PipedTestRunner(unittest.TextTestRunner):
 
     def run(self, test):
         "Run the given test case or test suite."
-        # Remeber stdout reference so it can be restored later
+        # Remember stdout reference so it can be restored later
         old_stdout = sys.stdout
 
         # Create the result pipe, and run the tests with it.
