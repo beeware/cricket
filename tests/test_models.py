@@ -20,8 +20,8 @@ class TestProject(unittest.TestCase):
         "If there are no tests, an empty tree is generated"
         project = Project()
         project.refresh(test_list=[])
-        self.assertEquals(project.errors, [])
-        self.assertItemsEqual(self._full_tree(project), {})
+        self.assertEqual(project.errors, [])
+        self.assertEqual(sorted(self._full_tree(project)), sorted({}))
 
     def test_with_tests(self):
         "If tests are found, the right tree is created"
@@ -34,8 +34,8 @@ class TestProject(unittest.TestCase):
                 'more_tests.JankyTestCase.test_things',
                 'deep_tests.package.DeepTestCase.test_doo_hickey',
             ])
-        self.assertEquals(project.errors, [])
-        self.assertItemsEqual(self._full_tree(project), {
+        self.assertEqual(project.errors, [])
+        self.assertEqual(sorted(self._full_tree(project)), sorted({
                 (TestModule, 'tests'): {
                     (TestCase, 'FunkyTestCase'): [
                         'test_something_unnecessary'
@@ -57,7 +57,7 @@ class TestProject(unittest.TestCase):
                         ]
                     }
                 }
-            })
+            }))
 
     def test_with_tests_and_errors(self):
         "If tests *and* errors are found, the tree is still created."
@@ -70,16 +70,16 @@ class TestProject(unittest.TestCase):
             ]
         )
 
-        self.assertEquals(project.errors, [
+        self.assertEqual(project.errors, [
             'ERROR: you broke it, fool!',
         ])
-        self.assertItemsEqual(self._full_tree(project), {
+        self.assertEqual(sorted(self._full_tree(project)), sorted({
                 (TestModule, 'tests'): {
                     (TestCase, 'FunkyTestCase'): [
                         'test_something_unnecessary'
                     ]
                 }
-            })
+            }))
 
 
 class FindLabelTests(unittest.TestCase):

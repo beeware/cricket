@@ -41,11 +41,11 @@ class TestExecutorCmdLine(unittest.TestCase):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=False,
-        )  
+        )
 
         output = ''
         for line in runner.stdout:
-            output += line
+            output += line.decode('utf-8')
 
         self.assertIn('tests.test_unit_integration.TestCollection',
                        output)
@@ -73,7 +73,7 @@ class TestExecutorCmdLine(unittest.TestCase):
 #         run_only = [
 #             'tests.test_unit_integration.TestDiscoverer'
 #         ]
-        
+
 #         PTE = test_executor.PyTestExecutor()
 #         PTE.run_only(run_only)
 #         PTE.stream_results()
