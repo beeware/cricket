@@ -70,7 +70,8 @@ def main(Model):
                 errors.append(line.strip())
 
             if errors and not test_list:
-                raise ModelLoadError('\n'.join(errors))
+                raise ModelLoadError('\n'.join(
+                    [e.decode('utf-8') for e in errors]))
 
             project.refresh(test_list, errors)
         except ModelLoadError as e:
