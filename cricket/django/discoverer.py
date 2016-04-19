@@ -3,7 +3,10 @@ from __future__ import absolute_import
 import unittest
 
 from django.conf import settings
-from django.test.simple import DjangoTestSuiteRunner
+try:
+    from django.test.simple import DjangoTestSuiteRunner
+except ImportError:
+    DjangoTestSuiteRunner = None
 from django.test.utils import get_runner
 
 # Dynamically retrieve the test runner class for this project.
@@ -23,7 +26,8 @@ class TestDiscoverer(TestRunnerClass):
             # drop out all everything between the app name and the test module.
             if isinstance(test, unittest.TestSuite):
                 self._output_suite(test)
-            elif issubclass(TestRunnerClass, DjangoTestSuiteRunner):
+            elif (DjangoTestSuiteRunner
+                  and issubclass(TestRunnerClass, DjangoTestSuiteRunner)):
                 parts = test.id().split('.')
                 tests_index = parts.index('tests')
                 print('%s.%s.%s' % (parts[tests_index - 1], parts[-2], parts[-1]))

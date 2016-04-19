@@ -6,7 +6,10 @@ except ImportError:
     coverage = None
 
 from django.conf import settings
-from django.test.simple import DjangoTestSuiteRunner
+try:
+    from django.test.simple import DjangoTestSuiteRunner
+except ImportError:
+    DjangoTestSuiteRunner = None
 from django.test.utils import get_runner
 
 from cricket.pipes import PipedTestRunner
@@ -25,7 +28,8 @@ class TestExecutor(TestRunnerClass):
         # If that test runner is in use, we use the full test name.
         # If we're still using a pre 1.6-style runner, we need to
         # drop out all everything between the app name and the test module.
-        use_old_discovery = issubclass(TestRunnerClass, DjangoTestSuiteRunner)
+        use_old_discovery = (DjangoTestSuiteRunner and
+                             issubclass(TestRunnerClass, DjangoTestSuiteRunner))
 
         return PipedTestRunner(use_old_discovery=use_old_discovery).run(suite)
 
