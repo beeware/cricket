@@ -603,7 +603,7 @@ class MainWindow(object):
 
     def cmd_cricket_docs(self):
         "Show the Cricket documentation"
-        webbrowser.open_new('http://cricket.readthedocs.org/')
+        webbrowser.open_new('https://cricket.readthedocs.io/')
 
     ######################################################
     # GUI Callbacks
