@@ -36,7 +36,7 @@ def main(Model):
     # Check the shortcut options
     if options.version:
         import cricket
-        print(cricket.VERSION)
+        print(cricket.__version__)
         return
 
     # Set up the root Tk context
