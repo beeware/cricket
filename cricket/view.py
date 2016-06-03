@@ -849,10 +849,11 @@ class MainWindow(object):
         else:
             dialog = tkMessageBox.showinfo
 
-        dialog(message=', '.join(
+        message = ', '.join(
             '%d %s' % (count, TestMethod.STATUS_LABELS[state])
             for state, count in sorted(self.executor.result_count.items()))
-        )
+
+        dialog(message=message or 'No tests were ran')
 
         # Reset the running summary.
         self.run_summary.set('T:%(total)s P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s' % {
