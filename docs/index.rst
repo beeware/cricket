@@ -3,7 +3,7 @@ Cricket
 
 Cricket is part of the `BeeWare suite`_. The project website is `http://pybee.org/cricket`_.
 
-Cricket is a graphical tool that helps you run your test suites.
+Cricket is a graphical tool that helps projects with large test suites **identify failures without waiting** for all your tests to finish.
 
 Normal unittest test runners dump all output to the console, and provide very
 little detail while the suite is running. As a result:
