@@ -67,11 +67,9 @@ def main(Model):
 
             errors = []
             for line in runner.stderr:
-                errors.append(line.strip())
-
+                errors.append(line.strip().decode('utf-8'))
             if errors and not test_list:
-                raise ModelLoadError('\n'.join(
-                    [e.decode('utf-8') for e in errors]))
+                raise ModelLoadError('\n'.join(errors))
 
             project.refresh(test_list, errors)
         except ModelLoadError as e:
@@ -81,7 +79,6 @@ def main(Model):
             dialog = TestLoadErrorDialog(root, e.trace)
             if dialog.status == dialog.CANCEL:
                 sys.exit(1)
-
     if project.errors:
         dialog = IgnorableTestLoadErrorDialog(root, '\n'.join(project.errors))
         if dialog.status == dialog.CANCEL:
