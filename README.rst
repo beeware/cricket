@@ -30,11 +30,11 @@ Cricket is a graphical tool that helps you run your test suites.
 Normal unittest test runners dump all output to the console, and provide very
 little detail while the suite is running. As a result:
 
- * You can't start looking at failures until the test suite has completed running,
+* You can't start looking at failures until the test suite has completed running,
 
- * It isn't a very accessible format for identifying patterns in test failures,
+* It isn't a very accessible format for identifying patterns in test failures,
 
- * It can be hard (or cumbersome) to re-run any tests that have failed.
+* It can be hard (or cumbersome) to re-run any tests that have failed.
 
 Why the name ``cricket``? `Test Cricket`_ is the most prestigious version of
 the game of cricket. Games last for up to 5 days... just like running some
@@ -53,9 +53,9 @@ Quickstart
 
 At present, Cricket has support for:
 
-    * Pre-Django 1.6 project test suites,
-    * Django 1.6+ project test suites using unittest2-style discovery, and
-    * unittest project test suites.
+* Pre-Django 1.6 project test suites,
+* Django 1.6+ project test suites using unittest2-style discovery, and
+* unittest project test suites.
 
 In your Django project, install cricket, and then run it::
 
