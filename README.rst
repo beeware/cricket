@@ -1,5 +1,27 @@
+.. image:: http://pybee.org/project/projects/tools/cricket/cricket.png
+    :width: 72px
+    :target: https://pybee.org/cricket
+
 Cricket
 =======
+
+.. image:: https://img.shields.io/pypi/pyversions/cricket.svg
+    :target: https://pypi.python.org/pypi/cricket
+
+.. image:: https://img.shields.io/pypi/v/cricket.svg
+    :target: https://pypi.python.org/pypi/cricket
+
+.. image:: https://img.shields.io/pypi/status/cricket.svg
+    :target: https://pypi.python.org/pypi/cricket
+
+.. image:: https://img.shields.io/pypi/l/cricket.svg
+    :target: https://github.com/pybee/cricket/blob/master/LICENSE
+
+.. image:: https://travis-ci.org/pybee/cricket.svg?branch=master
+    :target: https://travis-ci.org/pybee/cricket
+
+.. image:: https://badges.gitter.im/pybee/general.svg
+    :target: https://gitter.im/pybee/general
 
 Cricket is part of the `BeeWare suite`_. The project website is `http://pybee.org/cricket`_.
 
@@ -92,11 +114,12 @@ Community
 
 Cricket is part of the `BeeWare suite`_. You can talk to the community through:
 
- * `@pybeeware on Twitter`_
+* `@pybeeware on Twitter`_
 
- * The `BeeWare Users Mailing list`_, for questions about how to use the BeeWare suite.
+* The `pybee/general`_ channel on Gitter.
 
- * The `BeeWare Developers Mailing list`_, for discussing the development of new features in the BeeWare suite, and ideas for new tools for the suite.
+We foster a welcoming and respectful community as described in our
+`BeeWare Community Code of Conduct`_.
 
 Contributing
 ------------
@@ -105,8 +128,8 @@ If you experience problems with cricket, `log them on GitHub`_. If you want to c
 
 .. _Read The Docs: https://cricket.readthedocs.io
 .. _@pybeeware on Twitter: https://twitter.com/pybeeware
-.. _BeeWare Users Mailing list: https://groups.google.com/forum/#!forum/beeware-users
-.. _BeeWare Developers Mailing list: https://groups.google.com/forum/#!forum/beeware-developers
+.. _pybee/general: https://gitter.im/pybee/general
+.. _BeeWare Community Code of Conduct: http://pybee.org/community/behavior/
 .. _log them on Github: https://github.com/pybee/cricket/issues
 .. _fork the code: https://github.com/pybee/cricket
 .. _submit a pull request: https://github.com/pybee/cricket/pulls
