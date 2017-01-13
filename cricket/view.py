@@ -208,11 +208,13 @@ class MainWindow(object):
         self.rerun_button.grid(column=3, row=0)
 
         self.coverage = StringVar()
+        self.coverage_button = Button(self.toolbar, text='Coverage report', command=self.cmd_show_cov, state=DISABLED)
+        self.coverage_button.grid(column=4, row=0)
         self.coverage_checkbox = Checkbutton(self.toolbar,
                                              text='Generate coverage',
                                              command=self.on_coverageChange,
                                              variable=self.coverage)
-        self.coverage_checkbox.grid(column=4, row=0)
+        self.coverage_checkbox.grid(column=5, row=0)
 
         # If coverage is available, enable it by default.
         # Otherwise, disable the widget
@@ -581,6 +583,9 @@ class MainWindow(object):
         # start a test run.
         if not self.executor or not self.executor.is_running:
             self.run(status=set(TestMethod.FAILING_STATES))
+
+    def cmd_show_cov(self, event=None):
+        pass
 
     def cmd_open_duvet(self, event=None):
         "Command: Open Duvet"
