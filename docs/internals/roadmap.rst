@@ -7,8 +7,6 @@ you'd like to contribute, providing a patch for one of these features:
  * Use a standard protocol (e.g., subunit) for communicating between the
    executor and the GUI
 
- * Port to Python 3
-
  * Add a pytest backend
 
  * Add a nose backend
