@@ -2,7 +2,6 @@ import json
 import subprocess
 import sys
 from threading import Thread
-import time
 
 try:
     from Queue import Queue, Empty
