@@ -2,6 +2,7 @@ import json
 import subprocess
 import sys
 from threading import Thread
+import time
 
 try:
     from Queue import Queue, Empty
@@ -46,11 +47,13 @@ class Executor(EventSource):
         t = Thread(target=enqueue_output, args=(self.proc.stdout, self.stdout))
         t.daemon = True
         t.start()
+        t.join()
 
         self.stderr = Queue()
         t = Thread(target=enqueue_output, args=(self.proc.stderr, self.stderr))
         t.daemon = True
         t.start()
+        t.join()
 
         # The TestMethod object currently under execution.
         self.current_test = None
