@@ -5,6 +5,52 @@ import cricket
 
 from cricket.unittest import discoverer
 from cricket.unittest import executor
+from cricket.unittest.model import UnittestProject
+from cricket.executor import Executor
+from cricket.model import TestMethod
+
+class TestTestsCoverage(unittest.TestCase):
+
+    def setUp(self):
+        super(TestTestsCoverage, self).setUp()
+        self.project = UnittestProject()
+        self.project.refresh([
+            'tests.test_unit_integration.TestCollection.test_testCollection',
+            'tests.test_unit_integration.TestExecutorCmdLine.test_labels',
+            'tests.test_unit_integration.TestTestsCoverage.test_run_methods_tests_in_different_tests_cases',
+            'tests.test_unit_integration.TestStubToTestCoverage.test_stub1',
+            'tests.test_unit_integration.TestStubToTestCoverage.test_stub2',
+            'tests.test_unit_integration.TestStubToTestCoverage.test_stub3',
+        ])
+
+        self.labels = [
+            'tests.test_unit_integration.TestCollection.test_testCollection',
+            'tests.test_unit_integration.TestStubToTestCoverage.test_stub1',
+            'tests.test_unit_integration.TestStubToTestCoverage.test_stub2',
+            'tests.test_unit_integration.TestStubToTestCoverage.test_stub3',
+        ]
+
+    def test_run_methods_tests_in_different_tests_cases(self):
+        '''
+        Test coverage in a test module, selecting test methods from different tests cases (but not all tests cases from a test module)
+        '''
+
+        count, new_labels = self.project.find_tests(True, None, self.labels)
+        self.executor = Executor(self.project, count, new_labels)
+        self.executor.poll()
+        self.assertEquals(
+            self.executor.result_count.get(TestMethod.STATUS_PASS, 0), 4)
+
+class TestStubToTestCoverage(unittest.TestCase):
+
+    def test_stub1(self):
+        self.assertTrue(True)
+
+    def test_stub2(self):
+        self.assertTrue(True)
+
+    def test_stub3(self):
+        self.assertTrue(True)
 
 class TestCollection(unittest.TestCase):
 
