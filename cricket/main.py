@@ -7,11 +7,7 @@ from argparse import ArgumentParser
 import subprocess
 import sys
 
-try:
-    from Tkinter import *
-except ImportError:
-    from tkinter import *
-
+import toga
 from cricket.view import (
     MainWindow,
     TestLoadErrorDialog,
@@ -39,11 +35,8 @@ def main(Model):
         print(cricket.__version__)
         return
 
-    # Set up the root Tk context
-    root = Tk()
-
-    # Construct an empty window
-    view = MainWindow(root)
+    # Construct a Toga application
+    view = MainWindow('Cricket', 'org.pybee.cricket')
 
     # Try to load the project. If any error occurs during
     # project load, show an error dialog
@@ -76,13 +69,14 @@ def main(Model):
             # Load failed; destroy the project and show an error dialog.
             # If the user selects cancel, quit.
             project = None
-            dialog = TestLoadErrorDialog(root, e.trace)
-            if dialog.status == dialog.CANCEL:
-                sys.exit(1)
+            # dialog = TestLoadErrorDialog(root, e.trace)
+            # if dialog.status == dialog.CANCEL:
+            #     sys.exit(1)
     if project.errors:
-        dialog = IgnorableTestLoadErrorDialog(root, '\n'.join(project.errors))
-        if dialog.status == dialog.CANCEL:
-            sys.exit(1)
+        # dialog = IgnorableTestLoadErrorDialog(root, '\n'.join(project.errors))
+        # if dialog.status == dialog.CANCEL:
+        #     sys.exit(1)
+        pass
 
     # Set the project for the main window.
     # This populates the tree, and sets listeners for
@@ -90,7 +84,4 @@ def main(Model):
     view.project = project
 
     # Run the main loop
-    try:
-        view.mainloop()
-    except KeyboardInterrupt:
-        view.on_quit()
+    view.main_loop()
