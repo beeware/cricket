@@ -126,7 +126,7 @@ class MainWindow(toga.App):
         on which OS is being used. It contains drop down items menus to
         interact with the system. It is a persistent GUI component.
         '''
-        # Add menu items will be implement, issue #81
+        # TODO Add menu items will be implement, issue #81
         pass
 
     def _setup_button_toolbar(self):
@@ -134,15 +134,20 @@ class MainWindow(toga.App):
         The button toolbar runs as a horizontal area at the top of the GUI.
         It is a persistent GUI component
         '''
-        pass
+
+        self.stop_button = toga.Command( self.cmd_stop, 'Stop',
+                                         tooltip='Stop running the tests.',
+                                         icon=toga.TIBERIUS_ICON)
+        self.stop_button.enabled = False
+        self.main_window.toolbar = [self.stop_button]
+
+        # TODO add more commands on the self.toolbar
+        # TODO decide which icon to put in the commands of the toolbar
 
     def _setup_main_content(self):
         '''
         Sets up the main content area. It is a persistent GUI component
         '''
-
-        # Main content area
-        self.main_window.content = toga.Box()
 
         # Create the tree/control area on the left frame
         self._setup_left_frame()
@@ -152,11 +157,20 @@ class MainWindow(toga.App):
         # Create the output/viewer area on the right frame
         self._setup_right_frame()
 
+        self.split_main_container = toga.SplitContainer()
+        self.split_main_container.content = [self.left_box, self.right_box]
+
+        # Main content area
+        self.main_window.content = self.split_main_container
+
     def _setup_left_frame(self):
         '''
         The left frame mostly consists of the tree widget
         '''
-        pass
+        # TODO add option container
+        
+        # Table temporary
+        self.left_box = toga.Table(['All tests', 'Problems'])
 
     def _setup_all_tests_tree(self):
         pass
@@ -168,7 +182,10 @@ class MainWindow(toga.App):
         '''
         The right frame is basically the "output viewer" space
         '''
-        pass
+        self.right_box = toga.Box()
+
+        # TODO add name, duration, description, output and error
+        #   labels and readonly text input
 
     def _setup_status_bar(self):
         pass
