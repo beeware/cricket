@@ -121,6 +121,12 @@ class MainWindow(toga.App):
     ######################################################
 
     def _setup_menubar(self):
+        '''
+        The menu bar is located at the top of the OS or application depending
+        on which OS is being used. It contains drop down items menus to
+        interact with the system. It is a persistent GUI component.
+        '''
+        # Add menu items will be implement, issue #81
         pass
 
     def _setup_button_toolbar(self):
@@ -129,7 +135,7 @@ class MainWindow(toga.App):
         It is a persistent GUI component
         '''
         pass
-        
+
     def _setup_main_content(self):
         '''
         Sets up the main content area. It is a persistent GUI component
