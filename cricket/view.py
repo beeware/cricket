@@ -172,10 +172,11 @@ class MainWindow(toga.App):
         '''
         The left frame mostly consists of the tree widget
         '''
-        # TODO add option container
-
-        # Table temporary
-        self.left_box = toga.Table(['All tests', 'Problems'])
+        all_tests_box = toga.Box()
+        problems_box = toga.Box()
+        self.left_box = toga.OptionContainer(content=[
+                                                ('All tests', all_tests_box),
+                                                ('Problems', problems_box)])
 
     def _setup_all_tests_tree(self):
         # TODO add tree widget to set all the tests tree
@@ -204,7 +205,7 @@ class MainWindow(toga.App):
         self.statusbar = toga.Box()
         self.statusbar.add(self.run_status)
 
-        # self.content.add(self.statusbar)
+        self.content.add(self.statusbar)
 
         # TODO add run status, summary and progress values
 
