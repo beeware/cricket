@@ -5,6 +5,7 @@ This is the "View" of the MVC world.
 import subprocess
 import toga
 import webbrowser
+from colosseum import CSS
 
 # Check for the existence of coverage and duvet
 try:
@@ -88,6 +89,7 @@ class MainWindow(toga.App):
 
         self._project = None
         self.executor = None
+        self.content = None
 
         # Main window of the application with title and size
         self.main_window = toga.MainWindow(self.name, size=(1024, 768))
@@ -113,6 +115,8 @@ class MainWindow(toga.App):
         self._hide_test_output()
         self._hide_test_errors()
 
+        # Sets the content defined above to show on the main window
+        self.main_window.content = self.content
         # Show the main window
         self.main_window.show()
 
@@ -161,21 +165,24 @@ class MainWindow(toga.App):
         self.split_main_container.content = [self.left_box, self.right_box]
 
         # Main content area
-        self.main_window.content = self.split_main_container
+        self.content = toga.Box()
+        self.content.add(self.split_main_container)
 
     def _setup_left_frame(self):
         '''
         The left frame mostly consists of the tree widget
         '''
         # TODO add option container
-        
+
         # Table temporary
         self.left_box = toga.Table(['All tests', 'Problems'])
 
     def _setup_all_tests_tree(self):
+        # TODO add tree widget to set all the tests tree
         pass
 
     def _setup_problem_tests_tree(self):
+        # TODO add tree widget to set all the problems tests tree
         pass
 
     def _setup_right_frame(self):
@@ -188,7 +195,18 @@ class MainWindow(toga.App):
         #   labels and readonly text input
 
     def _setup_status_bar(self):
-        pass
+        '''
+        The bottom frame to inform the user about the status of the tests that are running. It is a persistent GUI component
+        '''
+
+        self.run_status = toga.Label('Not running')
+
+        self.statusbar = toga.Box()
+        self.statusbar.add(self.run_status)
+
+        # self.content.add(self.statusbar)
+
+        # TODO add run status, summary and progress values
 
     ######################################################
     # Utility methods for inspecting current GUI state
