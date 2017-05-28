@@ -25,7 +25,13 @@ setup(
     author_email='russell@keith-magee.com',
     url='http://pybee.org/cricket',
     packages=find_packages(exclude='tests'),
-    install_requires=['tkreadonly'],
+    install_requires=['toga'],
+    extras_require={
+        # Automatically installed platform backends
+        ':sys_platform=="win32"': ['toga-win32'],
+        ':sys_platform=="linux"': ['toga-gtk'],
+        ':sys_platform=="darwin"': ['toga-cocoa'],
+    },
     scripts=[],
     entry_points={
         'console_scripts': [
