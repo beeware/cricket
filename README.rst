@@ -91,12 +91,10 @@ package. If you're using Python 2.7 on Ubuntu 13.04, you can install
 For other versions of Python and Ubuntu, you'll need to adjust this as
 appropriate.
 
-If you are getting import error on fedora while using python 3 you should install
+If you are getting an import error on Fedora while using Python 3 you should install
 ``python3-tkinter`` by running::
 
     $ sudo dnf install python3-tkinter
-
-This should fix the import error.
 
 Problems under Windows
 ~~~~~~~~~~~~~~~~~~~~~~
