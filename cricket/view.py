@@ -165,15 +165,20 @@ class MainWindow(toga.App):
         self.split_main_container.content = [self.left_box, self.right_box]
 
         # Main content area
-        self.content = toga.Box()
-        self.content.add(self.split_main_container)
+        # TODO uncomment this after correct the issue #167
+        # self.content = toga.Box()
+        # self.content.add(self.split_main_container)
+
+        # TODO comment this after correct the issue #167
+        self.content = self.split_main_container
 
     def _setup_left_frame(self):
         '''
         The left frame mostly consists of the tree widget
         '''
-        all_tests_box = toga.Box()
-        problems_box = toga.Box()
+        all_tests_box = toga.Tree(['Tests'])
+        problems_box = toga.Tree(['Problems'])
+
         self.left_box = toga.OptionContainer(content=[
                                                 ('All tests', all_tests_box),
                                                 ('Problems', problems_box)])
@@ -205,7 +210,8 @@ class MainWindow(toga.App):
         self.statusbar = toga.Box()
         self.statusbar.add(self.run_status)
 
-        self.content.add(self.statusbar)
+        # TODO uncomment this after correct the issue #167
+        # self.content.add(self.statusbar)
 
         # TODO add run status, summary and progress values
 
@@ -483,7 +489,6 @@ class StackTraceDialog():
             button_text -- the label for the button text ("OK" by default)
             cancel_text -- the label for the cancel button ("Cancel" by default)
         '''
-        pass
 
     def ok(self, event=None):
         pass
@@ -522,7 +527,7 @@ class TestErrorsDialog():
         pass
 
 
-class TestLoadErrorDialog():
+class TestLoadErrorDialog(toga.App):
     def __init__(self, parent, trace):
         '''Show a dialog with a scrollable stack trace.
 
