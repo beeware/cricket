@@ -122,10 +122,7 @@ class MainWindow(toga.App):
         # Show the main window
         self.main_window.show()
 
-        if self._test_load_error:
-            dialog = TestLoadErrorDialog(self, self._test_load_error)
-            if dialog.status == dialog.CANCEL:
-                sys.exit(1)
+        self._check_errors_status()
 
     ######################################################
     # Error handlers from the model or project
@@ -138,6 +135,14 @@ class MainWindow(toga.App):
     @test_load_error.setter
     def test_load_error(self, trace=None):
         self._test_load_error = trace
+
+    @property
+    def ignorable_test_load_error(self):
+        return self._ignorable_test_load_error
+
+    @ignorable_test_load_error.setter
+    def ignorable_test_load_error(self, trace=None):
+        self._ignorable_test_load_error = trace
 
     ######################################################
     # Internal GUI layout methods.
@@ -489,6 +494,25 @@ class MainWindow(toga.App):
     def _show_test_errors(self, content):
         "Show the test error panel on the test results page"
         pass
+
+    def _check_errors_status(self):
+        """Checks if the model or the project have errors.
+
+        If there are errors on the model show the dialog TestLoadErrorDialog
+            with these errors.
+        If there are error on the project show the dialog
+            IgnorableTestLoadErrorDialog with these errors.
+        """
+
+        if self._test_load_error:
+            dialog = TestLoadErrorDialog(self, self._test_load_error)
+            if dialog.status == dialog.CANCEL:
+                sys.exit(1)
+        elif self._ignorable_test_load_error:
+            dialog = IgnorableTestLoadErrorDialog(self,
+                        self._ignorable_test_load_error)
+            if dialog.status == dialog.CANCEL:
+                sys.exit(1)
 
 
 class StackTraceDialog(toga.App):

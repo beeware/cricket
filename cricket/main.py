@@ -73,10 +73,9 @@ def main(Model):
             view.test_load_error = None
 
     if project.errors:
-        # dialog = IgnorableTestLoadErrorDialog(root, '\n'.join(project.errors))
-        # if dialog.status == dialog.CANCEL:
-        #     sys.exit(1)
-        pass
+        view.ignorable_test_load_error = '\n'.join(project.errors)
+    else:
+        view.ignorable_test_load_error = None
 
     # Set the project for the main window.
     # This populates the tree, and sets listeners for
