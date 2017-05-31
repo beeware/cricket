@@ -515,7 +515,7 @@ class MainWindow(toga.App):
                 sys.exit(1)
 
 
-class StackTraceDialog(toga.App):
+class StackTraceDialog:
     OK = 1
     CANCEL = 2
 
