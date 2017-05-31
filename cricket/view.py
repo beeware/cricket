@@ -2,8 +2,10 @@
 
 This is the "View" of the MVC world.
 """
-import subprocess
+
+import sys
 import toga
+import subprocess
 import webbrowser
 from colosseum import CSS
 
@@ -92,7 +94,7 @@ class MainWindow(toga.App):
         self.content = None
 
         # Main window of the application with title and size
-        self.main_window = toga.MainWindow(self.name, size=(1024, 768))
+        self.main_window = toga.MainWindow(self.name, size=(1024,768))
         self.main_window.app = self
 
         # Setup the menu
@@ -119,6 +121,23 @@ class MainWindow(toga.App):
         self.main_window.content = self.content
         # Show the main window
         self.main_window.show()
+
+        if self._test_load_error:
+            dialog = TestLoadErrorDialog(self, self._test_load_error)
+            if dialog.status == dialog.CANCEL:
+                sys.exit(1)
+
+    ######################################################
+    # Error handlers from the model or project
+    ######################################################
+
+    @property
+    def test_load_error(self):
+        return self._test_load_error
+
+    @test_load_error.setter
+    def test_load_error(self, trace=None):
+        self._test_load_error = trace
 
     ######################################################
     # Internal GUI layout methods.
@@ -472,7 +491,7 @@ class MainWindow(toga.App):
         pass
 
 
-class StackTraceDialog():
+class StackTraceDialog(toga.App):
     OK = 1
     CANCEL = 2
 
@@ -489,15 +508,26 @@ class StackTraceDialog():
             button_text -- the label for the button text ("OK" by default)
             cancel_text -- the label for the cancel button ("Cancel" by default)
         '''
+        self.parent = parent
+        self.status = None
+
+        # TODO adjust label, readonly input text and a scrollcontainer
+
+        if cancel_text is not None:
+            # TODO adjust add button to cancel
+            pass
+
+        # TODO adjust button ok
+
+        self.parent.main_window.stack_trace_dialog(title, label, trace)
 
     def ok(self, event=None):
-        pass
+        self.status = self.OK
 
     def cancel(self, event=None):
-        pass
+        self.status = self.CANCEL
 
-
-class FailedTestDialog():
+class FailedTestDialog(StackTraceDialog):
     def __init__(self, parent, trace):
         '''Report an error when running a test suite.
 
@@ -506,13 +536,20 @@ class FailedTestDialog():
             parent -- a parent window (the application window)
             trace -- the stack trace content to display.
         '''
-        pass
+        StackTraceDialog.__init__(
+            self,
+            parent,
+            'Error running test suite',
+            'The following stack trace was generated when attempting to run the test suite:',
+            trace,
+            button_text='OK',
+            cancel_text='Quit',
+        )
 
     def cancel(self, event=None):
-        pass
+        StackTraceDialog.cancel(self, event=event)
 
-
-class TestErrorsDialog():
+class TestErrorsDialog(StackTraceDialog):
     def __init__(self, parent, trace):
         '''Show a dialog with a scrollable list of errors.
 
@@ -521,13 +558,21 @@ class TestErrorsDialog():
             parent -- a parent window (the application window)
             error -- the error content to display.
         '''
-        pass
+        StackTraceDialog.__init__(
+            self,
+            parent,
+            'Errors during test suite',
+            ('The following errors were generated while running the test suite:'),
+            trace,
+            button_text='OK',
+            cancel_text=None,
+        )
 
     def cancel(self, event=None):
-        pass
+        StackTraceDialog.cancel(self, event=event)
 
 
-class TestLoadErrorDialog(toga.App):
+class TestLoadErrorDialog(StackTraceDialog):
     def __init__(self, parent, trace):
         '''Show a dialog with a scrollable stack trace.
 
@@ -536,13 +581,22 @@ class TestLoadErrorDialog(toga.App):
             parent -- a parent window (the application window)
             trace -- the stack trace content to display.
         '''
-        pass
+        StackTraceDialog.__init__(
+            self,
+            parent,
+            'Error discovering test suite',
+            ('The following stack trace was generated when attempting to '
+             'discover the test suite:'),
+            trace,
+            button_text='Retry',
+            cancel_text='Quit',
+        )
 
     def cancel(self, event=None):
-        pass
+        StackTraceDialog.cancel(self, event=event)
 
 
-class IgnorableTestLoadErrorDialog():
+class IgnorableTestLoadErrorDialog(StackTraceDialog):
     def __init__(self, parent, trace):
         '''Show a dialog with a scrollable stack trace when loading
            tests turned up errors in stderr but they can safely be ignored.
@@ -552,4 +606,13 @@ class IgnorableTestLoadErrorDialog():
             parent -- a parent window (the application window)
             trace -- the stack trace content to display.
         '''
-        pass
+        StackTraceDialog.__init__(
+            self,
+            parent,
+            'Error discovering test suite',
+            ('The following error where captured during test discovery '
+             'but running the tests might still work:'),
+            trace,
+            button_text='Continue',
+            cancel_text='Quit',
+        )

@@ -15,7 +15,6 @@ from cricket.view import (
 )
 from cricket.model import ModelLoadError
 
-
 def main(Model):
     """Run the main loop of the app.
 
@@ -68,10 +67,11 @@ def main(Model):
         except ModelLoadError as e:
             # Load failed; destroy the project and show an error dialog.
             # If the user selects cancel, quit.
-            project = None
-            # dialog = TestLoadErrorDialog(root, e.trace)
-            # if dialog.status == dialog.CANCEL:
-            #     sys.exit(1)
+            project = []
+            view.test_load_error = e.trace
+        else:
+            view.test_load_error = None
+
     if project.errors:
         # dialog = IgnorableTestLoadErrorDialog(root, '\n'.join(project.errors))
         # if dialog.status == dialog.CANCEL:
