@@ -71,6 +71,7 @@ STATUS_DEFAULT = {
 }
 
 
+
 class MainWindow(toga.App):
     def startup(self):
         '''
@@ -219,10 +220,36 @@ class MainWindow(toga.App):
         '''
         The right frame is basically the "output viewer" space
         '''
-        self.right_box = toga.Box()
+        # Box to show the detail of a test
+        self.right_box = toga.Box(style=CSS(flex_direction='column',
+                                            padding_top=15))
+        # Box to put the name of the test
+        self.name_box = toga.Box(style=CSS(flex_direction='row', margin=5))
 
-        # TODO add name, duration, description, output and error
-        #   labels and readonly text input
+        # Label to indicate that the next input text it will be the name
+        self.name_label = toga.Label('Name:', alignment=toga.RIGHT_ALIGNED,
+                                    style=CSS(width=50, margin_right=10))
+
+        # Text input to show the name of the test
+        self.name_input = toga.TextInput(readonly=True, style=CSS(flex=1))
+
+        self.test_status = toga.Label('.', alignment=toga.LEFT_ALIGNED,
+                                        style=CSS(width=100, height=50, margin_left=10))
+
+        # add font to test_status when the weight of the font and color for
+        #   labels become available
+        # self.test_status_font = toga.Font(family='Helvetica', size=50)
+        # self.test_status.set_font(self.test_status_font)
+        # self.test_status.rehint()
+
+        self.name_box.add(self.name_label)
+        self.name_box.add(self.name_input)
+        # self.name_box.add(self.test_status)
+
+        self.right_box.add(self.name_box)
+
+        # TODO duration, description, output and error labels
+        #   and readonly text input
 
     def _setup_status_bar(self):
         '''
