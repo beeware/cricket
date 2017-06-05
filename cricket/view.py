@@ -164,14 +164,38 @@ class MainWindow(toga.App):
         It is a persistent GUI component
         '''
 
-        self.stop_button = toga.Command( self.cmd_stop, 'Stop',
+        # TODO decide which icon to put in the commands of the toolbar
+
+        # Button to stop run the tests
+        self.stop_button = toga.Command(self.cmd_stop, 'Stop',
                                          tooltip='Stop running the tests.',
                                          icon=toga.TIBERIUS_ICON)
         self.stop_button.enabled = False
-        self.main_window.toolbar = [self.stop_button]
 
-        # TODO add more commands on the self.toolbar
-        # TODO decide which icon to put in the commands of the toolbar
+        # Button to run all the tests
+        self.run_all_button = toga.Command(self.cmd_run_all, 'Run all',
+                                         tooltip='Run all the tests.',
+                                         icon=toga.TIBERIUS_ICON)
+
+        # Button to run only the tests selected by the user
+        self.run_selected_button = toga.Command(self.cmd_run_selected,
+                                        'Run selected',
+                                         tooltip='Run the tests selected.',
+                                         icon=toga.TIBERIUS_ICON)
+        self.run_selected_button.enabled = False
+
+        # Re-run all the tests
+        self.rerun_button = toga.Command(self.cmd_rerun, 'Re-run',
+                                         tooltip='Re-run the tests.',
+                                         icon=toga.TIBERIUS_ICON)
+        self.rerun_button.enabled = False
+
+        # TODO add switch for generate coverage
+
+        self.main_window.toolbar = [self.stop_button,
+                                    self.run_all_button,
+                                    self.run_selected_button,
+                                    self.rerun_button]
 
     def _setup_main_content(self):
         '''
