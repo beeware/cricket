@@ -361,6 +361,8 @@ class MainWindow(toga.App):
 
     def cmd_run_selected(self, event=None):
         "Command: The 'run selected' button has been pressed"
+        # TODO do this part after the port of the Tree widget
+
         # If the executor isn't currently running, we can
         # start a test run.
         if not self.executor or not self.executor.is_running:
