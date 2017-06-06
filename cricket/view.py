@@ -3,6 +3,7 @@
 This is the "View" of the MVC world.
 """
 
+import os
 import sys
 import toga
 import subprocess
@@ -22,6 +23,8 @@ except ImportError:
 
 from cricket.model import TestMethod, TestCase, TestModule
 from cricket.executor import Executor
+
+ICONS_DIR = os.path.dirname(__file__)+'/icons/'
 
 # Display constants for test status
 STATUS = {
@@ -169,33 +172,35 @@ class MainWindow(toga.App):
         # Button to stop run the tests
         self.stop_button = toga.Command(self.cmd_stop, 'Stop',
                                          tooltip='Stop running the tests.',
-                                         icon=toga.TIBERIUS_ICON)
+                                         icon=ICONS_DIR+'stop.png')
         self.stop_button.enabled = False
 
         # Button to run all the tests
         self.run_all_button = toga.Command(self.cmd_run_all, 'Run all',
                                          tooltip='Run all the tests.',
-                                         icon=toga.TIBERIUS_ICON)
+                                         icon=ICONS_DIR+'play.png')
 
         # Button to run only the tests selected by the user
         self.run_selected_button = toga.Command(self.cmd_run_selected,
                                         'Run selected',
                                          tooltip='Run the tests selected.',
-                                         icon=toga.TIBERIUS_ICON)
+                                         icon=ICONS_DIR+'run_select.png')
         self.run_selected_button.enabled = False
 
         # Re-run all the tests
         self.rerun_button = toga.Command(self.cmd_rerun, 'Re-run',
                                          tooltip='Re-run the tests.',
-                                         icon=toga.TIBERIUS_ICON)
+                                         icon=ICONS_DIR+'re_run.png')
         self.rerun_button.enabled = False
 
         # TODO add switch for generate coverage
 
-        self.main_window.toolbar = [self.stop_button,
+        self.main_window.toolbar = [toga.EXPANDING_SPACER,
+                                    self.stop_button,
                                     self.run_all_button,
                                     self.run_selected_button,
-                                    self.rerun_button]
+                                    self.rerun_button,
+                                    toga.EXPANDING_SPACER]
 
     def _setup_main_content(self):
         '''
