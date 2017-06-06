@@ -503,11 +503,11 @@ class MainWindow(toga.App):
 
     def set_selected_button_state(self):
         if self.executor and self.executor.is_running:
-            pass
+            self.run_selected_button.enabled = False
         elif self.current_test_tree.selection():
-            pass
+            self.run_selected_button.enabled = True
         else:
-            pass
+            self.run_selected_button.enabled = False
 
     ######################################################
     # GUI utility methods
