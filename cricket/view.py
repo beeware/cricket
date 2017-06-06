@@ -524,8 +524,12 @@ class MainWindow(toga.App):
         """
         count, labels = self.project.find_tests(active, status, labels)
 
+        self.stop_button.enabled = True
+        self.run_all_button.enabled = False
+        self.run_selected_button.enabled = False
+        self.rerun_button.enabled = False
+
         self.progress['maximum'] = count
-        self.progress_value.set(0)
 
         # Create the runner
         self.executor = Executor(self.project, count, labels)
