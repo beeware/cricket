@@ -493,11 +493,13 @@ class MainWindow(toga.App):
 
     def reset_button_states_on_end(self):
         "A test run has ended and we should enable or disable buttons as appropriate."
+        self.stop_button.enabled = False
+        self.run_all_button.enabled = True
         self.set_selected_button_state()
         if self.executor and self.executor.any_failed:
-            pass
+            self.rerun_button.enabled = True
         else:
-            pass
+            self.rerun_button.enabled = False
 
     def set_selected_button_state(self):
         if self.executor and self.executor.is_running:
