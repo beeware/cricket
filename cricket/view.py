@@ -159,6 +159,21 @@ class MainWindow(toga.App):
         interact with the system. It is a persistent GUI component.
         '''
 
+        # Add details about the project on default menu items
+        for default_menu in self.commands:
+            if hasattr(default_menu, 'label'):
+                if 'About' in default_menu.label:
+                    default_menu.enabled = True
+                    default_menu.action = self.cmd_about_cricket
+                elif 'Preferences' in default_menu.label:
+                    # TODO implement cricket preferences
+                    pass
+                elif 'Visit homepage' in default_menu.label:
+                    default_menu.enabled = True
+                    default_menu.action = self.cmd_cricket_docs
+                    default_menu.label = 'Open Cricket project page'
+                    default_menu.group = toga.Group.HELP
+
         # Custom menus
         self.control_tests_group = toga.Group('Test')
         self.beeware_group = toga.Group('BeeWare')
@@ -175,8 +190,6 @@ class MainWindow(toga.App):
 
             # Help items
             toga.Command(self.cmd_cricket_docs, 'Open Documentation',
-                        group=toga.Group.HELP),
-            toga.Command(self.cmd_cricket_page, 'Open Cricket project page',
                         group=toga.Group.HELP),
             toga.Command(self.cmd_cricket_github, 'Open Cricket on GitHub',
                         group=toga.Group.HELP),
@@ -421,6 +434,14 @@ class MainWindow(toga.App):
     def cmd_cricket_docs(self, sender):
         "Show the Cricket documentation"
         webbrowser.open_new('https://cricket.readthedocs.io/')
+
+    def cmd_about_cricket(self, sender):
+        "Show a dialog with Cricket information"
+
+        self.about_cricket = "Cricket is a graphical tool that helps you run your test suites. \n \nNormal unittest test runners dump all output to the console, and provide very little detail while the suite is running. As a result: \n \n- You can't start looking at failures until the test suite has completed running,\n- It isn't a very accessible format for identifying patterns in test failures, \n- It can be hard (or cumbersome) to re-run any tests that have failed. \n \nWhy the name cricket? Test Cricket is the most prestigious version of the game of cricket. Games last for up to 5 days... just like running some test suites. The usual approach for making cricket watchable is a generous dose of beer; in programming, Balmer Peak limits come into effect, so something else is required..."
+
+        self.main_window.info_dialog('Cricket', self.about_cricket)
+
 
     ######################################################
     # GUI Callbacks
