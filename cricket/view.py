@@ -207,6 +207,7 @@ class MainWindow(toga.App):
         self.stop_button = toga.Command(self.cmd_stop, 'Stop',
                                          tooltip='Stop running the tests.',
                                          icon=ICONS_DIR+'stop.png',
+                                         shortcut='s',
                                          group=self.control_tests_group)
         self.stop_button.enabled = False
 
@@ -214,6 +215,7 @@ class MainWindow(toga.App):
         self.run_all_button = toga.Command(self.cmd_run_all, 'Run all',
                                          tooltip='Run all the tests.',
                                          icon=ICONS_DIR+'play.png',
+                                         shortcut='r',
                                          group=self.control_tests_group)
 
         # Button to run only the tests selected by the user
@@ -221,6 +223,7 @@ class MainWindow(toga.App):
                                         'Run selected',
                                          tooltip='Run the tests selected.',
                                          icon=ICONS_DIR+'run_select.png',
+                                         shortcut='e',
                                          group=self.control_tests_group)
         self.run_selected_button.enabled = False
 
@@ -228,6 +231,7 @@ class MainWindow(toga.App):
         self.rerun_button = toga.Command(self.cmd_rerun, 'Re-run',
                                          tooltip='Re-run the tests.',
                                          icon=ICONS_DIR+'re_run.png',
+                                         shortcut='a',
                                          group=self.control_tests_group)
         self.rerun_button.enabled = False
 
