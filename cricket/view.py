@@ -158,8 +158,9 @@ class MainWindow(toga.App):
         on which OS is being used. It contains drop down items menus to
         interact with the system. It is a persistent GUI component.
         '''
-        # TODO Add menu items will be implement, issue #81
-        pass
+
+        self.control_tests_group = toga.Group('Test')
+
 
     def _setup_button_toolbar(self):
         '''
@@ -167,40 +168,40 @@ class MainWindow(toga.App):
         It is a persistent GUI component
         '''
 
-        # TODO decide which icon to put in the commands of the toolbar
-
         # Button to stop run the tests
         self.stop_button = toga.Command(self.cmd_stop, 'Stop',
                                          tooltip='Stop running the tests.',
-                                         icon=ICONS_DIR+'stop.png')
+                                         icon=ICONS_DIR+'stop.png',
+                                         group=self.control_tests_group)
         self.stop_button.enabled = False
 
         # Button to run all the tests
         self.run_all_button = toga.Command(self.cmd_run_all, 'Run all',
                                          tooltip='Run all the tests.',
-                                         icon=ICONS_DIR+'play.png')
+                                         icon=ICONS_DIR+'play.png',
+                                         group=self.control_tests_group)
 
         # Button to run only the tests selected by the user
         self.run_selected_button = toga.Command(self.cmd_run_selected,
                                         'Run selected',
                                          tooltip='Run the tests selected.',
-                                         icon=ICONS_DIR+'run_select.png')
+                                         icon=ICONS_DIR+'run_select.png',
+                                         group=self.control_tests_group)
         self.run_selected_button.enabled = False
 
         # Re-run all the tests
         self.rerun_button = toga.Command(self.cmd_rerun, 'Re-run',
                                          tooltip='Re-run the tests.',
-                                         icon=ICONS_DIR+'re_run.png')
+                                         icon=ICONS_DIR+'re_run.png',
+                                         group=self.control_tests_group)
         self.rerun_button.enabled = False
 
         # TODO add switch for generate coverage
 
-        self.main_window.toolbar = [toga.EXPANDING_SPACER,
-                                    self.stop_button,
+        self.main_window.toolbar.add(self.stop_button,
                                     self.run_all_button,
                                     self.run_selected_button,
-                                    self.rerun_button,
-                                    toga.EXPANDING_SPACER]
+                                    self.rerun_button)
 
     def _setup_main_content(self):
         '''
@@ -600,6 +601,7 @@ class StackTraceDialog:
         self.status = None
 
         # TODO adjust label, readonly input text and a scrollcontainer
+        # TODO add button text parameter on toga interface and toga cocoa
 
         if cancel_text is not None:
             # TODO adjust add button to cancel
