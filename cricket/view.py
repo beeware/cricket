@@ -170,7 +170,7 @@ class MainWindow(toga.App):
                     pass
                 elif 'Visit homepage' in default_menu.label:
                     default_menu.enabled = True
-                    default_menu.action = self.cmd_cricket_docs
+                    default_menu.action = self.cmd_cricket_page
                     default_menu.label = 'Open Cricket project page'
                     default_menu.group = toga.Group.HELP
 
