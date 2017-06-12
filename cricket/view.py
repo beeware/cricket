@@ -159,8 +159,30 @@ class MainWindow(toga.App):
         interact with the system. It is a persistent GUI component.
         '''
 
+        # Custom menus
         self.control_tests_group = toga.Group('Test')
+        self.beeware_group = toga.Group('BeeWare')
 
+        self.open_duvet_command = toga.Command(self.cmd_open_duvet,
+                                                'Open Duvet...',
+                                                group=self.beeware_group)
+        self.open_duvet_command.enabled = False if duvet is None else True
+
+        # Cricket's menu items
+        self.commands.add(
+            # Beeware items
+            self.open_duvet_command,
+
+            # Help items
+            toga.Command(self.cmd_cricket_docs, 'Open Documentation',
+                        group=toga.Group.HELP),
+            toga.Command(self.cmd_cricket_page, 'Open Cricket project page',
+                        group=toga.Group.HELP),
+            toga.Command(self.cmd_cricket_github, 'Open Cricket on GitHub',
+                        group=toga.Group.HELP),
+            toga.Command(self.cmd_beeware_page, 'Open BeeWare project page',
+                        group=toga.Group.HELP),
+        )
 
     def _setup_button_toolbar(self):
         '''
