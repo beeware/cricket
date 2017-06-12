@@ -406,19 +406,19 @@ class MainWindow(toga.App):
             self.main_window.error_dialog('Error on open duvet',
                                 'Unable to start Duvet: %s' % e)
 
-    def cmd_cricket_page(self):
+    def cmd_cricket_page(self, sender):
         "Show the Cricket project page"
         webbrowser.open_new('http://pybee.org/cricket/')
 
-    def cmd_beeware_page(self):
+    def cmd_beeware_page(self, sender):
         "Show the Beeware project page"
         webbrowser.open_new('http://pybee.org/')
 
-    def cmd_cricket_github(self):
+    def cmd_cricket_github(self, sender):
         "Show the Cricket GitHub repo"
         webbrowser.open_new('http://github.com/pybee/cricket')
 
-    def cmd_cricket_docs(self):
+    def cmd_cricket_docs(self, sender):
         "Show the Cricket documentation"
         webbrowser.open_new('https://cricket.readthedocs.io/')
 
