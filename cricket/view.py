@@ -403,7 +403,8 @@ class MainWindow(toga.App):
         try:
             subprocess.Popen('duvet')
         except Exception as e:
-            pass
+            self.main_window.error_dialog('Error on open duvet',
+                                'Unable to start Duvet: %s' % e)
 
     def cmd_cricket_page(self):
         "Show the Cricket project page"
