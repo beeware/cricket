@@ -627,7 +627,6 @@ class MainWindow(toga.App):
             if dialog.status == dialog.CANCEL:
                 sys.exit(1)
 
-
 class StackTraceDialog:
     OK = 1
     CANCEL = 2
@@ -648,22 +647,17 @@ class StackTraceDialog:
         self.parent = parent
         self.status = None
 
-        # TODO adjust label, readonly input text and a scrollcontainer
-        # TODO add button text parameter on toga interface and toga cocoa
+        retry = True if cancel_text is not None else False
 
-        if cancel_text is not None:
-            # TODO adjust add button to cancel
-            pass
+        self.button_result = self.parent.main_window.stack_trace_dialog(title,
+                                                        label, trace,
+                                                        retry, button_label = (button_text,
+                                                        cancel_text))
 
-        # TODO adjust button ok
-
-        self.parent.main_window.stack_trace_dialog(title, label, trace)
-
-    def ok(self, event=None):
-        self.status = self.OK
-
-    def cancel(self, event=None):
-        self.status = self.CANCEL
+        if result:
+            self.status = self.OK
+        else:
+            self.status = self.CANCEL
 
 class FailedTestDialog(StackTraceDialog):
     def __init__(self, parent, trace):
@@ -684,9 +678,6 @@ class FailedTestDialog(StackTraceDialog):
             cancel_text='Quit',
         )
 
-    def cancel(self, event=None):
-        StackTraceDialog.cancel(self, event=event)
-
 class TestErrorsDialog(StackTraceDialog):
     def __init__(self, parent, trace):
         '''Show a dialog with a scrollable list of errors.
@@ -705,9 +696,6 @@ class TestErrorsDialog(StackTraceDialog):
             button_text='OK',
             cancel_text=None,
         )
-
-    def cancel(self, event=None):
-        StackTraceDialog.cancel(self, event=event)
 
 
 class TestLoadErrorDialog(StackTraceDialog):
@@ -729,9 +717,6 @@ class TestLoadErrorDialog(StackTraceDialog):
             button_text='Retry',
             cancel_text='Quit',
         )
-
-    def cancel(self, event=None):
-        StackTraceDialog.cancel(self, event=event)
 
 
 class IgnorableTestLoadErrorDialog(StackTraceDialog):
