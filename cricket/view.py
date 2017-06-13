@@ -235,8 +235,6 @@ class MainWindow(toga.App):
                                          group=self.control_tests_group)
         self.rerun_button.enabled = False
 
-        # TODO add switch for generate coverage
-
         self.main_window.toolbar.add(self.stop_button,
                                     self.run_all_button,
                                     self.run_selected_button,
@@ -292,6 +290,19 @@ class MainWindow(toga.App):
         # Box to show the detail of a test
         self.right_box = toga.Box(style=CSS(flex_direction='column',
                                             padding_top=15))
+
+        # Initial status for coverage
+        self.coverage = False
+        # Checkbutton to change the status for coverage
+        self.coverage_checkbox = toga.Switch('Generate coverage',
+                                on_toggle=self.on_coverageChange)
+
+        # If coverage is available, enable it by default.
+        # Otherwise, disable the widget
+        if not coverage:
+            self.coverage = False
+            self.coverage_checkbox.enabled = False
+
         # Box to put the name of the test
         self.name_box = toga.Box(style=CSS(flex_direction='row', margin=5))
 
@@ -315,6 +326,7 @@ class MainWindow(toga.App):
         self.name_box.add(self.name_input)
         # self.name_box.add(self.test_status)
 
+        self.right_box.add(self.coverage_checkbox)
         self.right_box.add(self.name_box)
 
         # TODO duration, description, output and error labels
@@ -375,9 +387,6 @@ class MainWindow(toga.App):
 
         # Listen for any status updates on nodes in the tree.
         TestMethod.bind('status_update', self.on_nodeStatusUpdate)
-
-        # Update the project to make sure coverage status matches the GUI
-        self.on_coverageChange()
 
     ######################################################
     # User commands
@@ -500,9 +509,10 @@ class MainWindow(toga.App):
         "Event handler: a node on the tree has received a status update"
         pass
 
-    def on_coverageChange(self):
+    def on_coverageChange(self, status):
         "Event handler: when the coverage checkbox has been toggled"
-        pass
+        self.coverage = not self.coverage
+        self.project.coverage = self.coverage == True
 
     def on_testProgress(self):
         "Event handler: a periodic update to poll the runner for output, generating GUI updates"
