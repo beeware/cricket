@@ -303,34 +303,36 @@ class MainWindow(toga.App):
             self.coverage = False
             self.coverage_checkbox.enabled = False
 
+        label_sample = lambda text: toga.Label(text,
+                                    alignment=toga.RIGHT_ALIGNED,
+                                    style=CSS(width=80, margin_right=10))
+        text_input_sample = toga.TextInput(readonly=True, style=CSS(flex=1))
+
         # Box to put the name of the test
         self.name_box = toga.Box(style=CSS(flex_direction='row', margin=5))
-
         # Label to indicate that the next input text it will be the name
-        self.name_label = toga.Label('Name:', alignment=toga.RIGHT_ALIGNED,
-                                    style=CSS(width=50, margin_right=10))
-
+        self.name_label = label_sample('Name:')
         # Text input to show the name of the test
-        self.name_input = toga.TextInput(readonly=True, style=CSS(flex=1))
+        self.name_input = text_input_sample
+        # Insert the name box objects
+        self.name_box.add(self.name_label)
+        self.name_box.add(self.name_input)
 
-        self.test_status = toga.Label('.', alignment=toga.LEFT_ALIGNED,
-                                        style=CSS(width=100, height=50, margin_left=10))
-
+        # self.test_status = toga.Label('.', alignment=toga.LEFT_ALIGNED,
+        #                                 style=CSS(width=100, height=50,
+        #                                 margin_left=10))
         # add font to test_status when the weight of the font and color for
         #   labels become available
         # self.test_status_font = toga.Font(family='Helvetica', size=50)
         # self.test_status.set_font(self.test_status_font)
         # self.test_status.rehint()
-
-        self.name_box.add(self.name_label)
-        self.name_box.add(self.name_input)
         # self.name_box.add(self.test_status)
 
+        # Insert the right box contents
         self.right_box.add(self.coverage_checkbox)
         self.right_box.add(self.name_box)
 
-        # TODO duration, description, output and error labels
-        #   and readonly text input
+        # TODO duration, description, output and error readonly text input
 
     def _setup_status_bar(self):
         '''
@@ -604,18 +606,22 @@ class MainWindow(toga.App):
 
     def _hide_test_output(self):
         "Hide the test output panel on the test results page"
+        # TODO hide self.output_box
         pass
 
     def _show_test_output(self, content):
         "Show the test output panel on the test results page"
+        # TODO show self.output_box
         pass
 
     def _hide_test_errors(self):
         "Hide the test error panel on the test results page"
+        # TODO hide self.error_box
         pass
 
     def _show_test_errors(self, content):
         "Show the test error panel on the test results page"
+        # TODO show self.error_box
         pass
 
     def _check_errors_status(self):
@@ -641,8 +647,7 @@ class StackTraceDialog:
     OK = 1
     CANCEL = 2
 
-    def __init__(self, parent, title, label, trace, button_text='OK',
-                 cancel_text='Cancel'):
+    def __init__(self, parent, title, label, trace, critical=False):
         '''Show a dialog with a scrollable stack trace.
 
         Arguments:
@@ -651,22 +656,18 @@ class StackTraceDialog:
             title -- the title for the stack trace window
             label -- the label describing the stack trace
             trace -- the stack trace content to display.
-            button_text -- the label for the button text ("OK" by default)
-            cancel_text -- the label for the cancel button ("Cancel" by default)
+            critical -- indicates if the stack trace dialog will be critical
         '''
         self.parent = parent
         self.status = None
 
-        retry = True if cancel_text is not None else False
-
         self.button_result = self.parent.main_window.stack_trace_dialog(title,
                                                         label, trace,
-                                                        retry, button_label = (button_text,
-                                                        cancel_text))
+                                                        retry=critical)
 
-        if result:
+        if self.button_result:
             self.status = self.OK
-        else:
+        elif critical:
             self.status = self.CANCEL
 
 class FailedTestDialog(StackTraceDialog):
@@ -684,8 +685,7 @@ class FailedTestDialog(StackTraceDialog):
             'Error running test suite',
             'The following stack trace was generated when attempting to run the test suite:',
             trace,
-            button_text='OK',
-            cancel_text='Quit',
+            False,
         )
 
 class TestErrorsDialog(StackTraceDialog):
@@ -703,8 +703,7 @@ class TestErrorsDialog(StackTraceDialog):
             'Errors during test suite',
             ('The following errors were generated while running the test suite:'),
             trace,
-            button_text='OK',
-            cancel_text=None,
+            False,
         )
 
 
@@ -724,8 +723,7 @@ class TestLoadErrorDialog(StackTraceDialog):
             ('The following stack trace was generated when attempting to '
              'discover the test suite:'),
             trace,
-            button_text='Retry',
-            cancel_text='Quit',
+            True,
         )
 
 
@@ -746,6 +744,5 @@ class IgnorableTestLoadErrorDialog(StackTraceDialog):
             ('The following error where captured during test discovery '
              'but running the tests might still work:'),
             trace,
-            button_text='Continue',
-            cancel_text='Quit',
+            False,
         )
