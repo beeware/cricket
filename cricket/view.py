@@ -328,9 +328,40 @@ class MainWindow(toga.App):
         # self.test_status.rehint()
         # self.name_box.add(self.test_status)
 
+        # Box to put the test duration
+        self.duration_box = toga.Box(style=CSS(flex_direction='row', margin=5))
+        # Label to indicate the test duration
+        self.duration_label = label_sample('Duration:')
+        # Insert the test duration box objects
+        self.duration_box.add(self.duration_label)
+
+        # Box to put the test description
+        self.description_box = toga.Box(style=CSS(flex_direction='row',
+                                                margin=5))
+        # Label to indicate the test description
+        self.description_label = label_sample('Description:')
+        # Insert the test description box objects
+        self.description_box.add(self.description_label)
+
+        # Box to put the test output
+        self.output_box = toga.Box(style=CSS(flex_direction='row', margin=5))
+        # Label to indicate the test output
+        self.output_label = label_sample('Output:')
+        # Insert the test output box objects
+        self.output_box.add(self.output_label)
+
+        # Box to put the test error
+        self.error_box = toga.Box(style=CSS(flex_direction='row', margin=5))
+        # Label to indicate the test error
+        self.error_label = label_sample('Error:')
+        # Insert the test error box objects
+        self.error_box.add(self.error_label)
+
         # Insert the right box contents
         self.right_box.add(self.coverage_checkbox)
         self.right_box.add(self.name_box)
+        self.right_box.add(self.duration_box)
+        self.right_box.add(self.description_box)
 
         # TODO duration, description, output and error readonly text input
 
