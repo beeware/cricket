@@ -362,6 +362,8 @@ class MainWindow(toga.App):
         self.right_box.add(self.name_box)
         self.right_box.add(self.duration_box)
         self.right_box.add(self.description_box)
+        self.right_box.add(self.output_box)
+        self.right_box.add(self.error_box)
 
         # TODO duration, description, output and error readonly text input
 
@@ -637,23 +639,19 @@ class MainWindow(toga.App):
 
     def _hide_test_output(self):
         "Hide the test output panel on the test results page"
-        # TODO hide self.output_box
-        pass
+        self.right_box.hide(self.output_box)
 
     def _show_test_output(self, content):
         "Show the test output panel on the test results page"
-        # TODO show self.output_box
-        pass
+        self.right_box.show(self.output_box)
 
     def _hide_test_errors(self):
         "Hide the test error panel on the test results page"
-        # TODO hide self.error_box
-        pass
+        self.right_box.hide(self.error_box)
 
     def _show_test_errors(self, content):
         "Show the test error panel on the test results page"
-        # TODO show self.error_box
-        pass
+        self.right_box.show(self.error_box)
 
     def _check_errors_status(self):
         """Checks if the model or the project have errors.
