@@ -93,7 +93,6 @@ class MainWindow(toga.App):
 
         '''
 
-        self._project = None
         self.executor = None
         self.content = None
 
@@ -106,8 +105,10 @@ class MainWindow(toga.App):
 
         # Set up the main content for the window.
         self._setup_button_toolbar()
-        self._setup_main_content()
         self._setup_status_bar()
+        self._setup_main_content()
+
+        self._setup_init_values()
 
         # Set up listeners for runner events.
         Executor.bind('test_status_update', self.on_executorStatusUpdate)
@@ -257,12 +258,11 @@ class MainWindow(toga.App):
         self.split_main_container.content = [self.left_box, self.right_box]
 
         # Main content area
-        # TODO uncomment this after correct the issue #167
-        # self.content = toga.Box()
-        # self.content.add(self.split_main_container)
+        self.outer_split = toga.SplitContainer(direction =
+                                            toga.SplitContainer.HORIZONTAL)
+        self.outer_split.content = [self.split_main_container, self.statusbar]
 
-        # TODO comment this after correct the issue #167
-        self.content = self.split_main_container
+        self.content = self.outer_split
 
     def _setup_left_frame(self):
         '''
@@ -374,13 +374,24 @@ class MainWindow(toga.App):
 
         self.run_status = toga.Label('Not running')
 
-        self.statusbar = toga.Box()
+        self.run_summary = toga.Label('T:0 P:0 F:0 E:0 X:0 U:0 S:0',
+                                        alignment=toga.RIGHT_ALIGNED,
+                                        style=CSS(width=200))
+
+        self.statusbar = toga.Box(style=CSS(flex_direction='row'))
         self.statusbar.add(self.run_status)
+        self.statusbar.add(self.run_summary)
 
-        # TODO uncomment this after correct the issue #167
-        # self.content.add(self.statusbar)
+        # TODO add run status, summary input text readonly and progress values
 
-        # TODO add run status, summary and progress values
+    def _setup_init_values(self):
+        "Update the layout with the initial values."
+        # Get a count of active tests to display in the status bar.
+        count, labels = self.project.find_tests(True)
+        self.run_summary.text = 'T:%s P:0 F:0 E:0 X:0 U:0 S:0' % count
+
+        # Update the project to make sure coverage status matches the GUI
+        self.on_coverageChange()
 
     ######################################################
     # Utility methods for inspecting current GUI state
@@ -400,11 +411,42 @@ class MainWindow(toga.App):
         return self._project
 
     def _add_test_module(self, parentNode, testModule):
+        # TODO tree widget
+        # testModule_node = self.all_tests_tree.insert(
+        #     parentNode, 'end', testModule.path,
+        #     text=testModule.name,
+        #     tags=['TestModule', 'active'],
+        #     open=True)
+        #
+        # for subModuleName, subModule in sorted(testModule.items()):
+        #     if isinstance(subModule, TestModule):
+        #         self._add_test_module(testModule_node, subModule)
+        #     else:
+        #         testCase = subModule
+        #         testCase_node = self.all_tests_tree.insert(
+        #             testModule_node, 'end', testCase.path,
+        #             text=testCase.name,
+        #             tags=['TestCase', 'active'],
+        #             open=True
+        #         )
+        #
+        #         for testMethod_name, testMethod in sorted(testCase.items()):
+        #             self.all_tests_tree.insert(
+        #                 testCase_node, 'end', testMethod.path,
+        #                 text=testMethod.name,
+        #                 tags=['TestMethod', 'active'],
+        #                 open=True
+        #             )
         pass
 
     @project.setter
     def project(self, project):
         self._project = project
+
+        # Populate the initial tree nodes. This is recursive, because
+        # the tree could be of arbitrary depth.
+        for testModule_name, testModule in sorted(project.items()):
+            self._add_test_module('', testModule)
 
         # Listen for any state changes on nodes in the tree
         TestModule.bind('active', self.on_nodeActive)
@@ -544,7 +586,7 @@ class MainWindow(toga.App):
         "Event handler: a node on the tree has received a status update"
         pass
 
-    def on_coverageChange(self, status):
+    def on_coverageChange(self):
         "Event handler: when the coverage checkbox has been toggled"
         self.coverage = not self.coverage
         self.project.coverage = self.coverage == True
@@ -552,25 +594,94 @@ class MainWindow(toga.App):
     def on_testProgress(self):
         "Event handler: a periodic update to poll the runner for output, generating GUI updates"
         if self.executor and self.executor.poll():
-            self.root.after(100, self.on_testProgress)
+            # TODO update layout every 100 ms
+            pass
+            # self.root.after(100, self.on_testProgress)
 
     def on_executorStatusUpdate(self, event, update):
         "The executor has some progress to report"
         # Update the status line.
-        self.run_status.set(update)
+        self.run_status.text = update
 
     def on_executorTestStart(self, event, test_path):
         "The executor has started running a new test."
         # Update status line, and set the tree item to active.
-        self.run_status.set('Running %s...' % test_path)
+        self.run_status.text = 'Running %s...' % test_path
 
     def on_executorTestEnd(self, event, test_path, result, remaining_time):
         "The executor has finished running a test."
+        # TODO update progress bar
         # Update the progress meter
-        pass
+        # self.progress_value.set(self.progress_value.get() + 1)
+
+        # Update the run summary
+        self.run_summary.text = 'T:%(total)s P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s, ~%(remaining)s remaining' % {
+            'total': self.executor.total_count,
+            'pass': self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
+            'fail': self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
+            'error': self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
+            'expected': self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
+            'unexpected': self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
+            'skip': self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
+            'remaining': remaining_time
+        }
+
+        # If the test that just fininshed is the one (and only one)
+        # selected on the tree, update the display.
+        current_tree = self.current_test_tree
+        if len(current_tree.selection()) == 1:
+            # One test selected.
+            if current_tree.selection()[0] == test_path:
+                # If the test that just finished running is the selected
+                # test, force reset the selection, which will generate a
+                # selection event, forcing a refresh of the result page.
+                current_tree.selection_set(current_tree.selection())
+        else:
+            # No or Multiple tests selected
+            # TODO update text input readonly
+            # self.name.set('')
+            # self.test_status.set('')
+            #
+            # self.duration.set('')
+            # self.description.delete('1.0', END)
+
+            self._hide_test_output()
+            self._hide_test_errors()
 
     def on_executorSuiteEnd(self, event, error=None):
         "The test suite finished running."
+        # Display the final results
+        self.run_status.text = 'Finished.'
+
+        if error:
+            # TODO update dialog error
+            pass
+
+        if self.executor.any_failed:
+            # TODO update dialog error
+            pass
+        else:
+            # TODO update dialog error
+            pass
+
+        message = ', '.join(
+            '%d %s' % (count, TestMethod.STATUS_LABELS[state])
+            for state, count in sorted(self.executor.result_count.items()))
+
+        # TODO update dialog message error
+        # dialog(message=message or 'No tests were ran')
+
+        # Reset the running summary.
+        self.run_summary.text = 'T:%(total)s P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s' % {
+            'total': self.executor.total_count,
+            'pass': self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
+            'fail': self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
+            'error': self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
+            'expected': self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
+            'unexpected': self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
+            'skip': self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
+        }
+
         # Reset the buttons
         self.reset_button_states_on_end()
 
@@ -579,6 +690,11 @@ class MainWindow(toga.App):
 
     def on_executorSuiteError(self, event, error):
         "An error occurred running the test suite."
+        # Display the error in a dialog
+        self.run_status.text = 'Error running test suite.'
+
+        # TODO update dialog error
+
         # Reset the buttons
         self.reset_button_states_on_end()
 
@@ -617,13 +733,16 @@ class MainWindow(toga.App):
             be executed
         """
         count, labels = self.project.find_tests(active, status, labels)
+        self.run_status.text = 'Running...'
+        self.run_summary.text = 'T:%s P:0 F:0 E:0 X:0 U:0 S:0' % count
 
         self.stop_button.enabled = True
         self.run_all_button.enabled = False
         self.run_selected_button.enabled = False
         self.rerun_button.enabled = False
 
-        self.progress['maximum'] = count
+        # TODO progress bar
+        # self.progress['maximum'] = count
 
         # Create the runner
         self.executor = Executor(self.project, count, labels)
@@ -631,27 +750,30 @@ class MainWindow(toga.App):
     def stop(self):
         "Stop the test suite."
         if self.executor and self.executor.is_running:
+            self.run_status.text = 'Stopping...'
 
             self.executor.terminate()
             self.executor = None
+
+            self.run_status.text = 'Stopped.'
 
             self.reset_button_states_on_end()
 
     def _hide_test_output(self):
         "Hide the test output panel on the test results page"
-        self.right_box.hide(self.output_box)
+        self.output_box.hide()
 
     def _show_test_output(self, content):
         "Show the test output panel on the test results page"
-        self.right_box.show(self.output_box)
+        self.output_box.show()
 
     def _hide_test_errors(self):
         "Hide the test error panel on the test results page"
-        self.right_box.hide(self.error_box)
+        self.error_box.hide()
 
     def _show_test_errors(self, content):
         "Show the test error panel on the test results page"
-        self.right_box.show(self.error_box)
+        self.error_box.show()
 
     def _check_errors_status(self):
         """Checks if the model or the project have errors.
