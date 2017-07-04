@@ -306,18 +306,25 @@ class MainWindow(toga.App):
         label_sample = lambda text: toga.Label(text,
                                     alignment=toga.RIGHT_ALIGNED,
                                     style=CSS(width=80, margin_right=10))
-        text_input_sample = toga.TextInput(readonly=True, style=CSS(flex=1))
+        text_input_sample = lambda text: toga.TextInput(readonly=True,
+                                                        style=CSS(flex=1),
+                                                        initial=text)
+        # text_input_scroll_sample = toga.MultilineTextInput(style=CSS(flex=1))
+
+        # Stub to put on the TextInput readonly tests details when start
+        self.name = self.duration = ''
 
         # Box to put the name of the test
         self.name_box = toga.Box(style=CSS(flex_direction='row', margin=5))
         # Label to indicate that the next input text it will be the name
         self.name_label = label_sample('Name:')
         # Text input to show the name of the test
-        self.name_input = text_input_sample
+        self.name_input = text_input_sample(self.name)
         # Insert the name box objects
         self.name_box.add(self.name_label)
         self.name_box.add(self.name_input)
 
+        # TODO wait fix issue 175
         # self.test_status = toga.Label('.', alignment=toga.LEFT_ALIGNED,
         #                                 style=CSS(width=100, height=50,
         #                                 margin_left=10))
@@ -332,30 +339,42 @@ class MainWindow(toga.App):
         self.duration_box = toga.Box(style=CSS(flex_direction='row', margin=5))
         # Label to indicate the test duration
         self.duration_label = label_sample('Duration:')
+        # Text input to show the test duration
+        self.duration_input = text_input_sample(self.duration)
         # Insert the test duration box objects
         self.duration_box.add(self.duration_label)
+        self.duration_box.add(self.duration_input)
 
         # Box to put the test description
         self.description_box = toga.Box(style=CSS(flex_direction='row',
                                                 margin=5))
         # Label to indicate the test description
         self.description_label = label_sample('Description:')
+        # Text input to show the test description
+        self.description_input = text_input_sample('')
         # Insert the test description box objects
         self.description_box.add(self.description_label)
+        self.description_box.add(self.description_input)
 
         # Box to put the test output
         self.output_box = toga.Box(style=CSS(flex_direction='row', margin=5))
         # Label to indicate the test output
         self.output_label = label_sample('Output:')
+        # Text input to show the test output
+        self.output_input = text_input_sample('')
         # Insert the test output box objects
         self.output_box.add(self.output_label)
+        self.output_box.add(self.output_input)
 
         # Box to put the test error
         self.error_box = toga.Box(style=CSS(flex_direction='row', margin=5))
         # Label to indicate the test error
         self.error_label = label_sample('Error:')
+        # Text input to show the test error
+        self.error_input = text_input_sample('')
         # Insert the test error box objects
         self.error_box.add(self.error_label)
+        self.error_box.add(self.error_input)
 
         # Insert the right box contents
         self.right_box.add(self.coverage_checkbox)
@@ -364,8 +383,6 @@ class MainWindow(toga.App):
         self.right_box.add(self.description_box)
         self.right_box.add(self.output_box)
         self.right_box.add(self.error_box)
-
-        # TODO duration, description, output and error readonly text input
 
     def _setup_status_bar(self):
         '''
