@@ -309,17 +309,16 @@ class MainWindow(toga.App):
         text_input_sample = lambda text: toga.TextInput(readonly=True,
                                                         style=CSS(flex=1),
                                                         initial=text)
-        # text_input_scroll_sample = toga.MultilineTextInput(style=CSS(flex=1))
-
-        # Stub to put on the TextInput readonly tests details when start
-        self.name = self.duration = ''
+        text_input_scroll_sample = lambda text: \
+                                toga.MultilineTextInput(style=CSS(flex=1),
+                                                        initial=text)
 
         # Box to put the name of the test
         self.name_box = toga.Box(style=CSS(flex_direction='row', margin=5))
         # Label to indicate that the next input text it will be the name
         self.name_label = label_sample('Name:')
         # Text input to show the name of the test
-        self.name_input = text_input_sample(self.name)
+        self.name_input = text_input_sample('')
         # Insert the name box objects
         self.name_box.add(self.name_label)
         self.name_box.add(self.name_input)
@@ -340,8 +339,7 @@ class MainWindow(toga.App):
         # Label to indicate the test duration
         self.duration_label = label_sample('Duration:')
         # Text input to show the test duration
-        self.duration_input = text_input_sample(self.duration)
-        # Insert the test duration box objects
+        self.duration_input = text_input_sample('')
         self.duration_box.add(self.duration_label)
         self.duration_box.add(self.duration_input)
 
@@ -351,7 +349,7 @@ class MainWindow(toga.App):
         # Label to indicate the test description
         self.description_label = label_sample('Description:')
         # Text input to show the test description
-        self.description_input = text_input_sample('')
+        self.description_input = text_input_scroll_sample('')
         # Insert the test description box objects
         self.description_box.add(self.description_label)
         self.description_box.add(self.description_input)
@@ -361,7 +359,7 @@ class MainWindow(toga.App):
         # Label to indicate the test output
         self.output_label = label_sample('Output:')
         # Text input to show the test output
-        self.output_input = text_input_sample('')
+        self.output_input = text_input_scroll_sample('')
         # Insert the test output box objects
         self.output_box.add(self.output_label)
         self.output_box.add(self.output_input)
@@ -371,7 +369,7 @@ class MainWindow(toga.App):
         # Label to indicate the test error
         self.error_label = label_sample('Error:')
         # Text input to show the test error
-        self.error_input = text_input_sample('')
+        self.error_input = text_input_scroll_sample('')
         # Insert the test error box objects
         self.error_box.add(self.error_label)
         self.error_box.add(self.error_input)
@@ -568,6 +566,13 @@ class MainWindow(toga.App):
 
     def on_testModuleSelected(self, event):
         "Event handler: a test module has been selected in the tree"
+        self.name_input.clear()
+        self.duration_input.clear()
+        self.description_input.clear()
+
+        # TODO wait fix issue 175
+        # self.test_status.set('')
+
         self._hide_test_output()
         self._hide_test_errors()
 
@@ -576,6 +581,13 @@ class MainWindow(toga.App):
 
     def on_testCaseSelected(self, event):
         "Event handler: a test case has been selected in the tree"
+        self.name_input.clear()
+        self.duration_input.clear()
+        self.description_input.clear()
+
+        # TODO wait fix issue 175
+        # self.test_status.set('')
+
         self._hide_test_output()
         self._hide_test_errors()
 
@@ -584,29 +596,91 @@ class MainWindow(toga.App):
 
     def on_testMethodSelected(self, event):
         "Event handler: a test case has been selected in the tree"
+        "Event handler: a test case has been selected in the tree"
+        if len(event.widget.selection()) == 1:
+            parts = event.widget.selection()[0].split('.')
+
+            # Find the definition for the actual test method
+            # out of the project.
+            testMethod = self.project
+            for part in parts:
+                testMethod = testMethod[part]
+
+            self.name_input.value = testMethod.path
+
+            self.description.clear()
+            self.description.value += testMethod.description
+
+            config = STATUS.get(testMethod.status, STATUS_DEFAULT)
+            # TODO wait fix issue 175
+            # self.test_status_widget.config(foreground=config['color'])
+            # self.test_status.set(config['symbol'])
+
+            if testMethod._result:
+                # Test has been executed
+                self.duration.value = '%0.2fs' % testMethod._result['duration']
+
+                if testMethod.output:
+                    self._show_test_output(testMethod.output)
+                else:
+                    self._hide_test_output()
+
+                if testMethod.error:
+                    self._show_test_errors(testMethod.error)
+                else:
+                    self._hide_test_errors()
+            else:
+                # Test hasn't been executed yet.
+                self.duration.value = 'Not executed'
+
+                self._hide_test_output()
+                self._hide_test_errors()
+
+        else:
+            # Multiple tests selected
+            self.name.clear()
+            self.duration.clear()
+            self.description.clear()
+
+            # TODO wait fix issue 175
+            # self.test_status.set('')
+
+            self._hide_test_output()
+            self._hide_test_errors()
+
         # update "run selected" button enabled state
         self.set_selected_button_state()
 
     def on_nodeAdded(self, node):
         "Event handler: a new node has been added to the tree"
+        # TODO on tree widget part
         pass
 
     def on_nodeActive(self, node):
         "Event handler: a node on the tree has been made active"
+        # TODO on tree widget part
         pass
 
     def on_nodeInactive(self, node):
         "Event handler: a node on the tree has been made inactive"
+        # TODO on tree widget part
         pass
 
     def on_nodeStatusUpdate(self, node):
         "Event handler: a node on the tree has received a status update"
+        # TODO on tree widget part
         pass
 
-    def on_coverageChange(self):
+    def on_coverageChange(self, event=None):
         "Event handler: when the coverage checkbox has been toggled"
         self.coverage = not self.coverage
         self.project.coverage = self.coverage == True
+        if self.coverage:
+            self._hide_test_output()
+            self._hide_test_errors()
+        else:
+            self._show_test_output('olar')
+            self._show_test_errors('olar')
 
     def on_testProgress(self):
         "Event handler: a periodic update to poll the runner for output, generating GUI updates"
@@ -645,25 +719,26 @@ class MainWindow(toga.App):
 
         # If the test that just fininshed is the one (and only one)
         # selected on the tree, update the display.
-        current_tree = self.current_test_tree
-        if len(current_tree.selection()) == 1:
-            # One test selected.
-            if current_tree.selection()[0] == test_path:
-                # If the test that just finished running is the selected
-                # test, force reset the selection, which will generate a
-                # selection event, forcing a refresh of the result page.
-                current_tree.selection_set(current_tree.selection())
-        else:
-            # No or Multiple tests selected
-            # TODO update text input readonly
-            # self.name.set('')
-            # self.test_status.set('')
-            #
-            # self.duration.set('')
-            # self.description.delete('1.0', END)
+        # TODO on tree widget part
+        # current_tree = self.current_test_tree
+        # if len(current_tree.selection()) == 1:
+        #     # One test selected.
+        #     if current_tree.selection()[0] == test_path:
+        #         # If the test that just finished running is the selected
+        #         # test, force reset the selection, which will generate a
+        #         # selection event, forcing a refresh of the result page.
+        #         current_tree.selection_set(current_tree.selection())
+        # else:
+        # No or Multiple tests selected
+        self.name.clear()
+        self.duration.clear()
+        self.description.clear()
 
-            self._hide_test_output()
-            self._hide_test_errors()
+        # TODO wait fix issue 175
+        # self.test_status.set('')
+
+        self._hide_test_output()
+        self._hide_test_errors()
 
     def on_executorSuiteEnd(self, event, error=None):
         "The test suite finished running."
@@ -782,6 +857,7 @@ class MainWindow(toga.App):
 
     def _show_test_output(self, content):
         "Show the test output panel on the test results page"
+        self.output_input.value = content
         self.output_box.show()
 
     def _hide_test_errors(self):
@@ -790,6 +866,7 @@ class MainWindow(toga.App):
 
     def _show_test_errors(self, content):
         "Show the test error panel on the test results page"
+        self.error_input.value = content
         self.error_box.show()
 
     def _check_errors_status(self):
