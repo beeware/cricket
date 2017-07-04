@@ -703,9 +703,8 @@ class MainWindow(toga.App):
 
     def on_executorTestEnd(self, event, test_path, result, remaining_time):
         "The executor has finished running a test."
-        # TODO update progress bar
         # Update the progress meter
-        # self.progress_value.set(self.progress_value.get() + 1)
+        self.progress.value += 1
 
         # Update the run summary
         self.run_summary.text = 'T:%(total)s P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s, ~%(remaining)s remaining' % {
@@ -835,8 +834,8 @@ class MainWindow(toga.App):
         self.run_selected_button.enabled = False
         self.rerun_button.enabled = False
 
-        # TODO progress bar
-        # self.progress['maximum'] = count
+        self.progress.max = count
+        self.progress.value = 0
 
         # Create the runner
         self.executor = Executor(self.project, count, labels)
