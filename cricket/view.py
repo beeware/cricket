@@ -393,11 +393,13 @@ class MainWindow(toga.App):
                                         alignment=toga.RIGHT_ALIGNED,
                                         style=CSS(width=200))
 
+        # Test progress
+        self.progress = toga.ProgressBar(max=100, value=0)
+
         self.statusbar = toga.Box(style=CSS(flex_direction='row'))
         self.statusbar.add(self.run_status)
         self.statusbar.add(self.run_summary)
-
-        # TODO add run status, summary input text readonly and progress values
+        self.statusbar.add(self.progress)
 
     def _setup_init_values(self):
         "Update the layout with the initial values."
