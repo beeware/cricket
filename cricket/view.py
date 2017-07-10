@@ -396,7 +396,9 @@ class MainWindow(toga.App):
         # Test progress
         self.progress = toga.ProgressBar(max=100, value=0)
 
-        self.statusbar = toga.Box(style=CSS(flex_direction='row'))
+        #TODO use flex direction row after fix the issue 195
+        # self.statusbar = toga.Box(style=CSS(flex_direction='row'))
+        self.statusbar = toga.Box()
         self.statusbar.add(self.run_status)
         self.statusbar.add(self.run_summary)
         self.statusbar.add(self.progress)
