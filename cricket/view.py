@@ -255,7 +255,7 @@ class MainWindow(toga.App):
         self._setup_right_frame()
 
         self.split_main_container = toga.SplitContainer()
-        self.split_main_container.content = [self.left_box, self.right_box]
+        self.split_main_container.content = [self.tree_notebook, self.right_box]
 
         # Main content area
         self.outer_split = toga.SplitContainer(direction =
@@ -271,7 +271,7 @@ class MainWindow(toga.App):
         all_tests_box = toga.Tree(['Tests'])
         problems_box = toga.Tree(['Problems'])
 
-        self.left_box = toga.OptionContainer(content=[
+        self.tree_notebook = toga.OptionContainer(content=[
                                                 ('All tests', all_tests_box),
                                                 ('Problems', problems_box)])
 
@@ -419,7 +419,13 @@ class MainWindow(toga.App):
     @property
     def current_test_tree(self):
         "Check the tree notebook to return the currently selected tree."
-        pass
+        current_tree_id = self.tree_notebook.selected
+        #TODO after tree widget
+        # if current_tree_id == self.problem_tests_tree_frame._w:
+        #     return self.problem_tests_tree
+        # else:
+        #     return self.all_tests_tree
+
 
     ######################################################
     # Handlers for setting a new project
@@ -679,12 +685,6 @@ class MainWindow(toga.App):
         "Event handler: when the coverage checkbox has been toggled"
         self.coverage = not self.coverage
         self.project.coverage = self.coverage == True
-        if self.coverage:
-            self._hide_test_output()
-            self._hide_test_errors()
-        else:
-            self._show_test_output('olar')
-            self._show_test_errors('olar')
 
     def on_testProgress(self):
         "Event handler: a periodic update to poll the runner for output, generating GUI updates"
