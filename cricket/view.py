@@ -436,6 +436,8 @@ class MainWindow(toga.App):
         # Update the project to make sure coverage status matches the GUI
         self.on_coverageChange()
 
+        self.populateTree()
+
     ######################################################
     # Utility methods for inspecting current GUI state
     ######################################################
@@ -454,47 +456,35 @@ class MainWindow(toga.App):
     # Handlers for setting a new project
     ######################################################
 
+    def populateTree(self):
+        # Populate the initial tree nodes. This is recursive, because
+        # the tree could be of arbitrary depth.
+        for testModule_name, testModule in sorted(self._project.items()):
+            self._add_test_module(None, testModule)
+
+    def _add_test_module(self, parentNode, testModule):
+        testModule_node = self.all_tests_tree.insert(parentNode, None,
+                                                    testModule.name)
+
+        for subModuleName, subModule in sorted(testModule.items()):
+            if isinstance(subModule, TestModule):
+                self._add_test_module(testModule_node, subModule)
+            else:
+                testCase = subModule
+                testCase_node = self.all_tests_tree.insert(
+                    testModule_node, None, testCase.name)
+
+                for testMethod_name, testMethod in sorted(testCase.items()):
+                    self.all_tests_tree.insert(
+                        testCase_node, None, testMethod.name)
+
     @property
     def project(self):
         return self._project
 
-    def _add_test_module(self, parentNode, testModule):
-        # TODO tree widget
-        # testModule_node = self.all_tests_tree.insert(
-        #     parentNode, 'end', testModule.path,
-        #     text=testModule.name,
-        #     tags=['TestModule', 'active'],
-        #     open=True)
-        #
-        # for subModuleName, subModule in sorted(testModule.items()):
-        #     if isinstance(subModule, TestModule):
-        #         self._add_test_module(testModule_node, subModule)
-        #     else:
-        #         testCase = subModule
-        #         testCase_node = self.all_tests_tree.insert(
-        #             testModule_node, 'end', testCase.path,
-        #             text=testCase.name,
-        #             tags=['TestCase', 'active'],
-        #             open=True
-        #         )
-        #
-        #         for testMethod_name, testMethod in sorted(testCase.items()):
-        #             self.all_tests_tree.insert(
-        #                 testCase_node, 'end', testMethod.path,
-        #                 text=testMethod.name,
-        #                 tags=['TestMethod', 'active'],
-        #                 open=True
-        #             )
-        pass
-
     @project.setter
     def project(self, project):
         self._project = project
-
-        # Populate the initial tree nodes. This is recursive, because
-        # the tree could be of arbitrary depth.
-        for testModule_name, testModule in sorted(project.items()):
-            self._add_test_module('', testModule)
 
         # Listen for any state changes on nodes in the tree
         TestModule.bind('active', self.on_nodeActive)
