@@ -268,19 +268,43 @@ class MainWindow(toga.App):
         '''
         The left frame mostly consists of the tree widget
         '''
-        all_tests_box = toga.Tree(['Tests'])
-        problems_box = toga.Tree(['Problems'])
+        self.all_tests_tree = toga.Tree(['Tests'])
+        self.problem_tests_tree = toga.Tree(['Problems'])
 
         self.tree_notebook = toga.OptionContainer(content=[
-                                                ('All tests', all_tests_box),
-                                                ('Problems', problems_box)])
+                                        ('All tests', self.all_tests_tree),
+                                        ('Problems', self.problem_tests_tree)])
 
     def _setup_all_tests_tree(self):
-        # TODO add tree widget to set all the tests tree
+        #TODO color feature on tree widget
+        # Set up the tag colors for tree nodes.
+        # for status, config in STATUS.items():
+        #     self.all_tests_tree.tag_configure(config['tag'], foreground=config['color'])
+        # self.all_tests_tree.tag_configure('inactive', foreground='lightgray')
+
+        #TODO binds on tree widget
+        # Listen for button clicks on tree nodes
+        # self.all_tests_tree.tag_bind('TestModule', '<Double-Button-1>', self.on_testModuleClicked)
+        # self.all_tests_tree.tag_bind('TestCase', '<Double-Button-1>', self.on_testCaseClicked)
+        # self.all_tests_tree.tag_bind('TestMethod', '<Double-Button-1>', self.on_testMethodClicked)
+        #
+        # self.all_tests_tree.tag_bind('TestModule', '<<TreeviewSelect>>', self.on_testModuleSelected)
+        # self.all_tests_tree.tag_bind('TestCase', '<<TreeviewSelect>>', self.on_testCaseSelected)
+        # self.all_tests_tree.tag_bind('TestMethod', '<<TreeviewSelect>>', self.on_testMethodSelected)
         pass
 
     def _setup_problem_tests_tree(self):
-        # TODO add tree widget to set all the problems tests tree
+        #TODO color feature on tree widget
+        # Set up the tag colors for tree nodes.
+        # for status, config in STATUS.items():
+        #     self.problem_tests_tree.tag_configure(config['tag'], foreground=config['color'])
+        # self.problem_tests_tree.tag_configure('inactive', foreground='lightgray')
+
+        #TODO binds on tree widget
+        # Problem tree only deals with selection, not clicks.
+        # self.problem_tests_tree.tag_bind('TestModule', '<<TreeviewSelect>>', self.on_testModuleSelected)
+        # self.problem_tests_tree.tag_bind('TestCase', '<<TreeviewSelect>>', self.on_testCaseSelected)
+        # self.problem_tests_tree.tag_bind('TestMethod', '<<TreeviewSelect>>', self.on_testMethodSelected)
         pass
 
     def _setup_right_frame(self):
@@ -419,12 +443,11 @@ class MainWindow(toga.App):
     @property
     def current_test_tree(self):
         "Check the tree notebook to return the currently selected tree."
-        current_tree_id = self.tree_notebook.selected
-        #TODO after tree widget
-        # if current_tree_id == self.problem_tests_tree_frame._w:
-        #     return self.problem_tests_tree
-        # else:
-        #     return self.all_tests_tree
+        current_tree = self.tree_notebook.selected['label']
+        if current_tree == 'Problems':
+            return self.problem_tests_tree
+        else:
+            return self.all_tests_tree
 
 
     ######################################################
