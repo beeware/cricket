@@ -676,7 +676,9 @@ class MainWindow(toga.App):
 
     def on_nodeAdded(self, node):
         "Event handler: a new node has been added to the tree"
-        # TODO on tree widget part
+        # TODO find a way to pass the path and find the parent node
+        # self.all_tests_tree.insert(
+            # node.parent.path, None, node.name)
         pass
 
     def on_nodeActive(self, node):
@@ -843,6 +845,8 @@ class MainWindow(toga.App):
         count, labels = self.project.find_tests(active, status, labels)
         self.run_status.text = 'Running...'
         self.run_summary.text = 'T:%s P:0 F:0 E:0 X:0 U:0 S:0' % count
+
+        self.all_tests_tree.setIcon(ICONS_DIR+'wait.png')
 
         self.stop_button.enabled = True
         self.run_all_button.enabled = False
