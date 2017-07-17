@@ -463,8 +463,13 @@ class MainWindow(toga.App):
             self._add_test_module(None, testModule)
 
     def _add_test_module(self, parentNode, testModule):
-        testModule_node = self.all_tests_tree.insert(parentNode, None,
-                                                    testModule.name)
+        if parentNode:
+            node_id = parentNode.id
+        else:
+            node_id = None
+
+        testModule_node = self.all_tests_tree.insert(testModule.name,
+                                                    node_id)
 
         for subModuleName, subModule in sorted(testModule.items()):
             if isinstance(subModule, TestModule):
@@ -472,11 +477,11 @@ class MainWindow(toga.App):
             else:
                 testCase = subModule
                 testCase_node = self.all_tests_tree.insert(
-                    testModule_node, None, testCase.name)
+                    testCase.name, testModule_node.id)
 
                 for testMethod_name, testMethod in sorted(testCase.items()):
                     self.all_tests_tree.insert(
-                        testCase_node, None, testMethod.name)
+                        testMethod.name, testCase_node.id)
 
     @property
     def project(self):
@@ -676,10 +681,7 @@ class MainWindow(toga.App):
 
     def on_nodeAdded(self, node):
         "Event handler: a new node has been added to the tree"
-        # TODO find a way to pass the path and find the parent node
-        # self.all_tests_tree.insert(
-            # node.parent.path, None, node.name)
-        pass
+        self.all_tests_tree.insert(node.name, node.id)
 
     def on_nodeActive(self, node):
         "Event handler: a node on the tree has been made active"
@@ -846,7 +848,8 @@ class MainWindow(toga.App):
         self.run_status.text = 'Running...'
         self.run_summary.text = 'T:%s P:0 F:0 E:0 X:0 U:0 S:0' % count
 
-        self.all_tests_tree.setIcon(ICONS_DIR+'wait.png')
+        print(self.all_tests_tree.tree)
+        # self.all_tests_tree.setIcon(ICONS_DIR+'wait.png')
 
         self.stop_button.enabled = True
         self.run_all_button.enabled = False
