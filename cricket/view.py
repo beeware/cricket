@@ -848,8 +848,10 @@ class MainWindow(toga.App):
         self.run_status.text = 'Running...'
         self.run_summary.text = 'T:%s P:0 F:0 E:0 X:0 U:0 S:0' % count
 
-        print(self.all_tests_tree.tree)
-        # self.all_tests_tree.setIcon(ICONS_DIR+'wait.png')
+        for ids, node in self.all_tests_tree.tree.items():
+            node.set_icon = ICONS_DIR+'wait.png'
+
+        self.all_tests_tree.apply_layout()
 
         self.stop_button.enabled = True
         self.run_all_button.enabled = False
