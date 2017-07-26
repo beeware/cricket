@@ -411,18 +411,18 @@ class MainWindow(toga.App):
         The bottom frame to inform the user about the status of the tests that are running. It is a persistent GUI component
         '''
 
-        self.run_status = toga.Label('Not running')
+        self.run_status = toga.Label('Not running', style=CSS(margin_left=50))
 
         self.run_summary = toga.Label('T:0 P:0 F:0 E:0 X:0 U:0 S:0',
                                         alignment=toga.RIGHT_ALIGNED,
                                         style=CSS(width=200))
 
         # Test progress
-        self.progress = toga.ProgressBar(max=100, value=0)
+        self.progress = toga.ProgressBar(max=100, value=0,
+                                        style=CSS(margin_right=50))
 
-        #TODO use flex direction row after fix the issue 195
-        # self.statusbar = toga.Box(style=CSS(flex_direction='row'))
-        self.statusbar = toga.Box()
+        self.statusbar = toga.Box(style=CSS(flex_direction='row',
+                                            justify_content='space-between'))
         self.statusbar.add(self.run_status)
         self.statusbar.add(self.run_summary)
         self.statusbar.add(self.progress)
@@ -463,25 +463,27 @@ class MainWindow(toga.App):
             self._add_test_module(None, testModule)
 
     def _add_test_module(self, parentNode, testModule):
-        if parentNode:
-            node_id = parentNode.id
-        else:
-            node_id = None
-
-        testModule_node = self.all_tests_tree.insert(testModule.name,
-                                                    node_id)
-
-        for subModuleName, subModule in sorted(testModule.items()):
-            if isinstance(subModule, TestModule):
-                self._add_test_module(testModule_node, subModule)
-            else:
-                testCase = subModule
-                testCase_node = self.all_tests_tree.insert(
-                    testCase.name, testModule_node.id)
-
-                for testMethod_name, testMethod in sorted(testCase.items()):
-                    self.all_tests_tree.insert(
-                        testMethod.name, testCase_node.id)
+        # TODO wait new tree api
+        # if parentNode:
+        #     node_id = parentNode.id
+        # else:
+        #     node_id = None
+        #
+        # testModule_node = self.all_tests_tree.insert(testModule.name,
+        #                                             node_id)
+        #
+        # for subModuleName, subModule in sorted(testModule.items()):
+        #     if isinstance(subModule, TestModule):
+        #         self._add_test_module(testModule_node, subModule)
+        #     else:
+        #         testCase = subModule
+        #         testCase_node = self.all_tests_tree.insert(
+        #             testCase.name, testModule_node.id)
+        #
+        #         for testMethod_name, testMethod in sorted(testCase.items()):
+        #             self.all_tests_tree.insert(
+        #                 testMethod.name, testCase_node.id)
+        pass
 
     @property
     def project(self):
@@ -681,7 +683,8 @@ class MainWindow(toga.App):
 
     def on_nodeAdded(self, node):
         "Event handler: a new node has been added to the tree"
-        self.all_tests_tree.insert(node.name, node.id)
+        # TODO wait tree api
+        # self.all_tests_tree.insert(node.name, node.id)
 
     def on_nodeActive(self, node):
         "Event handler: a node on the tree has been made active"
@@ -848,10 +851,11 @@ class MainWindow(toga.App):
         self.run_status.text = 'Running...'
         self.run_summary.text = 'T:%s P:0 F:0 E:0 X:0 U:0 S:0' % count
 
-        for ids, node in self.all_tests_tree.tree.items():
-            node.set_icon = ICONS_DIR+'wait.png'
-
-        self.all_tests_tree.apply_layout()
+        # TODO wait tree api
+        # for ids, node in self.all_tests_tree.tree.items():
+        #     node.set_icon = ICONS_DIR+'wait.png'
+        #
+        # self.all_tests_tree.apply_layout()
 
         self.stop_button.enabled = True
         self.run_all_button.enabled = False
