@@ -598,7 +598,7 @@ class MainWindow(toga.App):
         "Event handler: a test module has been selected in the tree"
         self.name_input.clear()
         self.duration_input.clear()
-        self.description_input.value = ''
+        self.description_input.clear()
 
         # TODO wait fix issue 175
         # self.test_status.set('')
@@ -613,7 +613,7 @@ class MainWindow(toga.App):
         "Event handler: a test case has been selected in the tree"
         self.name_input.clear()
         self.duration_input.clear()
-        self.description_input.value = ''
+        self.description_input.clear()
 
         # TODO wait fix issue 175
         # self.test_status.set('')
@@ -669,7 +669,7 @@ class MainWindow(toga.App):
             # Multiple tests selected
             self.name_input.clear()
             self.duration_input.clear()
-            self.description_input.value = ''
+            self.description_input.clear()
 
             # TODO wait fix issue 175
             # self.test_status.set('')
@@ -754,7 +754,7 @@ class MainWindow(toga.App):
         # No or Multiple tests selected
         self.name_input.clear()
         self.duration_input.clear()
-        self.description_input.value = ''
+        self.description_input.clear()
 
         # TODO wait fix issue 175
         # self.test_status.set('')
