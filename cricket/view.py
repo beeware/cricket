@@ -254,15 +254,13 @@ class MainWindow(toga.App):
         # Create the output/viewer area on the right frame
         self._setup_right_frame()
 
-        self.split_main_container = toga.SplitContainer()
+        self.split_main_container = toga.SplitContainer(style=CSS(height=720))
         self.split_main_container.content = [self.tree_notebook, self.right_box]
 
         # Main content area
-        self.outer_split = toga.SplitContainer(direction =
-                                            toga.SplitContainer.HORIZONTAL)
-        self.outer_split.content = [self.split_main_container, self.statusbar]
-
-        self.content = self.outer_split
+        self.outer_box = toga.Box(children=[self.split_main_container,
+                                            self.statusbar])
+        self.content = self.outer_box
 
     def _setup_left_frame(self):
         '''
