@@ -473,8 +473,6 @@ class MainWindow(toga.App):
         # Update the project to make sure coverage status matches the GUI
         self.on_coverageChange()
 
-        self.populateTree()
-
     ######################################################
     # Utility methods for inspecting current GUI state
     ######################################################
@@ -492,35 +490,6 @@ class MainWindow(toga.App):
     ######################################################
     # Handlers for setting a new project
     ######################################################
-
-    def populateTree(self):
-        # Populate the initial tree nodes. This is recursive, because
-        # the tree could be of arbitrary depth.
-        for testModule_name, testModule in sorted(self._project.items()):
-            self._add_test_module(None, testModule)
-
-    def _add_test_module(self, parentNode, testModule):
-        # TODO wait new tree api
-        # if parentNode:
-        #     node_id = parentNode.id
-        # else:
-        #     node_id = None
-        #
-        # testModule_node = self.all_tests_tree.insert(testModule.name,
-        #                                             node_id)
-        #
-        # for subModuleName, subModule in sorted(testModule.items()):
-        #     if isinstance(subModule, TestModule):
-        #         self._add_test_module(testModule_node, subModule)
-        #     else:
-        #         testCase = subModule
-        #         testCase_node = self.all_tests_tree.insert(
-        #             testCase.name, testModule_node.id)
-        #
-        #         for testMethod_name, testMethod in sorted(testCase.items()):
-        #             self.all_tests_tree.insert(
-        #                 testMethod.name, testCase_node.id)
-        pass
 
     @property
     def project(self):
