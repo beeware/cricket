@@ -73,7 +73,42 @@ STATUS_DEFAULT = {
     'color': '#BFBFBF',
 }
 
+class TestsTreeStructure:
+    def __init__(self, data, visualization=None):
+        self.content = data
+        self.visualization = visualization
 
+    def _search_node_on_project(self, branch, text):
+        for key, item in branch.items():
+            if not isinstance(item, TestMethod):
+                if key == text:
+                    return item
+
+                search_next_node = self._search_node_on_project(item, text)
+                if search_next_node is not None:
+                    return search_next_node
+
+    def _search_node(self, node):
+        return self._search_node_on_project(self.content, node.data['text'])
+
+class TogaDataSource:
+    def __init__(self, data):
+        self._source = data
+
+    def roots(self):
+        return [item for item in self._source.content.keys()]
+
+    def children(self, node):
+        node_found = self._source._search_node(node)
+        if node_found != None:
+            return [child for child in node_found.keys()]
+        return []
+
+    def is_collapsed(self, node):
+        node_text = node.data['text']
+        display = self._source.visualization
+        if display is not None:
+            return True if node_text in display['collapse'] else False
 
 class MainWindow(toga.App):
     def startup(self):
@@ -266,7 +301,11 @@ class MainWindow(toga.App):
         '''
         The left frame mostly consists of the tree widget
         '''
-        self.all_tests_tree = toga.Tree(['Tests'])
+        self.tests_tree_data = TestsTreeStructure(data=self.project)
+
+        self.all_tests_tree = toga.Tree(['Tests'], data=TogaDataSource(self.tests_tree_data))
+
+        # TODO toga data source for problems
         self.problem_tests_tree = toga.Tree(['Problems'])
 
         self.tree_notebook = toga.OptionContainer(content=[
