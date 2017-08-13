@@ -774,22 +774,17 @@ class MainWindow(toga.App):
         self.run_status.text = 'Finished.'
 
         if error:
-            # TODO update dialog error
-            pass
-
-        if self.executor.any_failed:
-            # TODO update dialog error
-            pass
-        else:
-            # TODO update dialog error
-            pass
+            self.main_window.error_dialog('Result', error)
 
         message = ', '.join(
             '%d %s' % (count, TestMethod.STATUS_LABELS[state])
             for state, count in sorted(self.executor.result_count.items()))
 
-        # TODO update dialog message error
-        # dialog(message=message or 'No tests were ran')
+        if self.executor.any_failed:
+            self.main_window.error_dialog('Result', message)
+        else:
+            self.main_window.info_dialog('Result',
+                                message=message or 'No tests were ran')
 
         # Reset the running summary.
         self.run_summary.text = 'T:%(total)s P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s' % {
@@ -813,7 +808,7 @@ class MainWindow(toga.App):
         # Display the error in a dialog
         self.run_status.text = 'Error running test suite.'
 
-        # TODO update dialog error
+        FailedTestDialog(self, error)
 
         # Reset the buttons
         self.reset_button_states_on_end()
@@ -968,7 +963,6 @@ class FailedTestDialog(StackTraceDialog):
             'Error running test suite',
             'The following stack trace was generated when attempting to run the test suite:',
             trace,
-            False,
         )
 
 class TestErrorsDialog(StackTraceDialog):
@@ -986,7 +980,6 @@ class TestErrorsDialog(StackTraceDialog):
             'Errors during test suite',
             ('The following errors were generated while running the test suite:'),
             trace,
-            False,
         )
 
 
@@ -1027,5 +1020,4 @@ class IgnorableTestLoadErrorDialog(StackTraceDialog):
             ('The following error where captured during test discovery '
              'but running the tests might still work:'),
             trace,
-            False,
         )
