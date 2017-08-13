@@ -303,7 +303,8 @@ class MainWindow(toga.App):
         '''
         self.tests_tree_data = TestsTreeStructure(data=self.project)
 
-        self.all_tests_tree = toga.Tree(['Tests'], data=TogaDataSource(self.tests_tree_data))
+        self.all_tests_tree = toga.Tree(['Tests'],
+                                    data=TogaDataSource(self.tests_tree_data))
 
         # TODO toga data source for problems
         self.problem_tests_tree = toga.Tree(['Problems'])
@@ -688,8 +689,7 @@ class MainWindow(toga.App):
 
     def on_nodeAdded(self, node):
         "Event handler: a new node has been added to the tree"
-        # TODO wait tree api
-        # self.all_tests_tree.insert(node.name, node.id)
+        self.all_tests_tree.update()
 
     def on_nodeActive(self, node):
         "Event handler: a node on the tree has been made active"
@@ -715,8 +715,8 @@ class MainWindow(toga.App):
         "Event handler: a periodic update to poll the runner for output, generating GUI updates"
         if self.executor and self.executor.poll():
             # TODO update layout every 100 ms
-            pass
             # self.root.after(100, self.on_testProgress)
+            pass
 
     def on_executorStatusUpdate(self, event, update):
         "The executor has some progress to report"
@@ -834,10 +834,11 @@ class MainWindow(toga.App):
     def set_selected_button_state(self):
         if self.executor and self.executor.is_running:
             self.run_selected_button.enabled = False
-        elif self.current_test_tree.selection():
-            self.run_selected_button.enabled = True
-        else:
-            self.run_selected_button.enabled = False
+        # TODO after method select on tree api
+        # elif self.current_test_tree.selection():
+        #     self.run_selected_button.enabled = True
+        # else:
+        #     self.run_selected_button.enabled = False
 
     ######################################################
     # GUI utility methods
@@ -872,6 +873,9 @@ class MainWindow(toga.App):
 
         # Create the runner
         self.executor = Executor(self.project, count, labels)
+
+        # Progress handling event
+        self.on_testProgress()
 
     def stop(self):
         "Stop the test suite."
