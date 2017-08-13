@@ -227,7 +227,7 @@ class Executor(EventSource):
                             # No active test; first line tells us which test is running.
                             pre = json.loads(line)
                         except ValueError:
-                            self.emit('suit_end')
+                            self.emit('suite_end')
                             return True
                         self.current_test = self.project.confirm_exists(pre['path'])
                         self.emit('test_start', test_path=pre['path'])
