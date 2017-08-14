@@ -78,18 +78,22 @@ class TestsTreeStructure:
         self.content = data
         self.visualization = visualization
 
-    def _search_node_on_project(self, branch, text):
-        for key, item in branch.items():
-            if not isinstance(item, TestMethod):
-                if key == text:
-                    return item
+    def search_node(self, text, branch=None, selection=False):
+        if branch is None:
+            branch = self.content
 
-                search_next_node = self._search_node_on_project(item, text)
+        if not isinstance(branch, TestMethod):
+            for key, item in branch.items():
+                if not selection:
+                    if isinstance(item, TestMethod):
+                        continue
+
+                if key == text:
+                    return None if selection and not isinstance(item, TestMethod) else item
+
+                search_next_node = self.search_node(text, item, selection)
                 if search_next_node is not None:
                     return search_next_node
-
-    def _search_node(self, node):
-        return self._search_node_on_project(self.content, node.data['text'])
 
 class TogaDataSource:
     def __init__(self, data):
@@ -99,7 +103,7 @@ class TogaDataSource:
         return [item for item in self._source.content.keys()]
 
     def children(self, node):
-        node_found = self._source._search_node(node)
+        node_found = self._source.search_node(node.data['text'])
         if node_found != None:
             return [child for child in node_found.keys()]
         return []
@@ -325,11 +329,8 @@ class MainWindow(toga.App):
         # self.all_tests_tree.tag_bind('TestModule', '<Double-Button-1>', self.on_testModuleClicked)
         # self.all_tests_tree.tag_bind('TestCase', '<Double-Button-1>', self.on_testCaseClicked)
         # self.all_tests_tree.tag_bind('TestMethod', '<Double-Button-1>', self.on_testMethodClicked)
-        #
-        # self.all_tests_tree.tag_bind('TestModule', '<<TreeviewSelect>>', self.on_testModuleSelected)
-        # self.all_tests_tree.tag_bind('TestCase', '<<TreeviewSelect>>', self.on_testCaseSelected)
-        # self.all_tests_tree.tag_bind('TestMethod', '<<TreeviewSelect>>', self.on_testMethodSelected)
-        pass
+
+        self.all_tests_tree.on_selection = self.on_testMethodSelected
 
     def _setup_problem_tests_tree(self):
         #TODO color feature on tree widget
@@ -338,12 +339,8 @@ class MainWindow(toga.App):
         #     self.problem_tests_tree.tag_configure(config['tag'], foreground=config['color'])
         # self.problem_tests_tree.tag_configure('inactive', foreground='lightgray')
 
-        #TODO binds on tree widget
         # Problem tree only deals with selection, not clicks.
-        # self.problem_tests_tree.tag_bind('TestModule', '<<TreeviewSelect>>', self.on_testModuleSelected)
-        # self.problem_tests_tree.tag_bind('TestCase', '<<TreeviewSelect>>', self.on_testCaseSelected)
-        # self.problem_tests_tree.tag_bind('TestMethod', '<<TreeviewSelect>>', self.on_testMethodSelected)
-        pass
+        self.problem_tests_tree.on_selection = self.on_testMethodSelected
 
     def _setup_right_frame(self):
         '''
@@ -601,51 +598,15 @@ class MainWindow(toga.App):
         "Event handler: a test case has been clicked in the tree"
         pass
 
-    def on_testModuleSelected(self, event):
-        "Event handler: a test module has been selected in the tree"
-        self.name_input.clear()
-        self.duration_input.clear()
-        self.description_input.clear()
-
-        # TODO wait fix issue 175
-        # self.test_status.set('')
-
-        self._hide_test_output()
-        self._hide_test_errors()
-
-        # update "run selected" button enabled state
-        self.set_selected_button_state()
-
-    def on_testCaseSelected(self, event):
+    def on_testMethodSelected(self, node):
         "Event handler: a test case has been selected in the tree"
-        self.name_input.clear()
-        self.duration_input.clear()
-        self.description_input.clear()
-
-        # TODO wait fix issue 175
-        # self.test_status.set('')
-
-        self._hide_test_output()
-        self._hide_test_errors()
-
-        # update "run selected" button enabled state
-        self.set_selected_button_state()
-
-    def on_testMethodSelected(self, event):
-        "Event handler: a test case has been selected in the tree"
-        "Event handler: a test case has been selected in the tree"
-        if len(event.widget.selection()) == 1:
-            parts = event.widget.selection()[0].split('.')
-
-            # Find the definition for the actual test method
-            # out of the project.
-            testMethod = self.project
-            for part in parts:
-                testMethod = testMethod[part]
-
+        # Find the definition for the actual test method out of the project
+        testMethod = self.tests_tree_data.search_node(node.data['text'],
+                                                        selection=True)
+        if testMethod is not None:
             self.name_input.value = testMethod.path
-
             self.description_input.value = testMethod.description
+
 
             config = STATUS.get(testMethod.status, STATUS_DEFAULT)
             # TODO wait fix issue 175
@@ -654,7 +615,7 @@ class MainWindow(toga.App):
 
             if testMethod._result:
                 # Test has been executed
-                self.duration.value = '%0.2fs' % testMethod._result['duration']
+                self.duration_input.value = '%0.2fs' % testMethod._result['duration']
 
                 if testMethod.output:
                     self._show_test_output(testMethod.output)
@@ -667,25 +628,26 @@ class MainWindow(toga.App):
                     self._hide_test_errors()
             else:
                 # Test hasn't been executed yet.
-                self.duration.value = 'Not executed'
+                self.duration_input.value = 'Not executed'
 
                 self._hide_test_output()
                 self._hide_test_errors()
 
-        else:
-            # Multiple tests selected
-            self.name_input.clear()
-            self.duration_input.clear()
-            self.description_input.clear()
+            # TODO multiple selections
+            # else:
+            #     # Multiple tests selected
+            #     self.name_input.clear()
+            #     self.duration_input.clear()
+            #     self.description_input.clear()
+            #
+            #     # TODO wait fix issue 175
+            #     # self.test_status.set('')
+            #
+            #     self._hide_test_output()
+            #     self._hide_test_errors()
 
-            # TODO wait fix issue 175
-            # self.test_status.set('')
-
-            self._hide_test_output()
-            self._hide_test_errors()
-
-        # update "run selected" button enabled state
-        self.set_selected_button_state()
+            # update "run selected" button enabled state
+            self.set_selected_button_state()
 
     def on_nodeAdded(self, node):
         "Event handler: a new node has been added to the tree"
