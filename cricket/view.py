@@ -75,44 +75,55 @@ STATUS_DEFAULT = {
 
 class TestsTreeStructure:
     def __init__(self, data, visualization=None):
-        self.content = data
+        self.data = data
         self.visualization = visualization
+
+    def roots(self):
+        if self.data:
+            return [item for item in self.data.keys()]
+        return []
 
     def search_node(self, text, branch=None, selection=False):
         if branch is None:
-            branch = self.content
+            branch = self.data
 
         if not isinstance(branch, TestMethod):
             for key, item in branch.items():
-                if not selection:
-                    if isinstance(item, TestMethod):
-                        continue
-
                 if key == text:
-                    return None if selection and not isinstance(item, TestMethod) else item
+                    if not selection:
+                        if isinstance(item, TestMethod):
+                            continue
+                        else:
+                            return self._make_data(item)
+                    elif selection and isinstance(item, TestMethod):
+                        return item
 
                 search_next_node = self.search_node(text, item, selection)
-                if search_next_node is not None:
+                if search_next_node:
                     return search_next_node
+        return []
+
+    def _make_data(self, children):
+        return [(child, None, True) for child in children.keys()]
 
 class TogaDataSource:
     def __init__(self, data):
         self._source = data
 
     def roots(self):
-        return [item for item in self._source.content.keys()]
+        return self._source.roots()
 
     def children(self, node):
-        node_found = self._source.search_node(node.data['text'])
-        if node_found != None:
-            return [child for child in node_found.keys()]
-        return []
+        # default data of a node
+        data = {'text': None,
+                'icon': None,
+                'collapsed': True}
 
-    def is_collapsed(self, node):
-        node_text = node.data['text']
-        display = self._source.visualization
-        if display is not None:
-            return True if node_text in display['collapse'] else False
+        # children is a list of tuples that contains text, icon and a bool that
+        #   indicates if the child is collapsed
+        children = self._source.search_node(node.data['text'])
+        return [{k : value for (k,v), value in zip(data.items(), child)} for
+        child in children]
 
 class MainWindow(toga.App):
     def startup(self):
@@ -603,7 +614,7 @@ class MainWindow(toga.App):
         # Find the definition for the actual test method out of the project
         testMethod = self.tests_tree_data.search_node(node.data['text'],
                                                         selection=True)
-        if testMethod is not None:
+        if testMethod:
             self.name_input.value = testMethod.path
             self.description_input.value = testMethod.description
 
@@ -633,21 +644,21 @@ class MainWindow(toga.App):
                 self._hide_test_output()
                 self._hide_test_errors()
 
-            # TODO multiple selections
-            # else:
-            #     # Multiple tests selected
-            #     self.name_input.clear()
-            #     self.duration_input.clear()
-            #     self.description_input.clear()
-            #
-            #     # TODO wait fix issue 175
-            #     # self.test_status.set('')
-            #
-            #     self._hide_test_output()
-            #     self._hide_test_errors()
+        # TODO multiple selections
+        # else:
+        #     # Multiple tests selected
+        #     self.name_input.clear()
+        #     self.duration_input.clear()
+        #     self.description_input.clear()
+        #
+        #     # TODO wait fix issue 175
+        #     # self.test_status.set('')
+        #
+        #     self._hide_test_output()
+        #     self._hide_test_errors()
 
-            # update "run selected" button enabled state
-            self.set_selected_button_state()
+        # update "run selected" button enabled state
+        self.set_selected_button_state()
 
     def on_nodeAdded(self, node):
         "Event handler: a new node has been added to the tree"

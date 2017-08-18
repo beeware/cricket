@@ -66,8 +66,7 @@ def main(Model):
             project.refresh(test_list, errors)
         except ModelLoadError as e:
             # Load failed; destroy the project and show an error dialog.
-            # If the user selects cancel, quit.
-            project = []
+            #   If the user selects cancel, quit.
             view.test_load_error = e.trace
         else:
             view.test_load_error = None
