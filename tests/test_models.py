@@ -560,7 +560,7 @@ class FindLabelTests(unittest.TestCase):
             (3, ['app8.package2.subpackage2.tests2']))
 
     def test_package_collapse(self):
-        "If all test cases in a test pacakge are selected, path is trimmed to the testmethod"
+        "If all test cases in a test package are selected, path is trimmed to the testmethod"
 
         self.assertEquals(self.project.find_tests(labels=[
                 'app6.package2.tests1.TestCase.test_method',
