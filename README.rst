@@ -17,8 +17,8 @@ Cricket
 .. image:: https://img.shields.io/pypi/l/cricket.svg
     :target: https://github.com/pybee/cricket/blob/master/LICENSE
 
-.. image:: https://travis-ci.org/pybee/cricket.svg?branch=master
-    :target: https://travis-ci.org/pybee/cricket
+.. image:: https://beekeeper.herokuapp.com/projects/pybee/cricket/shield
+    :target: https://beekeeper.herokuapp.com/projects/pybee/cricket
 
 .. image:: https://badges.gitter.im/pybee/general.svg
     :target: https://gitter.im/pybee/general
