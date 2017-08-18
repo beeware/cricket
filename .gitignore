@@ -1,10 +1,19 @@
+# Byte-compiled
 *.pyc
-*~
-.*.sw[op]
-*.egg-info
-dist
-build
-_build
-distribute-*
+
+# Tests
 .coverage
 .tox
+
+# Distribution
+env/
+dist/
+build/
+*.egg-info
+_build
+distribute-*
+
+# Others
+.DS_Store
+.*.sw[op]
+*~
