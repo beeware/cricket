@@ -121,7 +121,7 @@ class TogaDataSource:
 
         # children is a list of tuples that contains text, icon and a bool that
         #   indicates if the child is collapsed
-        children = self._source.search_node(node.data['text'])
+        children = self._source.search_node(node.text)
         return [{k : value for (k,v), value in zip(data.items(), child)} for
         child in children]
 
@@ -341,7 +341,7 @@ class MainWindow(toga.App):
         # self.all_tests_tree.tag_bind('TestCase', '<Double-Button-1>', self.on_testCaseClicked)
         # self.all_tests_tree.tag_bind('TestMethod', '<Double-Button-1>', self.on_testMethodClicked)
 
-        self.all_tests_tree.on_selection = self.on_testMethodSelected
+        self.all_tests_tree.on_selection = self.on_testSelected
 
     def _setup_problem_tests_tree(self):
         #TODO color feature on tree widget
@@ -351,7 +351,7 @@ class MainWindow(toga.App):
         # self.problem_tests_tree.tag_configure('inactive', foreground='lightgray')
 
         # Problem tree only deals with selection, not clicks.
-        self.problem_tests_tree.on_selection = self.on_testMethodSelected
+        self.problem_tests_tree.on_selection = self.on_testSelected
 
     def _setup_right_frame(self):
         '''
@@ -477,6 +477,7 @@ class MainWindow(toga.App):
         "Update the layout with the initial values."
         # Get a count of active tests to display in the status bar.
         count, labels = self.project.find_tests(True)
+        self.current_tree_selected = []
         self.run_summary.text = 'T:%s P:0 F:0 E:0 X:0 U:0 S:0' % count
 
         # Update the project to make sure coverage status matches the GUI
@@ -547,12 +548,36 @@ class MainWindow(toga.App):
 
     def cmd_run_selected(self, event=None):
         "Command: The 'run selected' button has been pressed"
-        # TODO do this part after the port of the Tree widget
+
+        def find_test(test, branch=None):
+            "Find test in the project"
+            if branch is None:
+                branch = self.project
+
+            if isinstance(branch, TestMethod):
+                if test in branch.path:
+                    return branch[0]
+            else:
+                for key, item in branch.items():
+                    if key == test:
+                        return item
+                    else:
+                        result = find_test(test, item)
+                        if result:
+                            return result
+
+        tests_to_run = []
+
+        # If a node is selected, it needs to be made active
+        for node in self.current_tree_selected:
+            testModule = find_test(node.text)
+            testModule.set_active(True)
+            tests_to_run.append(testModule.path)
 
         # If the executor isn't currently running, we can
         # start a test run.
         if not self.executor or not self.executor.is_running:
-            pass
+            self.run(labels=set(tests_to_run))
 
     def cmd_rerun(self, event=None):
         "Command: The run/stop button has been pressed"
@@ -609,53 +634,53 @@ class MainWindow(toga.App):
         "Event handler: a test case has been clicked in the tree"
         pass
 
-    def on_testMethodSelected(self, node):
+    def on_testSelected(self, nodes):
         "Event handler: a test case has been selected in the tree"
-        # Find the definition for the actual test method out of the project
-        testMethod = self.tests_tree_data.search_node(node.data['text'],
-                                                        selection=True)
-        if testMethod:
-            self.name_input.value = testMethod.path
-            self.description_input.value = testMethod.description
+        self.current_tree_selected = nodes
 
+        # Multiple tests selected
+        if len(nodes) > 1:
+            self.name_input.clear()
+            self.duration_input.clear()
+            self.description_input.clear()
 
-            config = STATUS.get(testMethod.status, STATUS_DEFAULT)
             # TODO wait fix issue 175
-            # self.test_status_widget.config(foreground=config['color'])
-            # self.test_status.set(config['symbol'])
+            # self.test_status.set('')
 
-            if testMethod._result:
-                # Test has been executed
-                self.duration_input.value = '%0.2fs' % testMethod._result['duration']
+            self._hide_test_output()
+            self._hide_test_errors()
+        elif nodes:
+            # Find the definition for the actual test method out of the project
+            testMethod = self.tests_tree_data.search_node(nodes[0].text,
+                                                            selection=True)
+            if testMethod:
+                self.name_input.value = testMethod.path
+                self.description_input.value = testMethod.description
 
-                if testMethod.output:
-                    self._show_test_output(testMethod.output)
+                config = STATUS.get(testMethod.status, STATUS_DEFAULT)
+                # TODO wait fix issue 175
+                # self.test_status_widget.config(foreground=config['color'])
+                # self.test_status.set(config['symbol'])
+
+                if testMethod._result:
+                    # Test has been executed
+                    self.duration_input.value = '%0.2fs' % testMethod._result['duration']
+
+                    if testMethod.output:
+                        self._show_test_output(testMethod.output)
+                    else:
+                        self._hide_test_output()
+
+                    if testMethod.error:
+                        self._show_test_errors(testMethod.error)
+                    else:
+                        self._hide_test_errors()
                 else:
+                    # Test hasn't been executed yet.
+                    self.duration_input.value = 'Not executed'
+
                     self._hide_test_output()
-
-                if testMethod.error:
-                    self._show_test_errors(testMethod.error)
-                else:
                     self._hide_test_errors()
-            else:
-                # Test hasn't been executed yet.
-                self.duration_input.value = 'Not executed'
-
-                self._hide_test_output()
-                self._hide_test_errors()
-
-        # TODO multiple selections
-        # else:
-        #     # Multiple tests selected
-        #     self.name_input.clear()
-        #     self.duration_input.clear()
-        #     self.description_input.clear()
-        #
-        #     # TODO wait fix issue 175
-        #     # self.test_status.set('')
-        #
-        #     self._hide_test_output()
-        #     self._hide_test_errors()
 
         # update "run selected" button enabled state
         self.set_selected_button_state()
@@ -800,13 +825,8 @@ class MainWindow(toga.App):
             self.rerun_button.enabled = False
 
     def set_selected_button_state(self):
-        if self.executor and self.executor.is_running:
-            self.run_selected_button.enabled = False
-        # TODO after method select on tree api
-        # elif self.current_test_tree.selection():
-        #     self.run_selected_button.enabled = True
-        # else:
-        #     self.run_selected_button.enabled = False
+        state = False if self.executor and self.executor.is_running else True
+        self.run_selected_button.enabled = state
 
     ######################################################
     # GUI utility methods
