@@ -24,7 +24,7 @@ except ImportError:
 from cricket.model import TestMethod, TestCase, TestModule
 from cricket.executor import Executor
 
-ICONS_DIR = os.path.dirname(__file__)+'/icons/'
+ICONS_DIR = lambda image : os.path.dirname(__file__)+'/icons/' + image
 
 # Display constants for test status
 STATUS = {
@@ -74,9 +74,9 @@ STATUS_DEFAULT = {
 }
 
 class TestsTreeStructure:
-    def __init__(self, data, visualization=None):
+    def __init__(self, data):
         self.data = data
-        self.visualization = visualization
+        self.visualization = {}
 
     def roots(self):
         if self.data:
@@ -103,8 +103,31 @@ class TestsTreeStructure:
                     return search_next_node
         return []
 
+    def update_visualization(self, icon, tests=[]):
+        if tests:
+            # selected tests methods
+            for test in tests:
+                self.visualization[test] = icon
+        else:
+            # all tests methods
+            for k,v in self.visualization.items():
+                self.visualization[k] = icon
+
     def _make_data(self, children):
-        return [(child, None, True) for child in children.keys()]
+        data = []
+
+        for child, item in children.items():
+            if isinstance(item, TestMethod):
+                if item.path not in self.visualization.keys():
+                    self.visualization[item.path] = None
+                icon = self.visualization[item.path]
+            else:
+                icon = None
+
+
+            data.append((child, icon, True))
+        return data
+
 
 class TogaDataSource:
     def __init__(self, data):
@@ -257,7 +280,7 @@ class MainWindow(toga.App):
         # Button to stop run the tests
         self.stop_button = toga.Command(self.cmd_stop, 'Stop',
                                          tooltip='Stop running the tests.',
-                                         icon=ICONS_DIR+'stop.png',
+                                         icon=ICONS_DIR('stop.png'),
                                          shortcut='s',
                                          group=self.control_tests_group)
         self.stop_button.enabled = False
@@ -265,7 +288,7 @@ class MainWindow(toga.App):
         # Button to run all the tests
         self.run_all_button = toga.Command(self.cmd_run_all, 'Run all',
                                          tooltip='Run all the tests.',
-                                         icon=ICONS_DIR+'play.png',
+                                         icon=ICONS_DIR('play.png'),
                                          shortcut='r',
                                          group=self.control_tests_group)
 
@@ -273,7 +296,7 @@ class MainWindow(toga.App):
         self.run_selected_button = toga.Command(self.cmd_run_selected,
                                         'Run selected',
                                          tooltip='Run the tests selected.',
-                                         icon=ICONS_DIR+'run_select.png',
+                                         icon=ICONS_DIR('run_select.png'),
                                          shortcut='e',
                                          group=self.control_tests_group)
         self.run_selected_button.enabled = False
@@ -281,7 +304,7 @@ class MainWindow(toga.App):
         # Re-run all the tests
         self.rerun_button = toga.Command(self.cmd_rerun, 'Re-run',
                                          tooltip='Re-run the tests.',
-                                         icon=ICONS_DIR+'re_run.png',
+                                         icon=ICONS_DIR('re_run.png'),
                                          shortcut='a',
                                          group=self.control_tests_group)
         self.rerun_button.enabled = False
@@ -541,6 +564,9 @@ class MainWindow(toga.App):
 
     def cmd_run_all(self, event=None):
         "Command: The Run all button has been pressed"
+        # Update test status icon
+        self.tests_tree_data.update_visualization(ICONS_DIR('wait.png'))
+        self.all_tests_tree.update()
         # If the executor isn't currently running, we can
         # start a test run.
         if not self.executor or not self.executor.is_running:
@@ -573,6 +599,10 @@ class MainWindow(toga.App):
             testModule = find_test(node.text)
             testModule.set_active(True)
             tests_to_run.append(testModule.path)
+
+        self.tests_tree_data.update_visualization(ICONS_DIR('wait.png'),
+                                                tests_to_run)
+        self.all_tests_tree.update()
 
         # If the executor isn't currently running, we can
         # start a test run.
@@ -701,8 +731,51 @@ class MainWindow(toga.App):
 
     def on_nodeStatusUpdate(self, node):
         "Event handler: a node on the tree has received a status update"
-        # TODO on tree widget part
-        pass
+        if node.status in TestMethod.FAILING_STATES:
+            # Update test status icon
+            self.tests_tree_data.update_visualization(ICONS_DIR('fail.png'),
+                                                    [node.path])
+            # Test is in a failing state. Make sure it is on the problem tree,
+            # with the correct current status.
+
+            parts = node.path.split('.')
+            parentModule = self.project
+            for pos, part in enumerate(parts):
+                path = '.'.join(parts[:pos+1])
+                testModule = parentModule[part]
+
+                # TODO update problem tree
+                # if not self.problem_tests_tree.exists(path):
+                #     self.problem_tests_tree.insert(
+                #         parentModule.path, 'end', testModule.path,
+                #         text=testModule.name,
+                #         tags=[testModule.__class__.__name__, 'active'],
+                #         open=True
+                #     )
+
+                parentModule = testModule
+
+            # self.problem_tests_tree.item(node.path, tags=['TestMethod', STATUS[node.status]['tag']])
+        else:
+            # Update test status icon
+            self.tests_tree_data.update_visualization(ICONS_DIR('check.png'),
+                                                    [node.path])
+            # TODO update problem tree
+            # Test passed; if it's on the problem tree, remove it.
+            # if self.problem_tests_tree.exists(node.path):
+            #     self.problem_tests_tree.delete(node.path)
+            #
+            #     # Check all parents of this node. Recursively remove
+            #     # any parent has no children as a result of this deletion.
+            #     has_children = False
+            #     node = node.parent
+            #     while node.path and not has_children:
+            #         if not self.problem_tests_tree.get_children(node.path):
+            #             self.problem_tests_tree.delete(node.path)
+            #         else:
+            #             has_children = True
+            #         node = node.parent
+        self.all_tests_tree.update()
 
     def on_coverageChange(self, event=None):
         "Event handler: when the coverage checkbox has been toggled"
@@ -844,12 +917,6 @@ class MainWindow(toga.App):
         count, labels = self.project.find_tests(active, status, labels)
         self.run_status.text = 'Running...'
         self.run_summary.text = 'T:%s P:0 F:0 E:0 X:0 U:0 S:0' % count
-
-        # TODO wait tree api
-        # for ids, node in self.all_tests_tree.tree.items():
-        #     node.set_icon = ICONS_DIR+'wait.png'
-        #
-        # self.all_tests_tree.apply_layout()
 
         self.stop_button.enabled = True
         self.run_all_button.enabled = False
