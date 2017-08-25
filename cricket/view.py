@@ -314,7 +314,6 @@ class MainWindow(toga.App):
         The button toolbar runs as a horizontal area at the top of the GUI.
         It is a persistent GUI component
         '''
-
         # Button to stop run the tests
         self.stop_button = toga.Command(self.cmd_stop, 'Stop',
                                          tooltip='Stop running the tests.',
@@ -623,6 +622,9 @@ class MainWindow(toga.App):
         # start a test run.
         if not self.executor or not self.executor.is_running:
             self.run(status=set(TestMethod.FAILING_STATES))
+
+    def cmd_show_cov(self, event=None):
+        pass
 
     def cmd_open_duvet(self, event=None):
         "Command: Open Duvet"

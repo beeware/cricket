@@ -147,6 +147,38 @@ class PipedTestResult(unittest.result.TestResult):
         self.stream.flush()
         self._current_test = None
 
+    def addSubTest(self, test, subtest, err):
+        super(PipedTestResult, self).addSubTest(test, subtest, err)
+        if err is None:
+            body = {
+                'status': 'OK',
+                'end_time': time.time(),
+                'description': self.description(test),
+                'output': self._stdout.getvalue(),
+            }
+            self.stream.write('%s\n' % json.dumps(body))
+            self.stream.flush()
+        elif issubclass(err[0], test.failureException):
+            body = {
+                'status': 'F',
+                'end_time': time.time(),
+                'description': self.description(test),
+                'error': '\n'.join(traceback.format_exception(*err)),
+                'output': self._stdout.getvalue(),
+            }
+            self.stream.write('%s\n' % json.dumps(body))
+            self.stream.flush()
+        else:
+            body = {
+                'status': 'E',
+                'end_time': time.time(),
+                'description': self.description(test),
+                'error': '\n'.join(traceback.format_exception(*err)),
+                'output': self._stdout.getvalue(),
+            }
+            self.stream.write('%s\n' % json.dumps(body))
+            self.stream.flush()
+
     def addSkip(self, test, reason):
         super(PipedTestResult, self).addSkip(test, reason)
         body = {

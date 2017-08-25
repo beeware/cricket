@@ -24,6 +24,29 @@ def enqueue_output(out, queue):
     out.close()
 
 
+def parse_status_and_error(post):
+    if post['status'] == 'OK':
+        status = TestMethod.STATUS_PASS
+        error = None
+    elif post['status'] == 's':
+        status = TestMethod.STATUS_SKIP
+        error = 'Skipped: ' + post.get('error')
+    elif post['status'] == 'F':
+        status = TestMethod.STATUS_FAIL
+        error = post.get('error')
+    elif post['status'] == 'x':
+        status = TestMethod.STATUS_EXPECTED_FAIL
+        error = post.get('error')
+    elif post['status'] == 'u':
+        status = TestMethod.STATUS_UNEXPECTED_SUCCESS
+        error = None
+    elif post['status'] == 'E':
+        status = TestMethod.STATUS_ERROR
+        error = post.get('error')
+
+    return status, error
+
+
 class Executor(EventSource):
     "A wrapper around the subprocess that executes tests."
     def __init__(self, project, count, labels):
@@ -132,26 +155,22 @@ class Executor(EventSource):
                     # Start of new test result; record the last result
                     # Then, work out what content goes where.
                     pre = json.loads(self.buffer[0])
-                    post = json.loads(self.buffer[1])
+                    if len(self.buffer) == 2:
+                        # No subtests are present, or only one subtest
+                        post = json.loads(self.buffer[1])
+                        status, error = parse_status_and_error(post)
 
-                    if post['status'] == 'OK':
-                        status = TestMethod.STATUS_PASS
-                        error = None
-                    elif post['status'] == 's':
-                        status = TestMethod.STATUS_SKIP
-                        error = 'Skipped: ' + post.get('error')
-                    elif post['status'] == 'F':
-                        status = TestMethod.STATUS_FAIL
-                        error = post.get('error')
-                    elif post['status'] == 'x':
-                        status = TestMethod.STATUS_EXPECTED_FAIL
-                        error = post.get('error')
-                    elif post['status'] == 'u':
-                        status = TestMethod.STATUS_UNEXPECTED_SUCCESS
-                        error = None
-                    elif post['status'] == 'E':
-                        status = TestMethod.STATUS_ERROR
-                        error = post.get('error')
+                    else:
+                        # We have subtests; capture the most important status (until we can capture all the statuses)
+                        status = TestMethod.STATUS_PASS  # Assume pass until told otherwise
+                        error = ''
+                        for line_num in range(1, len(self.buffer)):
+                            post = json.loads(self.buffer[line_num])
+                            subtest_status, subtest_error = parse_status_and_error(post)
+                            if subtest_status > status:
+                                status = subtest_status
+                            if subtest_error:
+                                error += subtest_error + '\n\n'
 
                     # Increase the count of executed tests
                     self.completed_count = self.completed_count + 1
