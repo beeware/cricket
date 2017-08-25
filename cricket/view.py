@@ -394,7 +394,6 @@ class MainWindow(toga.App):
                                         ('Problems', self.problem_tests_tree)])
 
     def _setup_all_tests_tree(self):
-        #TODO binds on tree widget
         # Listen for button clicks on tree nodes
         # self.all_tests_tree.tag_bind('TestModule', '<Double-Button-1>', self.on_testModuleClicked)
         # self.all_tests_tree.tag_bind('TestCase', '<Double-Button-1>', self.on_testCaseClicked)
@@ -445,17 +444,6 @@ class MainWindow(toga.App):
         # Insert the name box objects
         self.name_box.add(self.name_label)
         self.name_box.add(self.name_input)
-
-        # TODO wait fix issue 175
-        # self.test_status = toga.Label('.', alignment=toga.LEFT_ALIGNED,
-        #                                 style=CSS(width=100, height=50,
-        #                                 margin_left=10))
-        # add font to test_status when the weight of the font and color for
-        #   labels become available
-        # self.test_status_font = toga.Font(family='Helvetica', size=50)
-        # self.test_status.set_font(self.test_status_font)
-        # self.test_status.rehint()
-        # self.name_box.add(self.test_status)
 
         # Box to put the test duration
         self.duration_box = toga.Box(style=CSS(flex_direction='row', margin=5))
@@ -708,9 +696,6 @@ class MainWindow(toga.App):
             self.duration_input.clear()
             self.description_input.clear()
 
-            # TODO wait fix issue 175
-            # self.test_status.set('')
-
             self._hide_test_output()
             self._hide_test_errors()
         elif nodes:
@@ -722,9 +707,6 @@ class MainWindow(toga.App):
                 self.description_input.value = testMethod.description
 
                 config = STATUS.get(testMethod.status, STATUS_DEFAULT)
-                # TODO wait fix issue 175
-                # self.test_status_widget.config(foreground=config['color'])
-                # self.test_status.set(config['symbol'])
 
                 if testMethod._result:
                     # Test has been executed
@@ -794,7 +776,6 @@ class MainWindow(toga.App):
         "Event handler: a periodic update to poll the runner for output, generating GUI updates"
         if self.executor and self.executor.poll():
             # TODO update layout every 100 ms
-            # self.root.after(100, self.on_testProgress)
             pass
 
     def on_executorStatusUpdate(self, event, update):
@@ -824,25 +805,10 @@ class MainWindow(toga.App):
             'remaining': remaining_time
         }
 
-        # If the test that just fininshed is the one (and only one)
-        # selected on the tree, update the display.
-        # TODO on tree widget part
-        # current_tree = self.current_test_tree
-        # if len(current_tree.selection()) == 1:
-        #     # One test selected.
-        #     if current_tree.selection()[0] == test_path:
-        #         # If the test that just finished running is the selected
-        #         # test, force reset the selection, which will generate a
-        #         # selection event, forcing a refresh of the result page.
-        #         current_tree.selection_set(current_tree.selection())
-        # else:
         # No or Multiple tests selected
         self.name_input.clear()
         self.duration_input.clear()
         self.description_input.clear()
-
-        # TODO wait fix issue 175
-        # self.test_status.set('')
 
         self._hide_test_output()
         self._hide_test_errors()
