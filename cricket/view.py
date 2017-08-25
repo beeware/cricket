@@ -6,7 +6,6 @@ This is the "View" of the MVC world.
 import os
 import sys
 import toga
-import functools
 import subprocess
 import webbrowser
 from colosseum import CSS
@@ -523,19 +522,6 @@ class MainWindow(toga.App):
 
         # Update the project to make sure coverage status matches the GUI
         self.on_coverageChange()
-
-    ######################################################
-    # Utility methods for inspecting current GUI state
-    ######################################################
-
-    @property
-    def current_test_tree(self):
-        "Check the tree notebook to return the currently selected tree."
-        current_tree = self.tree_notebook.selected['label']
-        if current_tree == 'Problems':
-            return self.problem_tests_tree
-        else:
-            return self.all_tests_tree
 
 
     ######################################################
