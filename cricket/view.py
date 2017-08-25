@@ -6,6 +6,7 @@ This is the "View" of the MVC world.
 import os
 import sys
 import toga
+import functools
 import subprocess
 import webbrowser
 from colosseum import CSS
@@ -74,9 +75,10 @@ STATUS_DEFAULT = {
 }
 
 class TestsTreeStructure:
-    def __init__(self, data):
+    def __init__(self, data={}, tree_type='TEST'):
         self.data = data
         self.visualization = {}
+        self.tree_type = tree_type
 
     def roots(self):
         if self.data:
@@ -103,6 +105,20 @@ class TestsTreeStructure:
                     return search_next_node
         return []
 
+    def search_item(self, item, parent=None):
+        if parent is None:
+            parent = self.data
+
+        for key, children in parent.items():
+            if item == key:
+                return self._make_item(children)
+
+            search_next_item = self.search_item(item, children)
+            if search_next_item:
+                return search_next_item
+
+        return []
+
     def update_visualization(self, icon, tests=[]):
         if tests:
             # selected tests methods
@@ -112,6 +128,25 @@ class TestsTreeStructure:
             # all tests methods
             for k,v in self.visualization.items():
                 self.visualization[k] = icon
+
+    def insert(self, path):
+        parts = path.split('.')
+
+        parent = self.data
+        for part in parts:
+            if part not in parent.keys():
+                parent[part] = {}
+                parent = parent[part]
+            else:
+                parent = parent[part]
+
+    def _make_item(self, children):
+        data = []
+
+        for child in children:
+            data.append((child, None, True))
+
+        return data
 
     def _make_data(self, children):
         data = []
@@ -124,7 +159,6 @@ class TestsTreeStructure:
             else:
                 icon = None
 
-
             data.append((child, icon, True))
         return data
 
@@ -132,21 +166,26 @@ class TestsTreeStructure:
 class TogaDataSource:
     def __init__(self, data):
         self._source = data
+        self._tree_type = self._source.tree_type
 
     def roots(self):
         return self._source.roots()
 
     def children(self, node):
         # default data of a node
-        data = {'text': None,
-                'icon': None,
-                'collapsed': True}
+        data, children = {'text': None,
+                        'icon': None,
+                        'collapsed': True}, ()
 
         # children is a list of tuples that contains text, icon and a bool that
         #   indicates if the child is collapsed
-        children = self._source.search_node(node.text)
-        return [{k : value for (k,v), value in zip(data.items(), child)} for
-        child in children]
+        if self._tree_type == 'TEST':
+            children = self._source.search_node(node.text)
+        elif self._tree_type == 'PROBLEM':
+            children = self._source.search_item(node.text)
+
+        return [{k : value for (k,v), value in zip(data.items(), child)}
+                for child in children]
 
 class MainWindow(toga.App):
     def startup(self):
@@ -339,25 +378,22 @@ class MainWindow(toga.App):
         '''
         The left frame mostly consists of the tree widget
         '''
-        self.tests_tree_data = TestsTreeStructure(data=self.project)
+        self.tests_tree_data = TestsTreeStructure(data=self.project,
+                                                tree_type='TEST')
 
         self.all_tests_tree = toga.Tree(['Tests'],
-                                    data=TogaDataSource(self.tests_tree_data))
+                                data=TogaDataSource(self.tests_tree_data))
 
-        # TODO toga data source for problems
-        self.problem_tests_tree = toga.Tree(['Problems'])
+        self.problem_tests_data = TestsTreeStructure(tree_type='PROBLEM')
+
+        self.problem_tests_tree = toga.Tree(['Problems'],
+                                data=TogaDataSource(self.problem_tests_data))
 
         self.tree_notebook = toga.OptionContainer(content=[
                                         ('All tests', self.all_tests_tree),
                                         ('Problems', self.problem_tests_tree)])
 
     def _setup_all_tests_tree(self):
-        #TODO color feature on tree widget
-        # Set up the tag colors for tree nodes.
-        # for status, config in STATUS.items():
-        #     self.all_tests_tree.tag_configure(config['tag'], foreground=config['color'])
-        # self.all_tests_tree.tag_configure('inactive', foreground='lightgray')
-
         #TODO binds on tree widget
         # Listen for button clicks on tree nodes
         # self.all_tests_tree.tag_bind('TestModule', '<Double-Button-1>', self.on_testModuleClicked)
@@ -367,12 +403,6 @@ class MainWindow(toga.App):
         self.all_tests_tree.on_selection = self.on_testSelected
 
     def _setup_problem_tests_tree(self):
-        #TODO color feature on tree widget
-        # Set up the tag colors for tree nodes.
-        # for status, config in STATUS.items():
-        #     self.problem_tests_tree.tag_configure(config['tag'], foreground=config['color'])
-        # self.problem_tests_tree.tag_configure('inactive', foreground='lightgray')
-
         # Problem tree only deals with selection, not clicks.
         self.problem_tests_tree.on_selection = self.on_testSelected
 
@@ -566,7 +596,9 @@ class MainWindow(toga.App):
         "Command: The Run all button has been pressed"
         # Update test status icon
         self.tests_tree_data.update_visualization(ICONS_DIR('wait.png'))
+        self.problem_tests_data.data = {}
         self.all_tests_tree.update()
+        self.problem_tests_tree.update()
         # If the executor isn't currently running, we can
         # start a test run.
         if not self.executor or not self.executor.is_running:
@@ -602,6 +634,8 @@ class MainWindow(toga.App):
 
         self.tests_tree_data.update_visualization(ICONS_DIR('wait.png'),
                                                 tests_to_run)
+        self.problem_tests_data.data = {}
+        self.problem_tests_tree.update()
         self.all_tests_tree.update()
 
         # If the executor isn't currently running, we can
@@ -732,50 +766,24 @@ class MainWindow(toga.App):
     def on_nodeStatusUpdate(self, node):
         "Event handler: a node on the tree has received a status update"
         if node.status in TestMethod.FAILING_STATES:
+            icon = ICONS_DIR('fail.png')
             # Update test status icon
-            self.tests_tree_data.update_visualization(ICONS_DIR('fail.png'),
-                                                    [node.path])
+            self.tests_tree_data.update_visualization(icon, [node.path])
+
             # Test is in a failing state. Make sure it is on the problem tree,
             # with the correct current status.
+            self.problem_tests_data.insert(node.path)
 
-            parts = node.path.split('.')
-            parentModule = self.project
-            for pos, part in enumerate(parts):
-                path = '.'.join(parts[:pos+1])
-                testModule = parentModule[part]
-
-                # TODO update problem tree
-                # if not self.problem_tests_tree.exists(path):
-                #     self.problem_tests_tree.insert(
-                #         parentModule.path, 'end', testModule.path,
-                #         text=testModule.name,
-                #         tags=[testModule.__class__.__name__, 'active'],
-                #         open=True
-                #     )
-
-                parentModule = testModule
-
-            # self.problem_tests_tree.item(node.path, tags=['TestMethod', STATUS[node.status]['tag']])
+            self.problem_tests_data.update_visualization(icon, [node.path])
         else:
+            icon = ICONS_DIR('check.png')
             # Update test status icon
-            self.tests_tree_data.update_visualization(ICONS_DIR('check.png'),
-                                                    [node.path])
-            # TODO update problem tree
-            # Test passed; if it's on the problem tree, remove it.
-            # if self.problem_tests_tree.exists(node.path):
-            #     self.problem_tests_tree.delete(node.path)
-            #
-            #     # Check all parents of this node. Recursively remove
-            #     # any parent has no children as a result of this deletion.
-            #     has_children = False
-            #     node = node.parent
-            #     while node.path and not has_children:
-            #         if not self.problem_tests_tree.get_children(node.path):
-            #             self.problem_tests_tree.delete(node.path)
-            #         else:
-            #             has_children = True
-            #         node = node.parent
+            self.tests_tree_data.update_visualization(icon, [node.path])
+
+            self.problem_tests_data.update_visualization(icon, [node.path])
+
         self.all_tests_tree.update()
+        self.problem_tests_tree.update()
 
     def on_coverageChange(self, event=None):
         "Event handler: when the coverage checkbox has been toggled"

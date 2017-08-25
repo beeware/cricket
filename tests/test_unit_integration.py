@@ -52,6 +52,9 @@ class TestStubToTestCoverage(unittest.TestCase):
     def test_stub3(self):
         self.assertTrue(True)
 
+    def test_stub4(self):
+        self.assertTrue(False)
+
 class TestCollection(unittest.TestCase):
 
     def test_testCollection(self):
