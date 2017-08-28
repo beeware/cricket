@@ -39,13 +39,13 @@ little detail while the suite is running. As a result:
 Why the name ``cricket``? `Test Cricket`_ is the most prestigious version of
 the game of cricket. Games last for up to 5 days... just like running some
 test suites. The usual approach for making cricket watchable is a generous
-dose of beer; in programming, `Balmer Peak`_ limits come into effect, so
+dose of beer; in programming, `Ballmer Peak`_ limits come into effect, so
 something else is required...
 
 .. _BeeWare suite: http://pybee.org/
 .. _http://pybee.org/cricket: http://pybee.org/cricket
 .. _Test Cricket: http://en.wikipedia.org/wiki/Test_cricket
-.. _Balmer Peak: http://xkcd.com/323/
+.. _Ballmer Peak: http://xkcd.com/323/
 
 
 Quickstart
