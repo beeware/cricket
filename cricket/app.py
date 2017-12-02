@@ -15,6 +15,7 @@ from cricket.view import (
 )
 from cricket.model import ModelLoadError
 
+
 def main(Model):
     """Run the main loop of the app.
 

@@ -6,8 +6,8 @@ from cricket.django.model import DjangoProject
 
 
 def main():
-    cricket_main(DjangoProject)
+    return cricket_main(DjangoProject)
 
 
 if __name__ == "__main__":
-    main()
+    main().main_loop()
