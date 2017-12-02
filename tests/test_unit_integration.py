@@ -9,6 +9,7 @@ from cricket.unittest.model import UnittestProject
 from cricket.executor import Executor
 from cricket.model import TestMethod
 
+
 class TestTestsCoverage(unittest.TestCase):
 
     def setUp(self):

@@ -1,4 +1,4 @@
-from cricket.compat import unittest
+import unittest
 from cricket.model import Project, TestModule, TestCase
 
 
