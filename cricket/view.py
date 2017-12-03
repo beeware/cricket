@@ -23,170 +23,10 @@ except ImportError:
 
 from cricket.model import TestMethod, TestCase, TestModule
 from cricket.executor import Executor
-
-ICONS_DIR = lambda image : os.path.dirname(__file__)+'/icons/' + image
-
-# Display constants for test status
-STATUS = {
-    TestMethod.STATUS_PASS: {
-        'description': u'Pass',
-        'symbol': u'\u25cf',
-        'tag': 'pass',
-        'color': '#28C025',
-    },
-    TestMethod.STATUS_SKIP: {
-        'description': u'Skipped',
-        'symbol': u'S',
-        'tag': 'skip',
-        'color': '#259EBF'
-    },
-    TestMethod.STATUS_FAIL: {
-        'description': u'Failure',
-        'symbol': u'F',
-        'tag': 'fail',
-        'color': '#E32C2E'
-    },
-    TestMethod.STATUS_EXPECTED_FAIL: {
-        'description': u'Expected\n  failure',
-        'symbol': u'X',
-        'tag': 'expected',
-        'color': '#3C25BF'
-    },
-    TestMethod.STATUS_UNEXPECTED_SUCCESS: {
-        'description': u'Unexpected\n   success',
-        'symbol': u'U',
-        'tag': 'unexpected',
-        'color': '#C82788'
-    },
-    TestMethod.STATUS_ERROR: {
-        'description': 'Error',
-        'symbol': u'E',
-        'tag': 'error',
-        'color': '#E4742C'
-    },
-}
-
-STATUS_DEFAULT = {
-    'description': 'Not\nexecuted',
-    'symbol': u'',
-    'tag': None,
-    'color': '#BFBFBF',
-}
-
-class TestsTreeStructure:
-    def __init__(self, data={}, tree_type='TEST'):
-        self.data = data
-        self.visualization = {}
-        self.tree_type = tree_type
-
-    def roots(self):
-        if self.data:
-            return [item for item in self.data.keys()]
-        return []
-
-    def search_node(self, text, branch=None, selection=False):
-        if branch is None:
-            branch = self.data
-
-        if not isinstance(branch, TestMethod):
-            for key, item in branch.items():
-                if key == text:
-                    if not selection:
-                        if isinstance(item, TestMethod):
-                            continue
-                        else:
-                            return self._make_data(item)
-                    elif selection and isinstance(item, TestMethod):
-                        return item
-
-                search_next_node = self.search_node(text, item, selection)
-                if search_next_node:
-                    return search_next_node
-        return []
-
-    def search_item(self, item, parent=None):
-        if parent is None:
-            parent = self.data
-
-        for key, children in parent.items():
-            if item == key:
-                return self._make_item(children)
-
-            search_next_item = self.search_item(item, children)
-            if search_next_item:
-                return search_next_item
-
-        return []
-
-    def update_visualization(self, icon, tests=[]):
-        if tests:
-            # selected tests methods
-            for test in tests:
-                self.visualization[test] = icon
-        else:
-            # all tests methods
-            for k,v in self.visualization.items():
-                self.visualization[k] = icon
-
-    def insert(self, path):
-        parts = path.split('.')
-
-        parent = self.data
-        for part in parts:
-            if part not in parent.keys():
-                parent[part] = {}
-                parent = parent[part]
-            else:
-                parent = parent[part]
-
-    def _make_item(self, children):
-        data = []
-
-        for child in children:
-            data.append((child, None, True))
-
-        return data
-
-    def _make_data(self, children):
-        data = []
-
-        for child, item in children.items():
-            if isinstance(item, TestMethod):
-                if item.path not in self.visualization.keys():
-                    self.visualization[item.path] = None
-                icon = self.visualization[item.path]
-            else:
-                icon = None
-
-            data.append((child, icon, True))
-        return data
+from cricket.dialogs import FailedTestDialog, TestLoadErrorDialog, IgnorableTestLoadErrorDialog
 
 
-class TogaDataSource:
-    def __init__(self, data):
-        self._source = data
-        self._tree_type = self._source.tree_type
-
-    def roots(self):
-        return self._source.roots()
-
-    def children(self, node):
-        # default data of a node
-        data, children = {'text': None,
-                        'icon': None,
-                        'collapsed': True}, ()
-
-        # children is a list of tuples that contains text, icon and a bool that
-        #   indicates if the child is collapsed
-        if self._tree_type == 'TEST':
-            children = self._source.search_node(node.text)
-        elif self._tree_type == 'PROBLEM':
-            children = self._source.search_item(node.text)
-
-        return [{k : value for (k,v), value in zip(data.items(), child)}
-                for child in children]
-
-class MainWindow(toga.App):
+class Cricket(toga.App):
     def startup(self):
         '''
         -----------------------------------------------------
@@ -203,30 +43,20 @@ class MainWindow(toga.App):
         -----------------------------------------------------
 
         '''
-
         self.executor = None
-        self.content = None
 
         # Main window of the application with title and size
-        self.main_window = toga.MainWindow(self.name, size=(1024,768))
+        self.main_window = toga.MainWindow(self.name, size=(1024, 768))
         self.main_window.app = self
 
-        # Setup the menu
-        self._setup_menubar()
+        # Setup the menu and toolbar
+        self._setup_commands()
 
         # Set up the main content for the window.
-        self._setup_button_toolbar()
         self._setup_status_bar()
         self._setup_main_content()
 
         self._setup_init_values()
-
-        # Set up listeners for runner events.
-        Executor.bind('test_status_update', self.on_executorStatusUpdate)
-        Executor.bind('test_start', self.on_executorTestStart)
-        Executor.bind('test_end', self.on_executorTestEnd)
-        Executor.bind('suite_end', self.on_executorSuiteEnd)
-        Executor.bind('suite_error', self.on_executorSuiteError)
 
         # Now that we've laid out the grid, hide the error and output text
         # until we actually have an error/output to display
@@ -264,92 +94,69 @@ class MainWindow(toga.App):
     # Internal GUI layout methods.
     ######################################################
 
-    def _setup_menubar(self):
-        '''
-        The menu bar is located at the top of the OS or application depending
-        on which OS is being used. It contains drop down items menus to
-        interact with the system. It is a persistent GUI component.
-        '''
-
-        # Add details about the project on default menu items
-        for default_menu in self.commands:
-            if hasattr(default_menu, 'label'):
-                if 'About' in default_menu.label:
-                    default_menu.enabled = True
-                    default_menu.action = self.cmd_about_cricket
-                elif 'Preferences' in default_menu.label:
-                    # TODO implement cricket preferences
-                    pass
-                elif 'Visit homepage' in default_menu.label:
-                    default_menu.enabled = True
-                    default_menu.action = self.cmd_cricket_page
-                    default_menu.label = 'Open Cricket project page'
-                    default_menu.group = toga.Group.HELP
-
-        # Custom menus
+    def _setup_commands(self):
+        # Custom command groups
         self.control_tests_group = toga.Group('Test')
-        self.beeware_group = toga.Group('BeeWare')
+        self.instruments_group = toga.Group('Instruments')
 
-        self.open_duvet_command = toga.Command(self.cmd_open_duvet,
-                                                'Open Duvet...',
-                                                group=self.beeware_group)
-        self.open_duvet_command.enabled = False if duvet is None else True
+        self.show_coverage_command = toga.Command(
+            self.cmd_show_coverage,
+            'Show coverage...',
+            group=self.instruments_group
+        )
+        self.show_coverage_command.enabled = False if duvet is None else True
+
+        # Button to stop run the tests
+        self.stop_command = toga.Command(
+            self.cmd_stop, 'Stop',
+            tooltip='Stop running the tests.',
+            icon=toga.Icon('icons/stop.png'),
+            shortcut='s',
+            group=self.control_tests_group
+        )
+        self.stop_command.enabled = False
+
+        # Button to run all the tests
+        self.run_all_command = toga.Command(
+            self.cmd_run_all, 'Run all',
+            tooltip='Run all the tests.',
+            icon=toga.Icon('icons/play.png'),
+            shortcut='r',
+            group=self.control_tests_group
+        )
+
+        # Button to run only the tests selected by the user
+        self.run_selected_command = toga.Command(
+            self.cmd_run_selected, 'Run selected',
+            tooltip='Run the tests selected.',
+            icon=toga.Icon('icons/run_select.png'),
+            shortcut='e',
+            group=self.control_tests_group
+        )
+        self.run_selected_command.enabled = False
+
+        # Re-run all the tests
+        self.rerun_command = toga.Command(
+            self.cmd_rerun, 'Re-run',
+            tooltip='Re-run the tests.',
+            icon=toga.Icon('icons/re_run.png'),
+            shortcut='a',
+            group=self.control_tests_group
+        )
+        self.rerun_command.enabled = False
 
         # Cricket's menu items
         self.commands.add(
-            # Beeware items
-            self.open_duvet_command,
-
-            # Help items
-            toga.Command(self.cmd_cricket_docs, 'Open Documentation',
-                        group=toga.Group.HELP),
-            toga.Command(self.cmd_cricket_github, 'Open Cricket on GitHub',
-                        group=toga.Group.HELP),
-            toga.Command(self.cmd_beeware_page, 'Open BeeWare project page',
-                        group=toga.Group.HELP),
+            # Instrument items
+            self.show_coverage_command,
         )
 
-    def _setup_button_toolbar(self):
-        '''
-        The button toolbar runs as a horizontal area at the top of the GUI.
-        It is a persistent GUI component
-        '''
-        # Button to stop run the tests
-        self.stop_button = toga.Command(self.cmd_stop, 'Stop',
-                                         tooltip='Stop running the tests.',
-                                         icon=ICONS_DIR('stop.png'),
-                                         shortcut='s',
-                                         group=self.control_tests_group)
-        self.stop_button.enabled = False
-
-        # Button to run all the tests
-        self.run_all_button = toga.Command(self.cmd_run_all, 'Run all',
-                                         tooltip='Run all the tests.',
-                                         icon=ICONS_DIR('play.png'),
-                                         shortcut='r',
-                                         group=self.control_tests_group)
-
-        # Button to run only the tests selected by the user
-        self.run_selected_button = toga.Command(self.cmd_run_selected,
-                                        'Run selected',
-                                         tooltip='Run the tests selected.',
-                                         icon=ICONS_DIR('run_select.png'),
-                                         shortcut='e',
-                                         group=self.control_tests_group)
-        self.run_selected_button.enabled = False
-
-        # Re-run all the tests
-        self.rerun_button = toga.Command(self.cmd_rerun, 'Re-run',
-                                         tooltip='Re-run the tests.',
-                                         icon=ICONS_DIR('re_run.png'),
-                                         shortcut='a',
-                                         group=self.control_tests_group)
-        self.rerun_button.enabled = False
-
-        self.main_window.toolbar.add(self.stop_button,
-                                    self.run_all_button,
-                                    self.run_selected_button,
-                                    self.rerun_button)
+        self.main_window.toolbar.add(
+            self.stop_command,
+            self.run_all_command,
+            self.run_selected_command,
+            self.rerun_command
+        )
 
     def _setup_main_content(self):
         '''
@@ -358,64 +165,60 @@ class MainWindow(toga.App):
 
         # Create the tree/control area on the left frame
         self._setup_left_frame()
-        self._setup_all_tests_tree()
-        self._setup_problem_tests_tree()
 
         # Create the output/viewer area on the right frame
         self._setup_right_frame()
 
         self.split_main_container = toga.SplitContainer(style=CSS(height=720))
-        self.split_main_container.content = [self.tree_notebook, self.right_box]
+        self.split_main_container.content = [
+            self.tree_notebook,
+            self.right_box
+        ]
 
         # Main content area
-        self.outer_box = toga.Box(children=[self.split_main_container,
-                                            self.statusbar])
+        self.outer_box = toga.Box(
+            children=[
+                self.split_main_container,
+                self.statusbar
+            ]
+        )
         self.content = self.outer_box
 
     def _setup_left_frame(self):
         '''
         The left frame mostly consists of the tree widget
         '''
-        self.tests_tree_data = TestsTreeStructure(data=self.project,
-                                                tree_type='TEST')
+        self.all_tests_tree = toga.Tree(
+            ['Test'], accessors=['label'],
+            data=self.project,
+            multiple_select=True
+        )
 
-        self.all_tests_tree = toga.Tree(['Tests'],
-                                data=TogaDataSource(self.tests_tree_data))
+        self.all_tests_tree.on_select = self.on_testSelected
 
-        self.problem_tests_data = TestsTreeStructure(tree_type='PROBLEM')
+        self.problem_tests_tree = toga.Tree(['Test'], data=[])
+        self.problem_tests_tree.on_select = self.on_testSelected
 
-        self.problem_tests_tree = toga.Tree(['Problems'],
-                                data=TogaDataSource(self.problem_tests_data))
+        self.current_tree = self.all_tests_tree
 
-        self.tree_notebook = toga.OptionContainer(content=[
-                                        ('All tests', self.all_tests_tree),
-                                        ('Problems', self.problem_tests_tree)])
-
-    def _setup_all_tests_tree(self):
-        # Listen for button clicks on tree nodes
-        # self.all_tests_tree.tag_bind('TestModule', '<Double-Button-1>', self.on_testModuleClicked)
-        # self.all_tests_tree.tag_bind('TestCase', '<Double-Button-1>', self.on_testCaseClicked)
-        # self.all_tests_tree.tag_bind('TestMethod', '<Double-Button-1>', self.on_testMethodClicked)
-
-        self.all_tests_tree.on_selection = self.on_testSelected
-
-    def _setup_problem_tests_tree(self):
-        # Problem tree only deals with selection, not clicks.
-        self.problem_tests_tree.on_selection = self.on_testSelected
+        self.tree_notebook = toga.OptionContainer(
+            content=[
+                ('All tests', self.all_tests_tree),
+                ('Problems', self.problem_tests_tree)
+            ]
+        )
 
     def _setup_right_frame(self):
         '''
         The right frame is basically the "output viewer" space
         '''
         # Box to show the detail of a test
-        self.right_box = toga.Box(style=CSS(flex_direction='column',
-                                            padding_top=15))
+        self.right_box = toga.Box(style=CSS(flex_direction='column', padding_top=15))
 
         # Initial status for coverage
         self.coverage = False
         # Checkbutton to change the status for coverage
-        self.coverage_checkbox = toga.Switch('Generate coverage',
-                                on_toggle=self.on_coverageChange)
+        self.coverage_checkbox = toga.Switch('Generate coverage', on_toggle=self.on_coverageChange)
 
         # If coverage is available, enable it by default.
         # Otherwise, disable the widget
@@ -423,22 +226,19 @@ class MainWindow(toga.App):
             self.coverage = False
             self.coverage_checkbox.enabled = False
 
-        label_sample = lambda text: toga.Label(text,
-                                    alignment=toga.RIGHT_ALIGNED,
-                                    style=CSS(width=80, margin_right=10))
-        text_input_sample = lambda text: toga.TextInput(readonly=True,
-                                                        style=CSS(flex=1),
-                                                        initial=text)
-        text_input_scroll_sample = lambda text: \
-                                toga.MultilineTextInput(style=CSS(flex=1),
-                                                        initial=text)
+        # Label for indicator status of test
+        self.status_label = toga.Label(
+            '?', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
+        )
 
         # Box to put the name of the test
         self.name_box = toga.Box(style=CSS(flex_direction='row', margin=5))
         # Label to indicate that the next input text it will be the name
-        self.name_label = label_sample('Name:')
+        self.name_label = toga.Label(
+            'Name:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
+        )
         # Text input to show the name of the test
-        self.name_input = text_input_sample('')
+        self.name_input = toga.TextInput(readonly=True, style=CSS(flex=1))
         # Insert the name box objects
         self.name_box.add(self.name_label)
         self.name_box.add(self.name_input)
@@ -446,19 +246,22 @@ class MainWindow(toga.App):
         # Box to put the test duration
         self.duration_box = toga.Box(style=CSS(flex_direction='row', margin=5))
         # Label to indicate the test duration
-        self.duration_label = label_sample('Duration:')
+        self.duration_label = toga.Label(
+            'Duration:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
+        )
         # Text input to show the test duration
-        self.duration_input = text_input_sample('')
+        self.duration_input = toga.TextInput(readonly=True, style=CSS(flex=1))
         self.duration_box.add(self.duration_label)
         self.duration_box.add(self.duration_input)
 
         # Box to put the test description
-        self.description_box = toga.Box(style=CSS(flex_direction='row',
-                                                margin=5))
+        self.description_box = toga.Box(style=CSS(flex_direction='row', margin=5))
         # Label to indicate the test description
-        self.description_label = label_sample('Description:')
+        self.description_label = toga.Label(
+            'Description:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
+        )
         # Text input to show the test description
-        self.description_input = text_input_scroll_sample('')
+        self.description_input = toga.MultilineTextInput(style=CSS(flex=1))
         # Insert the test description box objects
         self.description_box.add(self.description_label)
         self.description_box.add(self.description_input)
@@ -466,9 +269,11 @@ class MainWindow(toga.App):
         # Box to put the test output
         self.output_box = toga.Box(style=CSS(flex_direction='row', margin=5))
         # Label to indicate the test output
-        self.output_label = label_sample('Output:')
+        self.output_label = toga.Label(
+            'Output:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
+        )
         # Text input to show the test output
-        self.output_input = text_input_scroll_sample('')
+        self.output_input = toga.MultilineTextInput(style=CSS(flex=1))
         # Insert the test output box objects
         self.output_box.add(self.output_label)
         self.output_box.add(self.output_input)
@@ -476,15 +281,18 @@ class MainWindow(toga.App):
         # Box to put the test error
         self.error_box = toga.Box(style=CSS(flex_direction='row', margin=5))
         # Label to indicate the test error
-        self.error_label = label_sample('Error:')
+        self.error_label = toga.Label(
+            'Error:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
+        )
         # Text input to show the test error
-        self.error_input = text_input_scroll_sample('')
+        self.error_input = toga.MultilineTextInput(style=CSS(flex=1))
         # Insert the test error box objects
         self.error_box.add(self.error_label)
         self.error_box.add(self.error_input)
 
         # Insert the right box contents
         self.right_box.add(self.coverage_checkbox)
+        self.right_box.add(self.status_label)
         self.right_box.add(self.name_box)
         self.right_box.add(self.duration_box)
         self.right_box.add(self.description_box)
@@ -492,22 +300,26 @@ class MainWindow(toga.App):
         self.right_box.add(self.error_box)
 
     def _setup_status_bar(self):
+        '''The bottom frame to inform the user about the status of the tests
+        that are running.
         '''
-        The bottom frame to inform the user about the status of the tests that are running. It is a persistent GUI component
-        '''
+        self.run_status = toga.Label('Not running', style=CSS(margin_left=10))
 
-        self.run_status = toga.Label('Not running', style=CSS(margin_left=50))
-
-        self.run_summary = toga.Label('T:0 P:0 F:0 E:0 X:0 U:0 S:0',
-                                        alignment=toga.RIGHT_ALIGNED,
-                                        style=CSS(width=200))
+        self.run_summary = toga.Label(
+            'T:0 P:0 F:0 E:0 X:0 U:0 S:0',
+            alignment=toga.RIGHT_ALIGNED,
+            style=CSS(flex=1)
+        )
 
         # Test progress
-        self.progress = toga.ProgressBar(max=100, value=0,
-                                        style=CSS(margin_right=50, width=200))
+        self.progress = toga.ProgressBar(
+            max=100, value=0, style=CSS(margin_left=10, margin_right=10, width=200)
+        )
 
-        self.statusbar = toga.Box(style=CSS(flex_direction='row',
-                                            justify_content='space-between'))
+        self.statusbar = toga.Box(
+            style=CSS(flex_direction='row', justify_content='space-between')
+        )
+
         self.statusbar.add(self.run_status)
         self.statusbar.add(self.run_summary)
         self.statusbar.add(self.progress)
@@ -515,12 +327,12 @@ class MainWindow(toga.App):
     def _setup_init_values(self):
         "Update the layout with the initial values."
         # Get a count of active tests to display in the status bar.
+
         count, labels = self.project.find_tests(True)
-        self.current_tree_selected = []
-        self.run_summary.text = 'T:%s P:0 F:0 E:0 X:0 U:0 S:0' % count
+        self.run_summary.text = 'T:{count} P:0 F:0 E:0 X:0 U:0 S:0'.format(count=count)
 
         # Update the project to make sure coverage status matches the GUI
-        self.on_coverageChange()
+        self.on_coverageChange(None)
 
 
     ######################################################
@@ -534,23 +346,7 @@ class MainWindow(toga.App):
     @project.setter
     def project(self, project):
         self._project = project
-
-        # Listen for any state changes on nodes in the tree
-        TestModule.bind('active', self.on_nodeActive)
-        TestCase.bind('active', self.on_nodeActive)
-        TestMethod.bind('active', self.on_nodeActive)
-
-        TestModule.bind('inactive', self.on_nodeInactive)
-        TestCase.bind('inactive', self.on_nodeInactive)
-        TestMethod.bind('inactive', self.on_nodeInactive)
-
-        # Listen for new nodes added to the tree
-        TestModule.bind('new', self.on_nodeAdded)
-        TestCase.bind('new', self.on_nodeAdded)
-        TestMethod.bind('new', self.on_nodeAdded)
-
-        # Listen for any status updates on nodes in the tree.
-        TestMethod.bind('status_update', self.on_nodeStatusUpdate)
+        self._project.add_listener(self)
 
     ######################################################
     # User commands
@@ -561,125 +357,83 @@ class MainWindow(toga.App):
         # If the runner is currently running, kill it.
         self.stop()
 
-    def cmd_stop(self, event=None):
+    async def cmd_stop(self, widget):
         "Command: The stop button has been pressed"
-        self.stop()
+        await self.stop()
 
-    def cmd_run_all(self, event=None):
+    async def cmd_run_all(self, widget):
         "Command: The Run all button has been pressed"
         # Update test status icon
-        self.tests_tree_data.update_visualization(ICONS_DIR('wait.png'))
-        self.problem_tests_data.data = {}
-        self.all_tests_tree.update()
-        self.problem_tests_tree.update()
+        # self.tests_tree_data.update_visualization(toga.Icon('icons/wait.png'))
+        # self.problem_tests_data.data = {}
+        # self.all_tests_tree.update()
+        # self.problem_tests_tree.update()
         # If the executor isn't currently running, we can
         # start a test run.
-        if not self.executor or not self.executor.is_running:
-            self.run(active=True)
+        if not self.executor:
+            await self.run(active=True)
 
-    def cmd_run_selected(self, event=None):
+    async def cmd_run_selected(self, widget):
         "Command: The 'run selected' button has been pressed"
-
-        def find_test(test, branch=None):
-            "Find test in the project"
-            if branch is None:
-                branch = self.project
-
-            if isinstance(branch, TestMethod):
-                if test in branch.path:
-                    return branch[0]
-            else:
-                for key, item in branch.items():
-                    if key == test:
-                        return item
-                    else:
-                        result = find_test(test, item)
-                        if result:
-                            return result
-
         tests_to_run = []
-
-        # If a node is selected, it needs to be made active
-        for node in self.current_tree_selected:
-            testModule = find_test(node.text)
-            testModule.set_active(True)
-            tests_to_run.append(testModule.path)
-
-        self.tests_tree_data.update_visualization(ICONS_DIR('wait.png'),
-                                                tests_to_run)
-        self.problem_tests_data.data = {}
-        self.problem_tests_tree.update()
-        self.all_tests_tree.update()
+        if self.current_tree.selection:
+            for node in self.current_tree.selection:
+                tests_to_run.append(node.path)
 
         # If the executor isn't currently running, we can
         # start a test run.
-        if not self.executor or not self.executor.is_running:
-            self.run(labels=set(tests_to_run))
+        if not self.executor:
+            await self.run(labels=tests_to_run)
 
-    def cmd_rerun(self, event=None):
+    def cmd_rerun(self, widget):
         "Command: The run/stop button has been pressed"
         # If the executor isn't currently running, we can
         # start a test run.
-        if not self.executor or not self.executor.is_running:
+        if not self.executor:
             self.run(status=set(TestMethod.FAILING_STATES))
 
-    def cmd_show_cov(self, event=None):
-        pass
-
-    def cmd_open_duvet(self, event=None):
-        "Command: Open Duvet"
+    def cmd_show_coverage(self, widget):
+        "Command: Open coverage tool"
         try:
             subprocess.Popen('duvet')
         except Exception as e:
-            self.main_window.error_dialog('Error on open duvet',
-                                'Unable to start Duvet: %s' % e)
+            self.main_window.error_dialog('Error on open duvet', 'Unable to start Duvet: %s' % e)
 
-    def cmd_cricket_page(self, sender):
-        "Show the Cricket project page"
-        webbrowser.open_new('http://pybee.org/cricket/')
+    # def cmd_cricket_page(self, sender):
+    #     "Show the Cricket project page"
+    #     webbrowser.open_new('http://pybee.org/cricket/')
 
-    def cmd_beeware_page(self, sender):
-        "Show the Beeware project page"
-        webbrowser.open_new('http://pybee.org/')
+    # def cmd_beeware_page(self, sender):
+    #     "Show the Beeware project page"
+    #     webbrowser.open_new('http://pybee.org/')
 
-    def cmd_cricket_github(self, sender):
-        "Show the Cricket GitHub repo"
-        webbrowser.open_new('http://github.com/pybee/cricket')
+    # def cmd_cricket_github(self, sender):
+    #     "Show the Cricket GitHub repo"
+    #     webbrowser.open_new('http://github.com/pybee/cricket')
 
-    def cmd_cricket_docs(self, sender):
-        "Show the Cricket documentation"
-        webbrowser.open_new('https://cricket.readthedocs.io/')
+    # def cmd_cricket_docs(self, sender):
+    #     "Show the Cricket documentation"
+    #     webbrowser.open_new('https://cricket.readthedocs.io/')
 
-    def cmd_about_cricket(self, sender):
-        "Show a dialog with Cricket information"
+    # def cmd_about_cricket(self, sender):
+    #     "Show a dialog with Cricket information"
 
-        self.about_cricket = "Cricket is a graphical tool that helps you run your test suites. \n \nNormal unittest test runners dump all output to the console, and provide very little detail while the suite is running. As a result: \n \n- You can't start looking at failures until the test suite has completed running,\n- It isn't a very accessible format for identifying patterns in test failures, \n- It can be hard (or cumbersome) to re-run any tests that have failed. \n \nWhy the name cricket? Test Cricket is the most prestigious version of the game of cricket. Games last for up to 5 days... just like running some test suites. The usual approach for making cricket watchable is a generous dose of beer; in programming, Balmer Peak limits come into effect, so something else is required..."
+    #     self.about_cricket = "Cricket is a graphical tool that helps you run your test suites. \n \nNormal unittest test runners dump all output to the console, and provide very little detail while the suite is running. As a result: \n \n- You can't start looking at failures until the test suite has completed running,\n- It isn't a very accessible format for identifying patterns in test failures, \n- It can be hard (or cumbersome) to re-run any tests that have failed. \n \nWhy the name cricket? Test Cricket is the most prestigious version of the game of cricket. Games last for up to 5 days... just like running some test suites. The usual approach for making cricket watchable is a generous dose of beer; in programming, Balmer Peak limits come into effect, so something else is required..."
 
-        self.main_window.info_dialog('Cricket', self.about_cricket)
+    #     self.main_window.info_dialog('Cricket', self.about_cricket)
 
 
     ######################################################
     # GUI Callbacks
     ######################################################
 
-    def on_testModuleClicked(self, event):
-        "Event handler: a module has been clicked in the tree"
-        pass
-
-    def on_testCaseClicked(self, event):
-        "Event handler: a test case has been clicked in the tree"
-        pass
-
-    def on_testMethodClicked(self, event):
-        "Event handler: a test case has been clicked in the tree"
-        pass
-
-    def on_testSelected(self, nodes):
+    def on_testSelected(self, widget):
         "Event handler: a test case has been selected in the tree"
-        self.current_tree_selected = nodes
-
+        self.current_tree = widget
+        nodes = widget.selection
         # Multiple tests selected
         if len(nodes) > 1:
+            self.status_input.clear()
             self.name_input.clear()
             self.duration_input.clear()
             self.description_input.clear()
@@ -688,17 +442,34 @@ class MainWindow(toga.App):
             self._hide_test_errors()
         elif nodes:
             # Find the definition for the actual test method out of the project
-            testMethod = self.tests_tree_data.search_node(nodes[0].text,
-                                                            selection=True)
-            if testMethod:
-                self.name_input.value = testMethod.path
+            testMethod = nodes[0]
+            self.name_input.value = testMethod.path
+            try:
                 self.description_input.value = testMethod.description
 
-                config = STATUS.get(testMethod.status, STATUS_DEFAULT)
+                # Display constants for test status
+                self.status_label.text = {
+                    TestMethod.STATUS_UNKNOWN: '?',
+                    TestMethod.STATUS_PASS: '\u25cf',
+                    TestMethod.STATUS_SKIP: 'S',
+                    TestMethod.STATUS_FAIL: 'F',
+                    TestMethod.STATUS_EXPECTED_FAIL: 'X',
+                    TestMethod.STATUS_UNEXPECTED_SUCCESS: 'U',
+                    TestMethod.STATUS_ERROR: 'E',
+                }[testMethod.status]
+                # self.status_label.color = {
+                #     TestMethod.STATUS_UNKNOWN: '#BFBFBF',
+                #     TestMethod.STATUS_PASS: '#28C025',
+                #     TestMethod.STATUS_SKIP: '#259EBF',
+                #     TestMethod.STATUS_FAIL: '#E32C2E',
+                #     TestMethod.STATUS_EXPECTED_FAIL: '#3C25BF',
+                #     TestMethod.STATUS_UNEXPECTED_SUCCESS: '#C82788',
+                #     TestMethod.STATUS_ERROR: '#E4742C',
+                # }[testMethod.status]
 
-                if testMethod._result:
+                if testMethod.status:
                     # Test has been executed
-                    self.duration_input.value = '%0.2fs' % testMethod._result['duration']
+                    self.duration_input.value = '%0.2fs' % testMethod.duration
 
                     if testMethod.output:
                         self._show_test_output(testMethod.output)
@@ -715,56 +486,32 @@ class MainWindow(toga.App):
 
                     self._hide_test_output()
                     self._hide_test_errors()
+            except AttributeError as e:
+                # There's no description attribute; that means it's not a test method,
+                # it's a module or test case.
+                self.status_label.value = ''
+                self.description_input.value = ''
+                self.duration_input.value = ''
+
+                self._hide_test_output()
+                self._hide_test_errors()
+        else:
+            # No selection at all.
+            self.status_label.value = ''
+            self.name_input.value = ''
+            self.description_input.value = ''
+            self.duration_input.value = ''
+
+            self._hide_test_output()
+            self._hide_test_errors()
 
         # update "run selected" button enabled state
         self.set_selected_button_state()
 
-    def on_nodeAdded(self, node):
-        "Event handler: a new node has been added to the tree"
-        self.all_tests_tree.update()
-
-    def on_nodeActive(self, node):
-        "Event handler: a node on the tree has been made active"
-        # TODO on tree widget part
-        pass
-
-    def on_nodeInactive(self, node):
-        "Event handler: a node on the tree has been made inactive"
-        # TODO on tree widget part
-        pass
-
-    def on_nodeStatusUpdate(self, node):
-        "Event handler: a node on the tree has received a status update"
-        if node.status in TestMethod.FAILING_STATES:
-            icon = ICONS_DIR('fail.png')
-            # Update test status icon
-            self.tests_tree_data.update_visualization(icon, [node.path])
-
-            # Test is in a failing state. Make sure it is on the problem tree,
-            # with the correct current status.
-            self.problem_tests_data.insert(node.path)
-
-            self.problem_tests_data.update_visualization(icon, [node.path])
-        else:
-            icon = ICONS_DIR('check.png')
-            # Update test status icon
-            self.tests_tree_data.update_visualization(icon, [node.path])
-
-            self.problem_tests_data.update_visualization(icon, [node.path])
-
-        self.all_tests_tree.update()
-        self.problem_tests_tree.update()
-
-    def on_coverageChange(self, event=None):
+    def on_coverageChange(self, widget):
         "Event handler: when the coverage checkbox has been toggled"
         self.coverage = not self.coverage
         self.project.coverage = self.coverage == True
-
-    def on_testProgress(self):
-        "Event handler: a periodic update to poll the runner for output, generating GUI updates"
-        if self.executor and self.executor.poll():
-            # TODO update layout every 100 ms
-            pass
 
     def on_executorStatusUpdate(self, event, update):
         "The executor has some progress to report"
@@ -782,16 +529,16 @@ class MainWindow(toga.App):
         self.progress.value += 1
 
         # Update the run summary
-        self.run_summary.text = 'T:%(total)s P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s, ~%(remaining)s remaining' % {
-            'total': self.executor.total_count,
-            'pass': self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
-            'fail': self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
-            'error': self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
-            'expected': self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
-            'unexpected': self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
-            'skip': self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
-            'remaining': remaining_time
-        }
+        self.run_summary.text = 'T{total} P:{passes} F:{failed} E:{errors} X:{expected} U:{unexpected} S:{skipped}, ~{remaining} remaining'.format(
+            total=self.executor.total_count,
+            passes=self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
+            failed=self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
+            errors=self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
+            expected=self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
+            unexpected=self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
+            skipped=self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
+            remaining=remaining_time,
+        )
 
         # No or Multiple tests selected
         self.name_input.clear()
@@ -820,15 +567,16 @@ class MainWindow(toga.App):
                                 message=message or 'No tests were ran')
 
         # Reset the running summary.
-        self.run_summary.text = 'T:%(total)s P:%(pass)s F:%(fail)s E:%(error)s X:%(expected)s U:%(unexpected)s S:%(skip)s' % {
-            'total': self.executor.total_count,
-            'pass': self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
-            'fail': self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
-            'error': self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
-            'expected': self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
-            'unexpected': self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
-            'skip': self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
-        }
+        self.run_summary.text = 'T{total} P:{passes} F:{failed} E:{errors} X:{expected} U:{unexpected} S:{skipped}'.format(
+            total=self.executor.total_count,
+            passes=self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
+            failed=self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
+            errors=self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
+            expected=self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
+            unexpected=self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
+            skipped=self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
+            remaining=remaining_time,
+        )
 
         # Reset the buttons
         self.reset_button_states_on_end()
@@ -851,23 +599,23 @@ class MainWindow(toga.App):
 
     def reset_button_states_on_end(self):
         "A test run has ended and we should enable or disable buttons as appropriate."
-        self.stop_button.enabled = False
-        self.run_all_button.enabled = True
+        self.stop_command.enabled = False
+        self.run_all_command.enabled = True
         self.set_selected_button_state()
         if self.executor and self.executor.any_failed:
-            self.rerun_button.enabled = True
+            self.rerun_command.enabled = True
         else:
-            self.rerun_button.enabled = False
+            self.rerun_command.enabled = False
 
     def set_selected_button_state(self):
-        state = False if self.executor and self.executor.is_running else True
-        self.run_selected_button.enabled = state
+        state = False if self.executor else True
+        self.run_selected_command.enabled = state
 
     ######################################################
     # GUI utility methods
     ######################################################
 
-    def run(self, active=True, status=None, labels=None):
+    async def run(self, active=True, status=None, labels=None):
         """Run the test suite.
 
         If active=True, only active tests will be run.
@@ -876,30 +624,38 @@ class MainWindow(toga.App):
         If labels is provided, only tests with those labels will
             be executed
         """
-        count, labels = self.project.find_tests(active, status, labels)
-        self.run_status.text = 'Running...'
-        self.run_summary.text = 'T:%s P:0 F:0 E:0 X:0 U:0 S:0' % count
+        if labels:
+            count = len(labels)
+        else:
+            count, labels = self.project.find_tests(active, status)
 
-        self.stop_button.enabled = True
-        self.run_all_button.enabled = False
-        self.run_selected_button.enabled = False
-        self.rerun_button.enabled = False
+        self.run_status.text = 'Running...'
+        self.run_summary.text = 'T:{count} P:0 F:0 E:0 X:0 U:0 S:0'.format(count=count)
+
+        self.stop_command.enabled = True
+        self.run_all_command.enabled = False
+        self.run_selected_command.enabled = False
+        self.rerun_command.enabled = False
 
         self.progress.max = count
         self.progress.value = 0
 
-        # Create the runner
-        self.executor = Executor(self.project, count, labels)
+        # Create the executor...
+        self.executor = Executor(self.project)
 
-        # Progress handling event
-        self.on_testProgress()
+        # ...and run it
+        await self.executor.run(count, labels)
 
-    def stop(self):
+        # Once it's done, clean up.
+        self.run_status.text = 'Stopped.'
+        self.reset_button_states_on_end()
+
+    async def stop(self):
         "Stop the test suite."
-        if self.executor and self.executor.is_running:
+        if self.executor:
             self.run_status.text = 'Stopping...'
 
-            self.executor.terminate()
+            await self.executor.terminate()
             self.executor = None
 
             self.run_status.text = 'Stopped.'
@@ -908,21 +664,25 @@ class MainWindow(toga.App):
 
     def _hide_test_output(self):
         "Hide the test output panel on the test results page"
-        self.output_box.hide()
+        # FIXME
+        # self.output_box.hide()
 
     def _show_test_output(self, content):
         "Show the test output panel on the test results page"
         self.output_input.value = content
-        self.output_box.show()
+        # FIXME
+        # self.output_box.show()
 
     def _hide_test_errors(self):
         "Hide the test error panel on the test results page"
-        self.error_box.hide()
+        # FIXME
+        # self.error_box.hide()
 
     def _show_test_errors(self, content):
         "Show the test error panel on the test results page"
         self.error_input.value = content
-        self.error_box.show()
+        # FIXME
+        # self.error_box.show()
 
     def _check_errors_status(self):
         """Checks if the model or the project have errors.
@@ -942,104 +702,3 @@ class MainWindow(toga.App):
                         self._ignorable_test_load_error)
             if dialog.status == dialog.CANCEL:
                 sys.exit(1)
-
-class StackTraceDialog:
-    OK = 1
-    CANCEL = 2
-
-    def __init__(self, parent, title, label, trace, critical=False):
-        '''Show a dialog with a scrollable stack trace.
-
-        Arguments:
-
-            parent -- a parent window (the application window)
-            title -- the title for the stack trace window
-            label -- the label describing the stack trace
-            trace -- the stack trace content to display.
-            critical -- indicates if the stack trace dialog will be critical
-        '''
-        self.parent = parent
-        self.status = None
-
-        self.button_result = self.parent.main_window.stack_trace_dialog(title,
-                                                        label, trace,
-                                                        retry=critical)
-
-        if self.button_result:
-            self.status = self.OK
-        elif critical:
-            self.status = self.CANCEL
-
-class FailedTestDialog(StackTraceDialog):
-    def __init__(self, parent, trace):
-        '''Report an error when running a test suite.
-
-        Arguments:
-
-            parent -- a parent window (the application window)
-            trace -- the stack trace content to display.
-        '''
-        StackTraceDialog.__init__(
-            self,
-            parent,
-            'Error running test suite',
-            'The following stack trace was generated when attempting to run the test suite:',
-            trace,
-        )
-
-class TestErrorsDialog(StackTraceDialog):
-    def __init__(self, parent, trace):
-        '''Show a dialog with a scrollable list of errors.
-
-        Arguments:
-
-            parent -- a parent window (the application window)
-            error -- the error content to display.
-        '''
-        StackTraceDialog.__init__(
-            self,
-            parent,
-            'Errors during test suite',
-            ('The following errors were generated while running the test suite:'),
-            trace,
-        )
-
-
-class TestLoadErrorDialog(StackTraceDialog):
-    def __init__(self, parent, trace):
-        '''Show a dialog with a scrollable stack trace.
-
-        Arguments:
-
-            parent -- a parent window (the application window)
-            trace -- the stack trace content to display.
-        '''
-        StackTraceDialog.__init__(
-            self,
-            parent,
-            'Error discovering test suite',
-            ('The following stack trace was generated when attempting to '
-             'discover the test suite:'),
-            trace,
-            True,
-        )
-
-
-class IgnorableTestLoadErrorDialog(StackTraceDialog):
-    def __init__(self, parent, trace):
-        '''Show a dialog with a scrollable stack trace when loading
-           tests turned up errors in stderr but they can safely be ignored.
-
-        Arguments:
-
-            parent -- a parent window (the application window)
-            trace -- the stack trace content to display.
-        '''
-        StackTraceDialog.__init__(
-            self,
-            parent,
-            'Error discovering test suite',
-            ('The following error where captured during test discovery '
-             'but running the tests might still work:'),
-            trace,
-        )
