@@ -171,7 +171,7 @@ class Cricket(toga.App):
         # Create the tree/control area on the left frame
         self._setup_left_frame()
 
-        self.split_main_container = toga.SplitContainer(style=CSS(height=720))
+        self.split_main_container = toga.SplitContainer(style=CSS(flex=1, min_height=450))
         self.split_main_container.content = [
             self.tree_notebook,
             self.right_box
@@ -182,7 +182,8 @@ class Cricket(toga.App):
             children=[
                 self.split_main_container,
                 self.statusbar
-            ]
+            ],
+            style=CSS(flex_direction='column')
         )
         self.content = self.outer_box
 
