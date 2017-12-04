@@ -163,11 +163,13 @@ class Cricket(toga.App):
         Sets up the main content area. It is a persistent GUI component
         '''
 
+        # Create the output/viewer area on the right frame
+        # Need to create this before the option container in the left
+        # frame is created.
+        self._setup_right_frame()
+
         # Create the tree/control area on the left frame
         self._setup_left_frame()
-
-        # Create the output/viewer area on the right frame
-        self._setup_right_frame()
 
         self.split_main_container = toga.SplitContainer(style=CSS(height=720))
         self.split_main_container.content = [
@@ -194,22 +196,21 @@ class Cricket(toga.App):
             multiple_select=True
         )
 
-        self.all_tests_tree.on_select = self.on_testSelected
+        self.all_tests_tree.on_select = self.on_test_selected
 
         self.problem_tests_tree = toga.Tree(
             ['Test'], accessors=['label'],
             data=TestSuiteProblems(self.test_suite),
             multiple_select=True
         )
-        self.problem_tests_tree.on_select = self.on_testSelected
-
-        self.current_tree = self.all_tests_tree
+        self.problem_tests_tree.on_select = self.on_test_selected
 
         self.tree_notebook = toga.OptionContainer(
             content=[
                 ('All tests', self.all_tests_tree),
                 ('Problems', self.problem_tests_tree)
-            ]
+            ],
+            on_select=self.on_tab_selected
         )
 
     def _setup_right_frame(self):
@@ -429,13 +430,17 @@ class Cricket(toga.App):
     # GUI Callbacks
     ######################################################
 
-    def on_testSelected(self, widget):
+    def on_tab_selected(self, tab, option):
+        "Event handler: the tree selection has changed."
+        self.current_tree = option
+        self.on_test_selected(option)
+
+    def on_test_selected(self, widget):
         "Event handler: a test case has been selected in the tree"
-        self.current_tree = widget
         nodes = widget.selection
         # Multiple tests selected
-        if len(nodes) > 1:
-            self.status_label = ''
+        if nodes and len(nodes) > 1:
+            self.status_label.text = ''
             self.name_view.clear()
             self.duration_view.clear()
             self.description_view.clear()
