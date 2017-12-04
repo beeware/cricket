@@ -171,11 +171,15 @@ class Cricket(toga.App):
         # Create the tree/control area on the left frame
         self._setup_left_frame()
 
-        self.split_main_container = toga.SplitContainer(style=CSS(flex=1, min_height=450))
-        self.split_main_container.content = [
-            self.tree_notebook,
-            self.right_box
-        ]
+        # Weight the split container so 66% of the screen
+        # is the details panel.
+        self.split_main_container = toga.SplitContainer(
+            content=[
+                (self.tree_notebook, 33),
+                (self.right_box, 66),
+            ],
+            style=CSS(flex=1, min_height=450)
+        )
 
         # Main content area
         self.outer_box = toga.Box(
