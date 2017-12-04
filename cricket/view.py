@@ -284,7 +284,7 @@ class Cricket(toga.App):
         self.output_box.add(self.output_view)
 
         # Box to put the test error
-        self.error_box = toga.Box(style=CSS(flex_direction='row', margin=5))
+        self.error_box = toga.Box(style=CSS(flex_direction='row', margin=5, flex=1))
         # Label to indicate the test error
         self.error_label = toga.Label(
             'Error:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
