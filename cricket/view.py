@@ -60,8 +60,8 @@ class Cricket(toga.App):
 
         # Now that we've laid out the grid, hide the error and output text
         # until we actually have an error/output to display
-        self._hide_test_output()
-        self._hide_test_errors()
+        # self.output_box.hide()
+        # self.error_box.hide()
 
         # Sets the content defined above to show on the main window
         self.main_window.content = self.content
@@ -242,10 +242,10 @@ class Cricket(toga.App):
             'Name:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
         )
         # Text input to show the name of the test
-        self.name_input = toga.TextInput(readonly=True, style=CSS(flex=1))
+        self.name_view = toga.TextInput(readonly=True, style=CSS(flex=1))
         # Insert the name box objects
         self.name_box.add(self.name_label)
-        self.name_box.add(self.name_input)
+        self.name_box.add(self.name_view)
 
         # Box to put the test duration
         self.duration_box = toga.Box(style=CSS(flex_direction='row', margin=5))
@@ -254,9 +254,9 @@ class Cricket(toga.App):
             'Duration:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
         )
         # Text input to show the test duration
-        self.duration_input = toga.TextInput(readonly=True, style=CSS(flex=1))
+        self.duration_view = toga.TextInput(readonly=True, style=CSS(flex=1))
         self.duration_box.add(self.duration_label)
-        self.duration_box.add(self.duration_input)
+        self.duration_box.add(self.duration_view)
 
         # Box to put the test description
         self.description_box = toga.Box(style=CSS(flex_direction='row', margin=5))
@@ -265,10 +265,10 @@ class Cricket(toga.App):
             'Description:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
         )
         # Text input to show the test description
-        self.description_input = toga.MultilineTextInput(style=CSS(flex=1))
+        self.description_view = toga.MultilineTextInput(style=CSS(flex=1))
         # Insert the test description box objects
         self.description_box.add(self.description_label)
-        self.description_box.add(self.description_input)
+        self.description_box.add(self.description_view)
 
         # Box to put the test output
         self.output_box = toga.Box(style=CSS(flex_direction='row', margin=5))
@@ -277,10 +277,10 @@ class Cricket(toga.App):
             'Output:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
         )
         # Text input to show the test output
-        self.output_input = toga.MultilineTextInput(style=CSS(flex=1))
+        self.output_view = toga.MultilineTextInput(style=CSS(flex=1))
         # Insert the test output box objects
         self.output_box.add(self.output_label)
-        self.output_box.add(self.output_input)
+        self.output_box.add(self.output_view)
 
         # Box to put the test error
         self.error_box = toga.Box(style=CSS(flex_direction='row', margin=5))
@@ -289,10 +289,10 @@ class Cricket(toga.App):
             'Error:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
         )
         # Text input to show the test error
-        self.error_input = toga.MultilineTextInput(style=CSS(flex=1))
+        self.error_view = toga.MultilineTextInput(style=CSS(flex=1))
         # Insert the test error box objects
         self.error_box.add(self.error_label)
-        self.error_box.add(self.error_input)
+        self.error_box.add(self.error_view)
 
         # Insert the right box contents
         self.right_box.add(self.coverage_checkbox)
@@ -436,18 +436,20 @@ class Cricket(toga.App):
         # Multiple tests selected
         if len(nodes) > 1:
             self.status_label = ''
-            self.name_input.clear()
-            self.duration_input.clear()
-            self.description_input.clear()
+            self.name_view.clear()
+            self.duration_view.clear()
+            self.description_view.clear()
 
-            self._hide_test_output()
-            self._hide_test_errors()
+            self.output_view.clear()
+            self.error_view.clear()
+            # self.output_box.hide()
+            # self.error_box.hide()
         elif nodes:
             # Find the definition for the actual test method out of the test_suite
             testMethod = nodes[0]
-            self.name_input.value = testMethod.path
+            self.name_view.value = testMethod.path
             try:
-                self.description_input.value = testMethod.description
+                self.description_view.value = testMethod.description
 
                 # Display constants for test status
                 self.status_label.text = {
@@ -471,41 +473,51 @@ class Cricket(toga.App):
 
                 if testMethod.status:
                     # Test has been executed
-                    self.duration_input.value = '%0.2fs' % testMethod.duration
+                    self.duration_view.value = '%0.2fs' % testMethod.duration
 
                     if testMethod.output:
-                        self._show_test_output(testMethod.output)
-                    else:
-                        self._hide_test_output()
+                        self.output_view.value = testMethod.output
+                        # self.output_box.show()
+                    # else:
+                    #     self.output_box.hide()
 
                     if testMethod.error:
-                        self._show_test_errors(testMethod.error)
-                    else:
-                        self._hide_test_errors()
+                        self.error_view.value = testMethod.error
+                        # self.error_box.show()
+                    # else:
+                    #     self.error_box.hide()
                 else:
                     # Test hasn't been executed yet.
-                    self.duration_input.value = 'Not executed'
+                    self.duration_view.value = 'Not executed'
 
-                    self._hide_test_output()
-                    self._hide_test_errors()
+                    self.output_view.clear()
+                    self.error_view.clear()
+
+                    # self.output_box.hide()
+                    # self.error_box.hide()
             except AttributeError as e:
                 # There's no description attribute; that means it's not a test method,
                 # it's a module or test case.
-                self.status_label.value = ''
-                self.description_input.value = ''
-                self.duration_input.value = ''
+                self.status_label.text = ''
+                self.description_view.clear()
+                self.duration_view.clear()
 
-                self._hide_test_output()
-                self._hide_test_errors()
+                self.output_view.clear()
+                self.error_view.clear()
+
+                # self.output_box.hide()
+                # self.error_box.hide()
         else:
             # No selection at all.
-            self.status_label.value = ''
-            self.name_input.value = ''
-            self.description_input.value = ''
-            self.duration_input.value = ''
+            self.status_label.text = ''
+            self.name_view.clear()
+            self.description_view.clear()
+            self.duration_view.clear()
+            self.output_view.clear()
+            self.error_view.clear()
 
-            self._hide_test_output()
-            self._hide_test_errors()
+            # self.output_box.hide()
+            # self.error_box.hide()
 
         # update "run selected" button enabled state
         self.set_selected_button_state()
@@ -520,12 +532,12 @@ class Cricket(toga.App):
         # Update the status line.
         self.run_status.text = update
 
-    def on_executorTestStart(self, event, test_path):
+    def executor_test_start(self, test_path):
         "The executor has started running a new test."
         # Update status line, and set the tree item to active.
         self.run_status.text = 'Running %s...' % test_path
 
-    def on_executorTestEnd(self, event, test_path, result, remaining_time):
+    def executor_test_end(self, test_path, result, remaining_time):
         "The executor has finished running a test."
         # Update the progress meter
         self.progress.value += 1
@@ -543,14 +555,14 @@ class Cricket(toga.App):
         )
 
         # No or Multiple tests selected
-        self.name_input.clear()
-        self.duration_input.clear()
-        self.description_input.clear()
+        self.name_view.clear()
+        self.duration_view.clear()
+        self.description_view.clear()
 
-        self._hide_test_output()
-        self._hide_test_errors()
+        # self.output_box.hide()
+        # self.error_box.hide()
 
-    def on_executorSuiteEnd(self, event, error=None):
+    def executor_suite_end(self, error=None):
         "The test suite finished running."
         # Display the final results
         self.run_status.text = 'Finished.'
@@ -559,8 +571,18 @@ class Cricket(toga.App):
             self.main_window.error_dialog('Result', error)
 
         message = ', '.join(
-            '%d %s' % (count, TestMethod.STATUS_LABELS[state])
-            for state, count in sorted(self.executor.result_count.items()))
+            '%d %s' % (
+                count, {
+                    TestMethod.STATUS_PASS: "passed",
+                    TestMethod.STATUS_FAIL: "failed",
+                    TestMethod.STATUS_ERROR: "errors",
+                    TestMethod.STATUS_EXPECTED_FAIL: "expected",
+                    TestMethod.STATUS_UNEXPECTED_SUCCESS: "unexpected",
+                    TestMethod.STATUS_SKIP: "skipped",
+                }[state]
+            )
+            for state, count in sorted(self.executor.result_count.items())
+        )
 
         if self.executor.any_failed:
             self.main_window.error_dialog('Result', message)
@@ -577,14 +599,7 @@ class Cricket(toga.App):
             expected=self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
             unexpected=self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
             skipped=self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
-            remaining=remaining_time,
         )
-
-        # Reset the buttons
-        self.reset_button_states_on_end()
-
-        # Drop the reference to the executor
-        self.executor = None
 
     def on_executorSuiteError(self, event, error):
         "An error occurred running the test suite."
@@ -643,49 +658,26 @@ class Cricket(toga.App):
         self.progress.value = 0
 
         # Create the executor...
-        self.executor = Executor(self.test_suite)
+        self.executor = Executor(self.test_suite, self)
 
         # ...and run it
         await self.executor.run(count, labels)
 
         # Once it's done, clean up.
-        self.run_status.text = 'Stopped.'
-        self.reset_button_states_on_end()
         self.executor = None
+        self.reset_button_states_on_end()
 
     async def stop(self):
         "Stop the test suite."
         if self.executor:
             self.run_status.text = 'Stopping...'
 
-            await self.executor.terminate()
-            self.executor = None
+            # await self.executor.terminate()
 
-            self.run_status.text = 'Stopped.'
+        self.executor = None
+        self.run_status.text = 'Stopped.'
 
-            self.reset_button_states_on_end()
-
-    def _hide_test_output(self):
-        "Hide the test output panel on the test results page"
-        # FIXME
-        # self.output_box.hide()
-
-    def _show_test_output(self, content):
-        "Show the test output panel on the test results page"
-        self.output_input.value = content
-        # FIXME
-        # self.output_box.show()
-
-    def _hide_test_errors(self):
-        "Hide the test error panel on the test results page"
-        # FIXME
-        # self.error_box.hide()
-
-    def _show_test_errors(self, content):
-        "Show the test error panel on the test results page"
-        self.error_input.value = content
-        # FIXME
-        # self.error_box.show()
+        self.reset_button_states_on_end()
 
     def _check_errors_status(self):
         """Checks if the model or the test_suite have errors.

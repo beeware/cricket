@@ -49,8 +49,9 @@ def parse_status_and_error(post):
 
 class Executor:
     "A wrapper around the subprocess that executes tests."
-    def __init__(self, test_suite):
+    def __init__(self, test_suite, display=None):
         self.test_suite = test_suite
+        self.display = display
 
         # The TestMethod object currently under execution.
         self.current_test = None
@@ -149,6 +150,14 @@ class Executor:
                     self.result_count.setdefault(status, 0)
                     self.result_count[status] = self.result_count[status] + 1
 
+                    # Update the display
+                    if self.display:
+                        self.display.executor_test_end(
+                            test_path=self.current_test.path,
+                            result=status,
+                            remaining_time=remaining
+                        )
+
                     # Clear the decks for the next test.
                     self.current_test = None
                     self.buffer = []
@@ -179,18 +188,22 @@ class Executor:
                             # No active test; first line tells us which test is running.
                             pre = json.loads(line)
                             self.current_test = self.test_suite.confirm_exists(pre['path'])
-                            # self.current_test
+
+                            # Update the display
+                            if self.display:
+                                self.display.executor_test_start(
+                                    test_path=self.current_test.path,
+                                )
+
                         except ValueError:
                             self.current_test = None
                 # else:
                 #     # We haven't started the suite yet; we're still collecting the preamble
             line = await self.proc.stdout.readline()
 
-        # if finished:
-        #     if self.error_buffer:
-        #         self.emit('suite_end', error='\n'.join(self.error_buffer))
-        #     else:
-        #         self.emit('suite_end')
+        # Update the display
+        if self.display:
+            self.display.executor_suite_end()
 
         # elif stopped:
         #     # Suite has stopped producing output.
