@@ -1,17 +1,17 @@
 '''
-In general, you would expect that there would only be one project class
+In general, you would expect that there would only be one TestSuite class
 specified in this file. It provides the interface to executing test
 collecetion and execution.
 '''
 import os
 import sys
 
-from cricket.model import Project
+from cricket.model import TestSuite
 
 
-class DjangoProject(Project):
+class DjangoTestSuite(TestSuite):
     '''
-    The Project is a wrapper around the command-line calls to interface
+    The TestSuite is a wrapper around the command-line calls to interface
     to test collection and test execution
     '''
 
@@ -19,7 +19,7 @@ class DjangoProject(Project):
         self.settings = None
         if options and hasattr(options, 'settings'):
             self.settings = options.settings
-        super(DjangoProject, self).__init__()
+        super(DjangoTestSuite, self).__init__()
 
     @classmethod
     def add_arguments(cls, parser):
@@ -47,7 +47,7 @@ class DjangoProject(Project):
         return script
 
     def discover_commandline(self):
-        "Command lineDiscover all available tests in a project."
+        "The command line to discover all available tests in a test suite."
 
         command = [sys.executable] + self.script
 
@@ -59,7 +59,7 @@ class DjangoProject(Project):
         return command
 
     def execute_commandline(self, labels):
-        "Return the command line to execute the specified test labels"
+        "The command line to execute the specified test labels"
         command = [sys.executable] + self.script
 
         if self.settings:

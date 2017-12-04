@@ -1,6 +1,6 @@
 '''
 The purpose of this module is to set up the Cricket GUI,
-load a "project" for discovering and executing tests, and
+load a Test Suite for discovering and executing tests, and
 to initiate the GUI main loop.
 '''
 from argparse import ArgumentParser
@@ -13,7 +13,7 @@ from cricket.model import ModelLoadError
 def main(Model):
     """Run the main loop of the app.
 
-    Take the project Model as the argument. This model will be
+    Take the test_suite Model as the argument. This model will be
     instantiated as part of the main loop.
     """
     parser = ArgumentParser()
@@ -32,28 +32,28 @@ def main(Model):
     # Construct a Toga application
     app = Cricket('Cricket', 'org.pybee.cricket')
 
-    # Try to load the project. If any error occurs during
-    # project load, show an error dialog
-    project = None
-    while project is None:
+    # Try to load the test_suite. If any error occurs during
+    # test suite load, show an error dialog
+    test_suite = None
+    while test_suite is None:
         try:
-            # Create the project objects
-            project = Model(options)
+            # Create the test_suite objects
+            test_suite = Model(options)
         except ModelLoadError as e:
-            # Load failed; destroy the project and show an error dialog.
+            # Load failed; destroy the test_suite and show an error dialog.
             #   If the user selects cancel, quit.
             app.test_load_error = e.trace
         else:
             app.test_load_error = None
 
-    if project.errors:
-        app.ignorable_test_load_error = '\n'.join(project.errors)
+    if test_suite.errors:
+        app.ignorable_test_load_error = '\n'.join(test_suite.errors)
     else:
         app.ignorable_test_load_error = None
 
-    # Set the project for the main window.
+    # Set the test_suite for the main window.
     # This populates the tree, and sets listeners for
     # future tree modifications.
-    app.project = project
+    app.test_suite = test_suite
 
     return app

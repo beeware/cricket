@@ -21,7 +21,7 @@ except ImportError:
     coverage = None
     duvet = None
 
-from cricket.model import TestMethod, TestCase, TestModule
+from cricket.model import TestMethod, TestSuiteProblems
 from cricket.executor import Executor
 from cricket.dialogs import FailedTestDialog, TestLoadErrorDialog, IgnorableTestLoadErrorDialog
 
@@ -71,7 +71,7 @@ class Cricket(toga.App):
         self._check_errors_status()
 
     ######################################################
-    # Error handlers from the model or project
+    # Error handlers from the model or test suite  FIXME
     ######################################################
 
     @property
@@ -190,13 +190,17 @@ class Cricket(toga.App):
         '''
         self.all_tests_tree = toga.Tree(
             ['Test'], accessors=['label'],
-            data=self.project,
+            data=self.test_suite,
             multiple_select=True
         )
 
         self.all_tests_tree.on_select = self.on_testSelected
 
-        self.problem_tests_tree = toga.Tree(['Test'], data=[])
+        self.problem_tests_tree = toga.Tree(
+            ['Test'], accessors=['label'],
+            data=TestSuiteProblems(self.test_suite),
+            multiple_select=True
+        )
         self.problem_tests_tree.on_select = self.on_testSelected
 
         self.current_tree = self.all_tests_tree
@@ -328,25 +332,24 @@ class Cricket(toga.App):
         "Update the layout with the initial values."
         # Get a count of active tests to display in the status bar.
 
-        count, labels = self.project.find_tests(True)
+        count, labels = self.test_suite.find_tests(True)
         self.run_summary.text = 'T:{count} P:0 F:0 E:0 X:0 U:0 S:0'.format(count=count)
 
-        # Update the project to make sure coverage status matches the GUI
+        # Update the test suite to make sure coverage status matches the GUI
         self.on_coverageChange(None)
 
-
     ######################################################
-    # Handlers for setting a new project
+    # Handlers for setting a new test_suite
     ######################################################
 
     @property
-    def project(self):
-        return self._project
+    def test_suite(self):
+        return self._test_suite
 
-    @project.setter
-    def project(self, project):
-        self._project = project
-        self._project.add_listener(self)
+    @test_suite.setter
+    def test_suite(self, test_suite):
+        self._test_suite = test_suite
+        self._test_suite.add_listener(self)
 
     ######################################################
     # User commands
@@ -400,11 +403,11 @@ class Cricket(toga.App):
             self.main_window.error_dialog('Error on open duvet', 'Unable to start Duvet: %s' % e)
 
     # def cmd_cricket_page(self, sender):
-    #     "Show the Cricket project page"
+    #     "Show the Cricket test_suite page"
     #     webbrowser.open_new('http://pybee.org/cricket/')
 
     # def cmd_beeware_page(self, sender):
-    #     "Show the Beeware project page"
+    #     "Show the Beeware test_suite page"
     #     webbrowser.open_new('http://pybee.org/')
 
     # def cmd_cricket_github(self, sender):
@@ -422,7 +425,6 @@ class Cricket(toga.App):
 
     #     self.main_window.info_dialog('Cricket', self.about_cricket)
 
-
     ######################################################
     # GUI Callbacks
     ######################################################
@@ -433,7 +435,7 @@ class Cricket(toga.App):
         nodes = widget.selection
         # Multiple tests selected
         if len(nodes) > 1:
-            self.status_input.clear()
+            self.status_label = ''
             self.name_input.clear()
             self.duration_input.clear()
             self.description_input.clear()
@@ -441,7 +443,7 @@ class Cricket(toga.App):
             self._hide_test_output()
             self._hide_test_errors()
         elif nodes:
-            # Find the definition for the actual test method out of the project
+            # Find the definition for the actual test method out of the test_suite
             testMethod = nodes[0]
             self.name_input.value = testMethod.path
             try:
@@ -511,7 +513,7 @@ class Cricket(toga.App):
     def on_coverageChange(self, widget):
         "Event handler: when the coverage checkbox has been toggled"
         self.coverage = not self.coverage
-        self.project.coverage = self.coverage == True
+        self.test_suite.coverage = self.coverage == True
 
     def on_executorStatusUpdate(self, event, update):
         "The executor has some progress to report"
@@ -627,7 +629,7 @@ class Cricket(toga.App):
         if labels:
             count = len(labels)
         else:
-            count, labels = self.project.find_tests(active, status)
+            count, labels = self.test_suite.find_tests(active, status)
 
         self.run_status.text = 'Running...'
         self.run_summary.text = 'T:{count} P:0 F:0 E:0 X:0 U:0 S:0'.format(count=count)
@@ -641,7 +643,7 @@ class Cricket(toga.App):
         self.progress.value = 0
 
         # Create the executor...
-        self.executor = Executor(self.project)
+        self.executor = Executor(self.test_suite)
 
         # ...and run it
         await self.executor.run(count, labels)
@@ -649,6 +651,7 @@ class Cricket(toga.App):
         # Once it's done, clean up.
         self.run_status.text = 'Stopped.'
         self.reset_button_states_on_end()
+        self.executor = None
 
     async def stop(self):
         "Stop the test suite."
@@ -685,11 +688,11 @@ class Cricket(toga.App):
         # self.error_box.show()
 
     def _check_errors_status(self):
-        """Checks if the model or the project have errors.
+        """Checks if the model or the test_suite have errors.
 
         If there are errors on the model show the dialog TestLoadErrorDialog
             with these errors.
-        If there are error on the project show the dialog
+        If there are error on the test_suite show the dialog
             IgnorableTestLoadErrorDialog with these errors.
         """
 

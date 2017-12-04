@@ -49,8 +49,8 @@ def parse_status_and_error(post):
 
 class Executor:
     "A wrapper around the subprocess that executes tests."
-    def __init__(self, project):
-        self.project = project
+    def __init__(self, test_suite):
+        self.test_suite = test_suite
 
         # The TestMethod object currently under execution.
         self.current_test = None
@@ -76,7 +76,7 @@ class Executor:
         self.total_count = count
 
         self.proc = await asyncio.create_subprocess_shell(
-            ' '.join(self.project.execute_commandline(labels)),
+            ' '.join(self.test_suite.execute_commandline(labels)),
             stdin=None,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -178,23 +178,19 @@ class Executor:
                         try:
                             # No active test; first line tells us which test is running.
                             pre = json.loads(line)
-                            self.current_test = self.project.confirm_exists(pre['path'])
-                            print("TEST START", pre['path'])
+                            self.current_test = self.test_suite.confirm_exists(pre['path'])
+                            # self.current_test
                         except ValueError:
                             self.current_test = None
                 # else:
-                #     # We haven't started the suite yet; we're in the preamble
-                #     pass
+                #     # We haven't started the suite yet; we're still collecting the preamble
             line = await self.proc.stdout.readline()
-        print("ALL DONE")
 
-        # # If we're not finished, requeue the event.
         # if finished:
         #     if self.error_buffer:
         #         self.emit('suite_end', error='\n'.join(self.error_buffer))
         #     else:
         #         self.emit('suite_end')
-        #     return False
 
         # elif stopped:
         #     # Suite has stopped producing output.
@@ -202,9 +198,6 @@ class Executor:
         #         self.emit('suite_error', error='\n'.join(self.error_buffer))
         #     else:
         #         self.emit('suite_error', error='Test output ended unexpectedly')
-
-        # await self.proc.wait()
-
 
     async def terminate(self):
         "Stop the executor."

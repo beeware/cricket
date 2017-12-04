@@ -20,12 +20,12 @@ class ModelLoadError(Exception):
 
 
 class TestNode:
-    def __init__(self, project, prefix, name):
+    def __init__(self, source, prefix, name):
         super().__init__()
         self._child_labels = []
         self._child_nodes = {}
 
-        self._project = project
+        self._source = source
         self._prefix = prefix
         self.name = name
         self._active = True
@@ -46,6 +46,26 @@ class TestNode:
     ######################################################################
     # Methods used by Cricket
     ######################################################################
+
+    def __setitem__(self, label, child):
+        # Insert the item, sort the list,
+        # and find out where the item was inserted.
+        self._child_labels.append(label)
+        self._child_labels.sort()
+        index = self._child_labels.index(label)
+
+        self._child_nodes[label] = child
+
+        self._source._notify('insert', parent=self, index=index, item=child)
+
+    def __delitem__(self, label):
+        # Find the label in the list of children, and remove it.
+        index = self._child_labels.index(label)
+        self._child_nodes[label] = child
+
+        self._source._notify('remove', item=child)
+        del self._child_labels[index]
+        del self._child_nodes[label]
 
     @property
     def path(self):
@@ -81,9 +101,8 @@ class TestNode:
         try:
             child = self._child_nodes[parts[0]]
         except KeyError:
-            child = TestClass(self._project, self.path, parts[0])
-            self._child_labels.append(parts[0])
-            self._child_nodes[parts[0]] = child
+            child = TestClass(self._source, self.path, parts[0])
+            self[parts[0]] = child
 
         if len(parts) > 1:
             test = child.confirm_exists('.'.join(parts[1:]))
@@ -147,14 +166,6 @@ class TestMethod:
 
     FAILING_STATES = (STATUS_FAIL, STATUS_UNEXPECTED_SUCCESS, STATUS_ERROR)
 
-    STATUS_LABELS = {
-        STATUS_PASS: 'passed',
-        STATUS_SKIP: 'skipped',
-        STATUS_FAIL: 'failures',
-        STATUS_EXPECTED_FAIL: 'expected failures',
-        STATUS_UNEXPECTED_SUCCESS: 'unexpected successes',
-        STATUS_ERROR: 'errors',
-    }
     STATUS_ICONS = {
         STATUS_UNKNOWN: toga.Icon('icons/status/unknown.png'),
         STATUS_PASS: toga.Icon('icons/status/pass.png'),
@@ -165,9 +176,8 @@ class TestMethod:
         STATUS_ERROR: toga.Icon('icons/status/error.png'),
     }
 
-
-    def __init__(self, project, prefix, name):
-        self._project = project
+    def __init__(self, source, prefix, name):
+        self._source = source
         self._prefix = prefix
         self._active = True
 
@@ -180,9 +190,8 @@ class TestMethod:
         self._error = None
         self._duration = None
 
-
     def __repr__(self):
-        return u'TestMethod %s' % self.path
+        return 'TestMethod %s' % self.path
 
     ######################################################################
     # Methods required by the TreeSource interface
@@ -245,7 +254,8 @@ class TestMethod:
         self._output = output
         self._error = error
         self._duration = duration
-        # self.emit()
+
+        self._source._notify('change', item=self)
 
     def set_active(self, is_active, cascade=True):
         """Explicitly set the active state of the test method
@@ -283,7 +293,7 @@ class TestCase(TestNode):
         * 'active' when the test method is made active in the suite.
     """
     def __repr__(self):
-        return u'TestCase %s' % self.path
+        return 'TestCase %s' % self.path
 
     def set_active(self, is_active, cascade=True):
         """Explicitly set the active state of the test case.
@@ -337,7 +347,7 @@ class TestModule(TestNode):
     """
 
     def __repr__(self):
-        return u'TestModule %s' % self.path
+        return 'TestModule %s' % self.path
 
     def set_active(self, is_active, cascade=True):
         """Explicitly set the active state of the test case.
@@ -380,17 +390,9 @@ class TestModule(TestNode):
             if len(testModule) == 0:
                 self.pop(testModule_name)
 
-    # def _update_active(self):
-    #     "Check the active status of all child nodes, and update the status of this node accordingly"
-    #     for subModule_name, subModule in self.items():
-    #         if subModule.active:
-    #             self.set_active(True)
-    #             return
-    #     self.set_active(False)
 
-
-class Project(TestNode, Source):
-    """A data representation of an project, containing 1+ test apps.
+class TestSuite(TestNode, Source):
+    """A data representation of a test suite, containing 1+ test apps.
     """
     def __init__(self):
         super().__init__(self, None, None)
@@ -400,11 +402,11 @@ class Project(TestNode, Source):
         self.refresh()
 
     def __repr__(self):
-        return u'Project'
+        return 'TestSuite'
 
     @classmethod
     def add_arguments(cls, parser):
-        """Add project specific commandline arguments to the *parser*
+        """Add test suite specific commandline arguments to the *parser*
         object. *parser* is an instance of argparse.ArgumentParser.
         """
         pass
@@ -443,6 +445,104 @@ class Project(TestNode, Source):
 
         self.errors = errors if errors is not None else []
 
-    # def _update_active(self):
-    #     "Exists for API consistency"
-    #     pass
+
+class Problem:
+    def __init__(self, source, origin):
+        super().__init__()
+        self._source = source
+        self._origin = origin
+        self._child_labels = []
+        self._child_nodes = {}
+
+    def __repr__(self):
+        return 'Problem with %s' % self._origin
+
+    ######################################################################
+    # Methods required by the TreeSource interface
+    ######################################################################
+
+    def __len__(self):
+        return len(self._child_labels)
+
+    def __getitem__(self, index):
+        return self._child_nodes[self._child_labels[index]]
+
+    def has_children(self):
+        return True
+
+    ######################################################################
+    # Methods used by Cricket
+    ######################################################################
+
+    def __setitem__(self, label, child):
+        # Insert the item, sort the list,
+        # and find out where the item was inserted.
+        self._child_labels.append(label)
+        self._child_labels.sort()
+        index = self._child_labels.index(label)
+
+        self._child_nodes[label] = child
+
+        self._source._notify('insert', parent=self, index=index, item=child)
+
+    def __delitem__(self, label):
+        # Find the label in the list of children, and remove it.
+        index = self._child_labels.index(label)
+        self._child_nodes[label] = child
+
+        self._source._notify('remove', item=child)
+        del self._child_labels[index]
+        del self._child_nodes[label]
+
+    @property
+    def path(self):
+        "The dotted-path name that identifies this test method to the test runner"
+        return self._origin.path
+
+    @property
+    def label(self):
+        "The display label for the node"
+        return self._origin.label
+
+
+class TestSuiteProblems(Problem, Source):
+    def __init__(self, source):
+        super().__init__(self, source)
+
+        # Listen to any changes on the source
+        source.add_listener(self)
+
+    def __repr__(self):
+        return 'TestSuiteProblems'
+
+    def change(self, item):
+        labels = item.path.split('.')
+        if item.status in TestMethod.FAILING_STATES:
+            # Test didn't pass. Make sure it exists in the problem tree.
+            parent = self
+            while labels:
+                label = labels.pop(0)
+                try:
+                    problem_child = parent._child_nodes[label]
+                except KeyError:
+                    # It's a new problem. Add it to the problem tree
+                    child = parent._origin._child_nodes[label]
+                    if isinstance(child, TestMethod):
+                        problem_child = child
+                    else:
+                        problem_child = Problem(self._source, child)
+
+                    parent[label] = problem_child
+                parent = problem_child
+        else:
+            # Test passed. Make sure it's not in the problem tree.
+            parent = self
+            while labels:
+                label = labels.pop(0)
+                try:
+                    problem_child = parent._child_nodes[label]
+                    parent = problem_child
+                except KeyError:
+                    # This node doesn't exist. Don't have to worry
+                    # about any deeper children.
+                    labels = None
