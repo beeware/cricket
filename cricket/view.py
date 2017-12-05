@@ -228,17 +228,17 @@ class Cricket(toga.App):
         # Initial status for coverage
         self.coverage = False
         # Checkbutton to change the status for coverage
-        self.coverage_checkbox = toga.Switch('Generate coverage', on_toggle=self.on_coverageChange)
+        # self.coverage_checkbox = toga.Switch('Generate coverage', on_toggle=self.on_coverageChange)
 
         # If coverage is available, enable it by default.
         # Otherwise, disable the widget
         if not coverage:
             self.coverage = False
-            self.coverage_checkbox.enabled = False
+            # self.coverage_checkbox.enabled = False
 
         # Label for indicator status of test
         self.status_label = toga.Label(
-            '?', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
+            '?', alignment=toga.RIGHT_ALIGNED, style=CSS(width=60, margin_right=10)
         )
 
         # Box to put the name of the test
@@ -263,6 +263,16 @@ class Cricket(toga.App):
         self.duration_view = toga.TextInput(readonly=True, style=CSS(flex=1))
         self.duration_box.add(self.duration_label)
         self.duration_box.add(self.duration_view)
+
+        # Group the name and duration into a single "identifier" box
+        self.identifier_box = toga.Box(style=CSS(flex_direction='column', flex=1))
+        self.identifier_box.add(self.name_box)
+        self.identifier_box.add(self.duration_box)
+
+        # Put the identifiers on the same row as the status label
+        self.summary_box = toga.Box(style=CSS(flex_direction='row'))
+        self.summary_box.add(self.identifier_box)
+        self.summary_box.add(self.status_label)
 
         # Box to put the test description
         self.description_box = toga.Box(style=CSS(flex_direction='row', margin=5))
@@ -301,11 +311,8 @@ class Cricket(toga.App):
         self.error_box.add(self.error_view)
 
         # Insert the right box contents
-        self.right_box.add(self.coverage_checkbox)
-        self.right_box.add(self.status_label)
-        self.right_box.add(self.name_box)
-        self.right_box.add(self.duration_box)
-        self.right_box.add(self.description_box)
+        # self.right_box.add(self.coverage_checkbox)
+        self.right_box.add(self.summary_box)
         self.right_box.add(self.output_box)
         self.right_box.add(self.error_box)
 
@@ -488,9 +495,9 @@ class Cricket(toga.App):
 
                     if testMethod.error:
                         self.error_view.value = testMethod.error
-                        # self.error_box.style.visibility = css.VISIBLE
-                    else:
-                        # self.error_box.style.visibility = css.HIDDEN
+                    #     self.error_box.style.visibility = css.VISIBLE
+                    # else:
+                    #     self.error_box.style.visibility = css.HIDDEN
                 else:
                     # Test hasn't been executed yet.
                     self.duration_view.value = 'Not executed'
