@@ -3,6 +3,7 @@
 This is the "View" of the MVC world.
 """
 
+import colosseum as css
 import os
 import sys
 import toga
@@ -58,10 +59,9 @@ class Cricket(toga.App):
 
         self._setup_init_values()
 
-        # Now that we've laid out the grid, hide the error and output text
+        # Now that we've laid out the grid, hide the error text
         # until we actually have an error/output to display
-        # self.output_box.hide()
-        # self.error_box.hide()
+        # self.error_box.style.visibility = css.HIDDEN
 
         # Sets the content defined above to show on the main window
         self.main_window.content = self.content
@@ -452,8 +452,7 @@ class Cricket(toga.App):
 
             self.output_view.clear()
             self.error_view.clear()
-            # self.output_box.hide()
-            # self.error_box.hide()
+            # self.error_box.style.visibility = css.HIDDEN
         elif nodes:
             # Find the definition for the actual test method out of the test_suite
             testMethod = nodes[0]
@@ -485,17 +484,13 @@ class Cricket(toga.App):
                     # Test has been executed
                     self.duration_view.value = '%0.2fs' % testMethod.duration
 
-                    if testMethod.output:
-                        self.output_view.value = testMethod.output
-                        # self.output_box.show()
-                    # else:
-                    #     self.output_box.hide()
+                    self.output_view.value = testMethod.output
 
                     if testMethod.error:
                         self.error_view.value = testMethod.error
-                        # self.error_box.show()
-                    # else:
-                    #     self.error_box.hide()
+                        # self.error_box.style.visibility = css.VISIBLE
+                    else:
+                        # self.error_box.style.visibility = css.HIDDEN
                 else:
                     # Test hasn't been executed yet.
                     self.duration_view.value = 'Not executed'
@@ -503,8 +498,7 @@ class Cricket(toga.App):
                     self.output_view.clear()
                     self.error_view.clear()
 
-                    # self.output_box.hide()
-                    # self.error_box.hide()
+                    # self.error_box.style.visibility = css.HIDDEN
             except AttributeError as e:
                 # There's no description attribute; that means it's not a test method,
                 # it's a module or test case.
@@ -515,8 +509,7 @@ class Cricket(toga.App):
                 self.output_view.clear()
                 self.error_view.clear()
 
-                # self.output_box.hide()
-                # self.error_box.hide()
+                # self.error_box.style.visibility = css.HIDDEN
         else:
             # No selection at all.
             self.status_label.text = ''
@@ -526,8 +519,7 @@ class Cricket(toga.App):
             self.output_view.clear()
             self.error_view.clear()
 
-            # self.output_box.hide()
-            # self.error_box.hide()
+            # self.error_box.style.visibility = css.HIDDEN
 
         # update "run selected" button enabled state
         self.set_selected_button_state()
@@ -563,14 +555,6 @@ class Cricket(toga.App):
             skipped=self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
             remaining=remaining_time,
         )
-
-        # No or Multiple tests selected
-        self.name_view.clear()
-        self.duration_view.clear()
-        self.description_view.clear()
-
-        # self.output_box.hide()
-        # self.error_box.hide()
 
     def executor_suite_end(self, error=None):
         "The test suite finished running."
