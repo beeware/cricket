@@ -30,7 +30,7 @@ def main(Model):
         return
 
     # Construct a Toga application
-    app = Cricket('Cricket', 'org.pybee.cricket')
+    app = Cricket('Cricket', 'org.pybee.cricket', icon=toga.Icon('icons/cricket'))
 
     # Try to load the test_suite. If any error occurs during
     # test suite load, show an error dialog
