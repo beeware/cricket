@@ -1,8 +1,12 @@
 include AUTHORS
+include CONTRIBUTING.md
 include LICENSE
+include beekeeper.yml
 include requirements*.txt
+recursive-include cricket *.icns
+recursive-include cricket *.png
+recursive-include docs Makefile
 recursive-include docs *.bat
 recursive-include docs *.py
 recursive-include docs *.rst
-recursive-include docs Makefile
 recursive-include tests *.py
