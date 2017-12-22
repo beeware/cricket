@@ -40,7 +40,7 @@ class TestNode:
     def __getitem__(self, index):
         return self._child_nodes[self._child_labels[index]]
 
-    def has_children(self):
+    def can_have_children(self):
         return True
 
     ######################################################################
@@ -200,7 +200,7 @@ class TestMethod:
     def __len__(self):
         return 0
 
-    def has_children(self):
+    def can_have_children(self):
         return False
 
     ######################################################################
@@ -467,7 +467,7 @@ class Problem:
     def __getitem__(self, index):
         return self._child_nodes[self._child_labels[index]]
 
-    def has_children(self):
+    def can_have_children(self):
         return True
 
     ######################################################################
