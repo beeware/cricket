@@ -3,13 +3,15 @@
 This is the "View" of the MVC world.
 """
 
-import colosseum as css
 import os
 import sys
-import toga
 import subprocess
 import webbrowser
-from colosseum import CSS
+
+import toga
+from toga.style import Pack
+from toga.style.pack import RIGHT, LEFT, CENTER, ROW, COLUMN, VISIBLE, HIDDEN
+from toga.font import BOLD, SANS_SERIF
 
 # Check for the existence of coverage and duvet
 try:
@@ -61,7 +63,7 @@ class Cricket(toga.App):
 
         # Now that we've laid out the grid, hide the error text
         # until we actually have an error/output to display
-        # self.error_box.style.visibility = css.HIDDEN
+        # self.error_box.style.visibility = HIDDEN
 
         # Sets the content defined above to show on the main window
         self.main_window.content = self.content
@@ -178,16 +180,15 @@ class Cricket(toga.App):
                 (self.tree_notebook, 33),
                 (self.right_box, 66),
             ],
-            style=CSS(flex=1, min_height=450)
+            style=Pack(flex=1)
         )
-
         # Main content area
         self.outer_box = toga.Box(
             children=[
                 self.split_main_container,
                 self.statusbar
             ],
-            style=CSS(flex_direction='column')
+            style=Pack(direction=COLUMN)
         )
         self.content = self.outer_box
 
@@ -223,7 +224,7 @@ class Cricket(toga.App):
         The right frame is basically the "output viewer" space
         '''
         # Box to show the detail of a test
-        self.right_box = toga.Box(style=CSS(flex_direction='column', padding_top=15))
+        self.right_box = toga.Box(style=Pack(direction=COLUMN, padding_top=10, padding_bottom=25))
 
         # Initial status for coverage
         self.coverage = False
@@ -238,74 +239,82 @@ class Cricket(toga.App):
 
         # Label for indicator status of test
         self.status_label = toga.Label(
-            '?', alignment=toga.RIGHT_ALIGNED, style=CSS(width=60, margin_right=10)
+            '',
+            style=Pack(
+                text_align=CENTER,
+                width=60,
+                padding_right=10,
+                font_family=SANS_SERIF,
+                font_weight=BOLD,
+                font_size=40,
+            )
         )
 
         # Box to put the name of the test
-        self.name_box = toga.Box(style=CSS(flex_direction='row', margin=5))
+        self.name_box = toga.Box(style=Pack(direction=ROW, padding=5))
         # Label to indicate that the next input text it will be the name
         self.name_label = toga.Label(
-            'Name:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
+            'Name:', style=Pack(text_align=RIGHT, width=80, padding_right=10)
         )
         # Text input to show the name of the test
-        self.name_view = toga.TextInput(readonly=True, style=CSS(flex=1))
+        self.name_view = toga.TextInput(readonly=True, style=Pack(flex=1))
         # Insert the name box objects
         self.name_box.add(self.name_label)
         self.name_box.add(self.name_view)
 
         # Box to put the test duration
-        self.duration_box = toga.Box(style=CSS(flex_direction='row', margin=5))
+        self.duration_box = toga.Box(style=Pack(direction=ROW, padding=5))
         # Label to indicate the test duration
         self.duration_label = toga.Label(
-            'Duration:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
+            'Duration:', style=Pack(text_align=RIGHT, width=80, padding_right=10)
         )
         # Text input to show the test duration
-        self.duration_view = toga.TextInput(readonly=True, style=CSS(flex=1))
+        self.duration_view = toga.TextInput(readonly=True, style=Pack(flex=1))
         self.duration_box.add(self.duration_label)
         self.duration_box.add(self.duration_view)
 
         # Group the name and duration into a single "identifier" box
-        self.identifier_box = toga.Box(style=CSS(flex_direction='column', flex=1))
+        self.identifier_box = toga.Box(style=Pack(direction=COLUMN, flex=1))
         self.identifier_box.add(self.name_box)
         self.identifier_box.add(self.duration_box)
 
         # Put the identifiers on the same row as the status label
-        self.summary_box = toga.Box(style=CSS(flex_direction='row'))
+        self.summary_box = toga.Box(style=Pack(direction=ROW, alignment=CENTER))
         self.summary_box.add(self.identifier_box)
         self.summary_box.add(self.status_label)
 
         # Box to put the test description
-        self.description_box = toga.Box(style=CSS(flex_direction='row', margin=5))
+        self.description_box = toga.Box(style=Pack(direction=ROW, padding=5, flex=1))
         # Label to indicate the test description
         self.description_label = toga.Label(
-            'Description:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
+            'Description:', style=Pack(text_align=RIGHT, width=80, padding_right=10)
         )
         # Text input to show the test description
-        self.description_view = toga.MultilineTextInput(style=CSS(flex=1))
+        self.description_view = toga.MultilineTextInput(style=Pack(flex=1))
         # Insert the test description box objects
         self.description_box.add(self.description_label)
         self.description_box.add(self.description_view)
 
         # Box to put the test output
-        self.output_box = toga.Box(style=CSS(flex_direction='row', margin=5))
+        self.output_box = toga.Box(style=Pack(direction=ROW, padding=5, flex=3))
         # Label to indicate the test output
         self.output_label = toga.Label(
-            'Output:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
+            'Output:', style=Pack(text_align=RIGHT, width=80, padding_right=10)
         )
         # Text input to show the test output
-        self.output_view = toga.MultilineTextInput(style=CSS(flex=1))
+        self.output_view = toga.MultilineTextInput(style=Pack(flex=1))
         # Insert the test output box objects
         self.output_box.add(self.output_label)
         self.output_box.add(self.output_view)
 
         # Box to put the test error
-        self.error_box = toga.Box(style=CSS(flex_direction='row', margin=5, flex=1))
+        self.error_box = toga.Box(style=Pack(direction=ROW, padding=5, flex=3))
         # Label to indicate the test error
         self.error_label = toga.Label(
-            'Error:', alignment=toga.RIGHT_ALIGNED, style=CSS(width=80, margin_right=10)
+            'Error:', style=Pack(text_align=RIGHT, width=80, padding_right=10)
         )
         # Text input to show the test error
-        self.error_view = toga.MultilineTextInput(style=CSS(flex=1))
+        self.error_view = toga.MultilineTextInput(style=Pack(flex=1))
         # Insert the test error box objects
         self.error_box.add(self.error_label)
         self.error_box.add(self.error_view)
@@ -313,6 +322,7 @@ class Cricket(toga.App):
         # Insert the right box contents
         # self.right_box.add(self.coverage_checkbox)
         self.right_box.add(self.summary_box)
+        self.right_box.add(self.description_box)
         self.right_box.add(self.output_box)
         self.right_box.add(self.error_box)
 
@@ -320,21 +330,20 @@ class Cricket(toga.App):
         '''The bottom frame to inform the user about the status of the tests
         that are running.
         '''
-        self.run_status = toga.Label('Not running', style=CSS(margin_left=10))
+        self.run_status = toga.Label('Not running', style=Pack(padding_left=10))
 
         self.run_summary = toga.Label(
             'T:0 P:0 F:0 E:0 X:0 U:0 S:0',
-            alignment=toga.RIGHT_ALIGNED,
-            style=CSS(flex=1)
+            style=Pack(flex=1, text_align=RIGHT)
         )
 
         # Test progress
         self.progress = toga.ProgressBar(
-            max=100, value=0, style=CSS(margin_left=10, margin_right=10, width=200)
+            max=100, value=0, style=Pack(padding_left=10, padding_right=10, width=200)
         )
 
         self.statusbar = toga.Box(
-            style=CSS(flex_direction='row', justify_content='space-between')
+            style=Pack(direction=ROW)
         )
 
         self.statusbar.add(self.run_status)
@@ -445,9 +454,9 @@ class Cricket(toga.App):
     def on_tab_selected(self, tab, option):
         "Event handler: the tree selection has changed."
         self.current_tree = option
-        self.on_test_selected(option)
+        self.on_test_selected(option, None)
 
-    def on_test_selected(self, widget):
+    def on_test_selected(self, widget, node):
         "Event handler: a test case has been selected in the tree"
         nodes = widget.selection
         # Multiple tests selected
@@ -459,7 +468,7 @@ class Cricket(toga.App):
 
             self.output_view.clear()
             self.error_view.clear()
-            # self.error_box.style.visibility = css.HIDDEN
+            # self.error_box.style.visibility = HIDDEN
         elif nodes:
             # Find the definition for the actual test method out of the test_suite
             testMethod = nodes[0]
@@ -477,15 +486,15 @@ class Cricket(toga.App):
                     TestMethod.STATUS_UNEXPECTED_SUCCESS: 'U',
                     TestMethod.STATUS_ERROR: 'E',
                 }[testMethod.status]
-                # self.status_label.color = {
-                #     TestMethod.STATUS_UNKNOWN: '#BFBFBF',
-                #     TestMethod.STATUS_PASS: '#28C025',
-                #     TestMethod.STATUS_SKIP: '#259EBF',
-                #     TestMethod.STATUS_FAIL: '#E32C2E',
-                #     TestMethod.STATUS_EXPECTED_FAIL: '#3C25BF',
-                #     TestMethod.STATUS_UNEXPECTED_SUCCESS: '#C82788',
-                #     TestMethod.STATUS_ERROR: '#E4742C',
-                # }[testMethod.status]
+                self.status_label.style.color = {
+                    TestMethod.STATUS_UNKNOWN: '#BFBFBF',
+                    TestMethod.STATUS_PASS: '#28C025',
+                    TestMethod.STATUS_SKIP: '#259EBF',
+                    TestMethod.STATUS_FAIL: '#E32C2E',
+                    TestMethod.STATUS_EXPECTED_FAIL: '#3C25BF',
+                    TestMethod.STATUS_UNEXPECTED_SUCCESS: '#C82788',
+                    TestMethod.STATUS_ERROR: '#E4742C',
+                }[testMethod.status]
 
                 if testMethod.status:
                     # Test has been executed
@@ -495,9 +504,9 @@ class Cricket(toga.App):
 
                     if testMethod.error:
                         self.error_view.value = testMethod.error
-                    #     self.error_box.style.visibility = css.VISIBLE
+                    #     self.error_box.style.visibility = VISIBLE
                     # else:
-                    #     self.error_box.style.visibility = css.HIDDEN
+                    #     self.error_box.style.visibility = HIDDEN
                 else:
                     # Test hasn't been executed yet.
                     self.duration_view.value = 'Not executed'
@@ -505,7 +514,7 @@ class Cricket(toga.App):
                     self.output_view.clear()
                     self.error_view.clear()
 
-                    # self.error_box.style.visibility = css.HIDDEN
+                    # self.error_box.style.visibility = HIDDEN
             except AttributeError as e:
                 # There's no description attribute; that means it's not a test method,
                 # it's a module or test case.
@@ -516,7 +525,7 @@ class Cricket(toga.App):
                 self.output_view.clear()
                 self.error_view.clear()
 
-                # self.error_box.style.visibility = css.HIDDEN
+                # self.error_box.style.visibility = HIDDEN
         else:
             # No selection at all.
             self.status_label.text = ''
@@ -526,7 +535,7 @@ class Cricket(toga.App):
             self.output_view.clear()
             self.error_view.clear()
 
-            # self.error_box.style.visibility = css.HIDDEN
+            # self.error_box.style.visibility = HIDDEN
 
         # update "run selected" button enabled state
         self.set_selected_button_state()
