@@ -39,6 +39,7 @@ def main(Model):
         try:
             # Create the test_suite objects
             test_suite = Model(options)
+            test_suite.refresh()
         except ModelLoadError as e:
             # Load failed; destroy the test_suite and show an error dialog.
             #   If the user selects cancel, quit.

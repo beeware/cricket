@@ -399,8 +399,6 @@ class TestSuite(TestNode, Source):
         self.errors = []
         self.coverage = False
 
-        self.refresh()
-
     def __repr__(self):
         return 'TestSuite'
 
@@ -411,26 +409,27 @@ class TestSuite(TestNode, Source):
         """
         pass
 
-    def refresh(self):
+    def refresh(self, test_list=None, errors=None):
         """Rediscover the tests in the test suite.
         """
-        runner = subprocess.Popen(
-            self.discover_commandline(),
-            stdin=None,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=False,
-        )
+        if test_list is None:
+            runner = subprocess.Popen(
+                self.discover_commandline(),
+                stdin=None,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=False,
+            )
 
-        test_list = []
-        for line in runner.stdout:
-            test_list.append(line.strip().decode('utf-8'))
+            test_list = []
+            for line in runner.stdout:
+                test_list.append(line.strip().decode('utf-8'))
 
-        errors = []
-        for line in runner.stderr:
-            errors.append(line.strip().decode('utf-8'))
-        if errors and not test_list:
-            raise ModelLoadError('\n'.join(errors))
+            errors = []
+            for line in runner.stderr:
+                errors.append(line.strip().decode('utf-8'))
+            if errors and not test_list:
+                raise ModelLoadError('\n'.join(errors))
 
         timestamp = datetime.now()
 
