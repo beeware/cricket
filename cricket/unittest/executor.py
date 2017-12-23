@@ -17,7 +17,7 @@ except ImportError:
 from cricket import pipes
 
 
-class PyTestExecutor(object):
+class PyTestExecutor:
     '''
     This is a thing which, when run, produces a stream
     of well-formed test result outputs. Its processing is

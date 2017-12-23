@@ -1,3 +1,4 @@
+import asyncio
 import json
 import subprocess
 import sys
@@ -8,7 +9,6 @@ try:
 except ImportError:
     from queue import Queue, Empty  # python 3.x
 
-from cricket.events import EventSource
 from cricket.model import TestMethod
 from cricket.pipes import PipedTestResult, PipedTestRunner
 
@@ -47,35 +47,11 @@ def parse_status_and_error(post):
     return status, error
 
 
-class Executor(EventSource):
+class Executor:
     "A wrapper around the subprocess that executes tests."
-    def __init__(self, project, count, labels):
-        self.project = project
-
-        self.proc = subprocess.Popen(
-            self.project.execute_commandline(labels),
-            stdin=None,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=False,
-            bufsize=1,
-            close_fds='posix' in sys.builtin_module_names
-        )
-
-        # Piped stdout/stderr reads are blocking; therefore, we need to
-        # do all our readline calls in a background thread, and use a
-        # queue object to store lines that have been read.
-        self.stdout = Queue()
-        t = Thread(target=enqueue_output, args=(self.proc.stdout, self.stdout))
-        t.daemon = True
-        t.start()
-        t.join()
-
-        self.stderr = Queue()
-        t = Thread(target=enqueue_output, args=(self.proc.stderr, self.stderr))
-        t.daemon = True
-        t.start()
-        t.join()
+    def __init__(self, test_suite, display=None):
+        self.test_suite = test_suite
+        self.display = display
 
         # The TestMethod object currently under execution.
         self.current_test = None
@@ -91,63 +67,30 @@ class Executor(EventSource):
         # The timestamp when current_test started
         self.start_time = None
 
-        # The total count of tests under execution
-        self.total_count = count
-
         # The count of tests that have been executed.
         self.completed_count = 0
 
         # The count of specific test results.
         self.result_count = {}
 
-    @property
-    def is_running(self):
-        "Return True if this runner currently running."
-        return self.proc.poll() is None
+    async def run(self, count, labels):
+        self.total_count = count
 
-    @property
-    def any_failed(self):
-        return sum(self.result_count.get(state, 0) for state in TestMethod.FAILING_STATES)
+        self.proc = await asyncio.create_subprocess_shell(
+            ' '.join(self.test_suite.execute_commandline(labels)),
+            stdin=None,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
 
-    def terminate(self):
-        "Stop the executor."
-        self.proc.terminate()
-
-    def poll(self):
-        "Poll the runner looking for new test output"
-        stopped = False
-        finished = False
-
-        # Read from stdout, building a buffer.
-        lines = []
-        try:
-            while True:
-                lines.append(self.stdout.get(block=False))
-        except Empty:
-            # queue.get() raises an exception when the queue is empty.
-            # This means there is no more output to consume at this time.
-            pass
-
-        # Read from stderr, building a buffer.
-        try:
-            while True:
-                self.error_buffer.append(self.stderr.get(block=False))
-        except Empty:
-            # queue.get() raises an exception when the queue is empty.
-            # This means there is no more output to consume at this time.
-            pass
-
-        # Check to see if the subprocess is still running.
-        # If it isn't, raise an error.
-        if self.proc is None:
-            stopped = True
-        elif self.proc.poll() is not None:
-            stopped = True
-
-        # Process all the full lines that are available
-        for line in lines:
-            # Look for a separator.
-            if line in (PipedTestResult.RESULT_SEPARATOR, PipedTestRunner.START_TEST_RESULTS, PipedTestRunner.END_TEST_RESULTS):
+        line = await self.proc.stdout.readline()
+        while line:
+            line = line.strip().decode('utf-8')
+            if line in {
+                            PipedTestResult.RESULT_SEPARATOR,
+                            PipedTestRunner.START_TEST_RESULTS,
+                            PipedTestRunner.END_TEST_RESULTS,
+                        }:
                 if self.buffer is None:
                     # Preamble is finished. Set up the line buffer.
                     self.buffer = []
@@ -159,7 +102,6 @@ class Executor(EventSource):
                         # No subtests are present, or only one subtest
                         post = json.loads(self.buffer[1])
                         status, error = parse_status_and_error(post)
-
                     else:
                         # We have subtests; capture the most important status (until we can capture all the statuses)
                         status = TestMethod.STATUS_PASS  # Assume pass until told otherwise
@@ -179,9 +121,8 @@ class Executor(EventSource):
                     start_time = float(pre['start_time'])
                     end_time = float(post['end_time'])
 
-                    self.current_test.description = post['description']
-
                     self.current_test.set_result(
+                        description=post['description'],
                         status=status,
                         output=post.get('output'),
                         error=error,
@@ -209,8 +150,13 @@ class Executor(EventSource):
                     self.result_count.setdefault(status, 0)
                     self.result_count[status] = self.result_count[status] + 1
 
-                    # Notify the display to update.
-                    self.emit('test_end', test_path=self.current_test.path, result=status, remaining_time=remaining)
+                    # Update the display
+                    if self.display:
+                        self.display.executor_test_end(
+                            test_path=self.current_test.path,
+                            result=status,
+                            remaining_time=remaining
+                        )
 
                     # Clear the decks for the next test.
                     self.current_test = None
@@ -225,11 +171,7 @@ class Executor(EventSource):
 
             else:
                 # Not a separator line, so it's actual content.
-                if self.buffer is None:
-                    # Suite isn't running yet - just display the output
-                    # as a status update line.
-                    self.emit('test_status_update', update=line)
-                else:
+                if self.buffer is not None:
                     # Suite is running - have we got an active test?
                     # Doctest (and some other tools) output invisible escape sequences.
                     # Strip these if they exist.
@@ -245,29 +187,36 @@ class Executor(EventSource):
                         try:
                             # No active test; first line tells us which test is running.
                             pre = json.loads(line)
+                            self.current_test = self.test_suite.confirm_exists(pre['path'])
+
+                            # Update the display
+                            if self.display:
+                                self.display.executor_test_start(
+                                    test_path=self.current_test.path,
+                                )
+
                         except ValueError:
-                            self.emit('suit_end')
-                            return True
-                        self.current_test = self.project.confirm_exists(pre['path'])
-                        self.emit('test_start', test_path=pre['path'])
-        # If we're not finished, requeue the event.
-        if finished:
-            if self.error_buffer:
-                self.emit('suite_end', error='\n'.join(self.error_buffer))
-            else:
-                self.emit('suite_end')
-            return False
+                            self.current_test = None
+                # else:
+                #     # We haven't started the suite yet; we're still collecting the preamble
+            line = await self.proc.stdout.readline()
 
-        elif stopped:
-            # Suite has stopped producing output.
-            if self.error_buffer:
-                self.emit('suite_error', error='\n'.join(self.error_buffer))
-            else:
-                self.emit('suite_error', error='Test output ended unexpectedly')
+        # Update the display
+        if self.display:
+            self.display.executor_suite_end()
 
-            # Suite has finished; don't requeue
-            return False
+        # elif stopped:
+        #     # Suite has stopped producing output.
+        #     if self.error_buffer:
+        #         self.emit('suite_error', error='\n'.join(self.error_buffer))
+        #     else:
+        #         self.emit('suite_error', error='Test output ended unexpectedly')
 
-        else:
-            # Still running - requeue event.
-            return True
+    async def terminate(self):
+        "Stop the executor."
+        self.proc.terminate()
+        await self.proc.wait()
+
+    @property
+    def any_failed(self):
+        return sum(self.result_count.get(state, 0) for state in TestMethod.FAILING_STATES)

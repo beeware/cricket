@@ -1,12 +1,12 @@
 import sys
 
-from cricket.model import Project
+from cricket.model import TestSuite
 
 
-class UnittestProject(Project):
+class UnittestTestSuite(TestSuite):
 
     def __init__(self, options=None):
-        super(UnittestProject, self).__init__()
+        super(UnittestTestSuite, self).__init__()
 
     def discover_commandline(self):
         "Command line: Discover all available tests in a project."

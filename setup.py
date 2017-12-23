@@ -25,7 +25,11 @@ setup(
     author_email='russell@keith-magee.com',
     url='http://pybee.org/cricket',
     packages=find_packages(exclude='tests'),
-    install_requires=['tkreadonly'],
+    package_data={
+        'cricket': ['icons/*'],
+    },
+    include_package_data=True,
+    install_requires=['toga'],
     scripts=[],
     entry_points={
         'console_scripts': [

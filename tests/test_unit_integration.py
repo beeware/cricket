@@ -5,16 +5,17 @@ import cricket
 
 from cricket.unittest import discoverer
 from cricket.unittest import executor
-from cricket.unittest.model import UnittestProject
+from cricket.unittest.model import UnittestTestSuite
 from cricket.executor import Executor
 from cricket.model import TestMethod
+
 
 class TestTestsCoverage(unittest.TestCase):
 
     def setUp(self):
         super(TestTestsCoverage, self).setUp()
-        self.project = UnittestProject()
-        self.project.refresh([
+        self.test_suite = UnittestTestSuite()
+        self.test_suite.refresh([
             'tests.test_unit_integration.TestCollection.test_testCollection',
             'tests.test_unit_integration.TestExecutorCmdLine.test_labels',
             'tests.test_unit_integration.TestTestsCoverage.test_run_methods_tests_in_different_tests_cases',
@@ -35,8 +36,8 @@ class TestTestsCoverage(unittest.TestCase):
         Test coverage in a test module, selecting test methods from different tests cases (but not all tests cases from a test module)
         '''
 
-        count, new_labels = self.project.find_tests(True, None, self.labels)
-        self.executor = Executor(self.project, count, new_labels)
+        count, new_labels = self.test_suite.find_tests(True, None, self.labels)
+        self.executor = Executor(self.test_suite, count, new_labels)
         self.executor.poll()
         self.assertEquals(
             self.executor.result_count.get(TestMethod.STATUS_PASS, 0), 4)
