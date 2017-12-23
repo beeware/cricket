@@ -224,7 +224,7 @@ class Cricket(toga.App):
         The right frame is basically the "output viewer" space
         '''
         # Box to show the detail of a test
-        self.right_box = toga.Box(style=Pack(direction=COLUMN, padding_top=10, padding_bottom=25))
+        self.right_box = toga.Box(style=Pack(direction=COLUMN, padding=(10, 0)))
 
         # Initial status for coverage
         self.coverage = False
@@ -251,7 +251,7 @@ class Cricket(toga.App):
         )
 
         # Box to put the name of the test
-        self.name_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        self.name_box = toga.Box(style=Pack(direction=ROW, padding=(5, 10)))
         # Label to indicate that the next input text it will be the name
         self.name_label = toga.Label(
             'Name:', style=Pack(text_align=RIGHT, width=80, padding_right=10)
@@ -263,7 +263,7 @@ class Cricket(toga.App):
         self.name_box.add(self.name_view)
 
         # Box to put the test duration
-        self.duration_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        self.duration_box = toga.Box(style=Pack(direction=ROW, padding=(5, 10)))
         # Label to indicate the test duration
         self.duration_label = toga.Label(
             'Duration:', style=Pack(text_align=RIGHT, width=80, padding_right=10)
@@ -284,7 +284,7 @@ class Cricket(toga.App):
         self.summary_box.add(self.status_label)
 
         # Box to put the test description
-        self.description_box = toga.Box(style=Pack(direction=ROW, padding=5, flex=1))
+        self.description_box = toga.Box(style=Pack(direction=ROW, padding=(5, 10), flex=1))
         # Label to indicate the test description
         self.description_label = toga.Label(
             'Description:', style=Pack(text_align=RIGHT, width=80, padding_right=10)
@@ -296,7 +296,7 @@ class Cricket(toga.App):
         self.description_box.add(self.description_view)
 
         # Box to put the test output
-        self.output_box = toga.Box(style=Pack(direction=ROW, padding=5, flex=3))
+        self.output_box = toga.Box(style=Pack(direction=ROW, padding=(5, 10), flex=3))
         # Label to indicate the test output
         self.output_label = toga.Label(
             'Output:', style=Pack(text_align=RIGHT, width=80, padding_right=10)
@@ -308,7 +308,7 @@ class Cricket(toga.App):
         self.output_box.add(self.output_view)
 
         # Box to put the test error
-        self.error_box = toga.Box(style=Pack(direction=ROW, padding=5, flex=3))
+        self.error_box = toga.Box(style=Pack(direction=ROW, padding=(5, 10), flex=3))
         # Label to indicate the test error
         self.error_label = toga.Label(
             'Error:', style=Pack(text_align=RIGHT, width=80, padding_right=10)
