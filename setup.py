@@ -54,5 +54,11 @@ setup(
         'Topic :: Software Development :: Testing',
         'Topic :: Utilities',
     ],
-    test_suite='tests'
+    test_suite='tests',
+    package_urls={
+        'Funding': 'https://pybee.org/contributing/membership/',
+        'Documentation': 'http://cricket.readthedocs.io/en/latest/',
+        'Tracker': 'https://github.com/pybee/cricket/issues',
+        'Source': 'https://github.com/pybee/cricket',
+    },
 )
