@@ -49,8 +49,7 @@ class Cricket(toga.App):
         self.executor = None
 
         # Main window of the application with title and size
-        self.main_window = toga.MainWindow(self.name, size=(1024, 768))
-        self.main_window.app = self
+        self.main_window = toga.MainWindow(title=self.name, size=(1024, 768))
 
         # Setup the menu and toolbar
         self._setup_commands()

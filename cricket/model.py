@@ -197,9 +197,6 @@ class TestMethod:
     # Methods required by the TreeSource interface
     ######################################################################
 
-    def __len__(self):
-        return 0
-
     def can_have_children(self):
         return False
 

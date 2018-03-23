@@ -29,7 +29,7 @@ setup(
         'cricket': ['icons/*'],
     },
     include_package_data=True,
-    install_requires=['toga'],
+    install_requires=['toga==0.3.0.dev8'],
     scripts=[],
     entry_points={
         'console_scripts': [
