@@ -47,7 +47,7 @@ understand the full detail, examine pipes.py.
 
 The Django and the unittest mechanisms for executing tests are different. The
 Django backend is a thin hook into the Django test execution machinery. The
-unittest backend is a slightly less thin hook into the unittest modele. The
+unittest backend is a slightly less thin hook into the unittest module. The
 key requirements of the executor backend are:
 
   1. The ability to stream well-formed output to stdout
