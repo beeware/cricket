@@ -6,8 +6,8 @@ pull_request:
                 name: Python lint checks
                 task: beefore
     - smoke-test:
-        task: py34
-        name: Smoke build (Python 3.4)
+        task: py35
+        name: Smoke build (Python 3.5)
     # - full-test:
     #     subtasks:
     #         - py3.5:
