@@ -1,3 +1,4 @@
+import asyncio
 import subprocess
 import unittest
 
@@ -18,29 +19,25 @@ class TestTestsCoverage(unittest.TestCase):
         self.test_suite.refresh([
             'tests.test_unit_integration.TestCollection.test_testCollection',
             'tests.test_unit_integration.TestExecutorCmdLine.test_labels',
-            'tests.test_unit_integration.TestTestsCoverage.test_run_methods_tests_in_different_tests_cases',
             'tests.test_unit_integration.TestStubToTestCoverage.test_stub1',
             'tests.test_unit_integration.TestStubToTestCoverage.test_stub2',
             'tests.test_unit_integration.TestStubToTestCoverage.test_stub3',
         ])
-
-        self.labels = [
-            'tests.test_unit_integration.TestCollection.test_testCollection',
-            'tests.test_unit_integration.TestStubToTestCoverage.test_stub1',
-            'tests.test_unit_integration.TestStubToTestCoverage.test_stub2',
-            'tests.test_unit_integration.TestStubToTestCoverage.test_stub3',
-        ]
 
     def test_run_methods_tests_in_different_tests_cases(self):
         '''
         Test coverage in a test module, selecting test methods from different tests cases (but not all tests cases from a test module)
         '''
 
-        count, new_labels = self.test_suite.find_tests(True, None, self.labels)
-        self.executor = Executor(self.test_suite, count, new_labels)
-        self.executor.poll()
+        # count, new_labels = self.test_suite.find_tests(True, None, self.labels)
+        count, new_labels = self.test_suite.find_tests(True, None)
+        self.executor = Executor(self.test_suite)
+        # self.executor.poll()
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.executor.run(count, new_labels))
+        loop.close()
         self.assertEquals(
-            self.executor.result_count.get(TestMethod.STATUS_PASS, 0), 4)
+            self.executor.result_count.get(TestMethod.STATUS_PASS, 0), count)
 
 class TestStubToTestCoverage(unittest.TestCase):
 
