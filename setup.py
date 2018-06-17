@@ -25,6 +25,7 @@ setup(
     author_email='russell@keith-magee.com',
     url='http://pybee.org/cricket',
     packages=find_packages(exclude='tests'),
+    py_modules=['pytest_cricket'],
     package_data={
         'cricket': ['icons/*'],
     },
@@ -35,7 +36,11 @@ setup(
         'console_scripts': [
             'cricket-django = cricket.django.__main__:main',
             'cricket-unittest = cricket.unittest.__main__:main',
-        ]
+            'cricket-pytest = cricket.pytest.__main__:main',
+        ],
+        'pytest11': [
+            'cricket = cricket.pytest.pytest_cricket',
+        ],
     },
     license='New BSD',
     classifiers=[

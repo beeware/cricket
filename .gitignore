@@ -4,6 +4,7 @@
 # Tests
 .coverage
 .tox
+.pytest_cache
 
 # Distribution
 env/
