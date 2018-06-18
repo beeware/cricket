@@ -17,7 +17,7 @@ except ImportError:
 from cricket import pipes
 
 
-class PyTestExecutor:
+class UnittestExecutor:
     '''
     This is a thing which, when run, produces a stream
     of well-formed test result outputs. Its processing is
@@ -33,7 +33,6 @@ class PyTestExecutor:
         self.specified_list = specified_list
 
     def stream_suite(self, suite):
-
         pipes.PipedTestRunner().run(suite)
 
     def stream_results(self):
@@ -54,14 +53,14 @@ class PyTestExecutor:
                 self.stream_suite(suite)
 
 
-class PyTestCoverageExecutor(PyTestExecutor):
+class UnittestCoverageExecutor(UnittestExecutor):
     '''
-    A version of PyTestExecutor that gathers coverage data.
+    A version of UnittestExecutor that gathers coverage data.
     '''
     def stream_suite(self, suite):
         cov = coverage()
         cov.start()
-        super(PyTestCoverageExecutor, self).stream_suite(suite)
+        super(UnittestCoverageExecutor, self).stream_suite(suite)
         cov.stop()
         cov.save()
 
@@ -78,10 +77,10 @@ if __name__ == '__main__':
     options = parser.parse_args()
 
     if options.coverage:
-        PTE = PyTestCoverageExecutor()
+        executor = UnittestCoverageExecutor()
     else:
-        PTE = PyTestExecutor()
+        executor = UnittestExecutor()
 
     if options.labels:
-        PTE.run_only(options.labels)
-    PTE.stream_results()
+        executor.run_only(options.labels)
+    executor.stream_results()
