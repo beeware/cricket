@@ -51,10 +51,9 @@ class PipedTestResult(unittest.result.TestResult):
     """
     RESULT_SEPARATOR = '\x1f'  # ASCII US (Unit Separator)
 
-    def __init__(self, stream, use_old_discovery=True):
+    def __init__(self, stream):
         super(PipedTestResult, self).__init__()
         self.stream = stream
-        self.use_old_discovery = use_old_discovery
         self._first = True
 
         # Create a clean buffer for stdout content.
@@ -85,12 +84,7 @@ class PipedTestResult(unittest.result.TestResult):
         self._stdout = StringIO()
         sys.stdout = self._stdout
 
-        if self.use_old_discovery:
-            parts = test.id().split('.')
-            tests_index = parts.index('tests')
-            path = '%s.%s.%s' % (parts[tests_index - 1], parts[-2], parts[-1])
-        else:
-            path = test.id()
+        path = test.id()
 
         body = {
             'path': path,
@@ -227,9 +221,8 @@ class PipedTestRunner(unittest.TextTestRunner):
     START_TEST_RESULTS = '\x02'  # ASCII STX (Start of Text)
     END_TEST_RESULTS = '\x03'    # ASCII ETX (End of Text)
 
-    def __init__(self, stream=sys.stdout, use_old_discovery=False):
+    def __init__(self, stream=sys.stdout):
         self.stream = stream
-        self.use_old_discovery = use_old_discovery
 
     def run(self, test):
         "Run the given test case or test suite."
@@ -237,7 +230,7 @@ class PipedTestRunner(unittest.TextTestRunner):
         old_stdout = sys.stdout
 
         # Create the result pipe, and run the tests with it.
-        result = PipedTestResult(self.stream, self.use_old_discovery)
+        result = PipedTestResult(self.stream)
         test(result)
 
         # Report end of test run
