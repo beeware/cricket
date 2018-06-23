@@ -30,13 +30,13 @@ setup(
         'cricket': ['icons/*'],
     },
     include_package_data=True,
-    install_requires=['toga==0.3.0.dev8'],
+    install_requires=['toga>=0.3.0.dev9'],
     scripts=[],
     entry_points={
         'console_scripts': [
-            'cricket-django = cricket.django.__main__:main',
-            'cricket-unittest = cricket.unittest.__main__:main',
-            'cricket-pytest = cricket.pytest.__main__:main',
+            'cricket-django = cricket.django.__main__:run',
+            'cricket-unittest = cricket.unittest.__main__:run',
+            'cricket-pytest = cricket.pytest.__main__:run',
         ],
         'pytest11': [
             'cricket = cricket.pytest.pytest_cricket',
