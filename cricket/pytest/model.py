@@ -14,10 +14,10 @@ class PyTestTestSuite(TestSuite):
 
     def execute_commandline(self, labels):
         "Return the command line to execute the specified test labels"
-        return ['pytest', '--cricket', 'execute']
+        args = ['pytest', '--cricket', 'execute']
         # if self.coverage:
         #     args.append('--coverage')
-        # return args + labels
+        return args + labels
 
     def split_test_id(self, test_id):
         dirparts = test_id.split(os.sep)
