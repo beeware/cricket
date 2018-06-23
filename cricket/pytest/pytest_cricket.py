@@ -12,7 +12,7 @@ import pytest
 def pytest_addoption(parser):
     group = parser.getgroup("cricket", "BeeWare Cricket integration")
     group.addoption(
-        '--cricket-mode', dest="cricket_mode", metavar="cricket_mode",
+        '--cricket', dest="cricket_mode", metavar="cricket_mode",
         action="store", choices=["discover", "execute", "off"], default="off",
         help="Cricket output mode")
 
@@ -29,6 +29,10 @@ def pytest_configure(config):
     if config.option.cricket_mode == 'discover':
         reporter = CricketDiscoverReporter(config, file=sys.stdout)
         config.pluginmanager.register(reporter, "terminalreporter")
+
+        # In discovery mode, we only collect tests
+        config.option.collectonly = True
+
     elif config.option.cricket_mode == 'execute':
         reporter = CricketExecuteReporter(config, file=sys.stdout)
         config.pluginmanager.register(reporter, "terminalreporter")
@@ -50,9 +54,6 @@ class CricketReporter:
     def print(self, *args, **kwargs):
         print(*args, **kwargs, file=self.file)
 
-    def report(self, **kwargs):
-        self.print(json.dumps(kwargs))
-
     def pytest_internalerror(self, excrepr):
         for line in str(excrepr).split("\n"):
             self.print("INTERNALERROR> " + line)
@@ -61,39 +62,13 @@ class CricketReporter:
 
 class CricketDiscoverReporter(CricketReporter):
     def pytest_itemcollected(self, item):
-        dirparts = item.nodeid.split('/')
-        pathparts = dirparts[-1].split('::')
-
-        parts = [
-            ('dir', dirpart)
-            for dirpart in dirparts
-        ]
-
-        if len(pathparts) == 2:
-            parts.extend([
-                ('file', pathparts[0]),
-                ('test', pathparts[1]),
-            ])
-        elif len(pathparts) == 3:
-            parts.extend([
-                ('file', pathparts[0]),
-                ('class', pathparts[1]),
-                ('test', pathparts[2]),
-            ])
-
-        self.report(
-            id=item.nodeid,
-            path=parts
-        )
-
-    def pytest_collection_modifyitems(self, items, config):
-        # In discovery mode, we don't actually want to run
-        # the tests - so modify the list of test items
-        # to be empty.
-        items[:] = []
+        self.print(item.nodeid)
 
 
 class CricketExecuteReporter(CricketReporter):
+    def report(self, **kwargs):
+        self.print(json.dumps(kwargs))
+
     def pytest_sessionstart(self, session):
         self._started = False
 
@@ -101,6 +76,8 @@ class CricketExecuteReporter(CricketReporter):
         if not self._started:
             self.print('\x02')  # ASCII STX (Start of Text)
             self._started = True
+        else:
+            self.print('\x1f')  # ASCII US (Unit Separator)
 
         self.report(
             path=nodeid,
@@ -193,4 +170,4 @@ class CricketExecuteReporter(CricketReporter):
                     self.report_expected_failure(report)
 
     def pytest_sessionfinish(self, exitstatus):
-        self.print('\x03')    # ASCII ETX (End of Text)
+        self.print('\x03')  # ASCII ETX (End of Text)

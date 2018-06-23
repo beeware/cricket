@@ -187,7 +187,7 @@ class Executor:
                         try:
                             # No active test; first line tells us which test is running.
                             pre = json.loads(line)
-                            self.current_test = self.test_suite.confirm_exists(pre['path'])
+                            self.current_test = self.test_suite.put_test(pre['path'])
 
                             # Update the display
                             if self.display:

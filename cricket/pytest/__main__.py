@@ -9,5 +9,9 @@ def main():
     return cricket_main(PyTestTestSuite)
 
 
-if __name__ == "__main__":
+def run():
     main().main_loop()
+
+
+if __name__ == "__main__":
+    run()

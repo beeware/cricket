@@ -71,9 +71,6 @@ class TestNode:
         del self._child_labels[index]
         del self._child_nodes[label]
 
-    def index(self, label):
-        return self._child_labels.index(label)
-
     @property
     def path(self):
         "The dotted-path name that identifies this node to the test runner"
@@ -361,8 +358,6 @@ class TestModule(TestNode):
 class TestSuite(TestNode, Source):
     """A data representation of a test suite, containing 1+ test cases.
     """
-    TEST_SUITE_ICON = toga.Icon('icons/status/test_suite.png')
-
     def __init__(self):
         super().__init__(self, None, None)
         self.errors = []
@@ -370,11 +365,6 @@ class TestSuite(TestNode, Source):
 
     def __repr__(self):
         return 'TestSuite'
-
-    @property
-    def label(self):
-        "The display label for the node"
-        return (self.TEST_SUITE_ICON, self.name)
 
     def refresh(self, test_list=None, errors=None):
         """Rediscover the tests in the test suite.
@@ -402,11 +392,15 @@ class TestSuite(TestNode, Source):
 
         # Make sure there is a data representation for every test in the list.
         for test_id in test_list:
-            self.confirm_exists(test_id)
+            self.put_test(test_id)
 
         self.errors = errors if errors is not None else []
 
-    def confirm_exists(self, test_id):
+    def put_test(self, test_id):
+        """An idempotent insert method for tests.
+
+        Ensures that a test identified as `test_id` exists in the test tree.
+        """
         parent = self
 
         for NodeClass, part in self.split_test_id(test_id):
@@ -423,104 +417,63 @@ class TestSuite(TestNode, Source):
 
         return child
 
+    def del_test(self, test_id):
+        parent = self
+        parents = []
+        for NodeClass, part in self.split_test_id(test_id):
+            try:
+                child = parent[part]
+                parents.append(parent)
+                parent = child
+            except KeyError:
+                # We've found a part of the path does doesn't
+                # exist in the tree - that means we can bail.
+                return
 
-class Problem:
-    def __init__(self, source, origin):
+        # If we complete iterating, we've found a test with this id.
+        # So, we can delete the child...
+        del parents[-1][child.name]
+
+        # ... then we can walk back up the list of parents,
+        # deleting any parent that has no children.
+        # If at any point we find a parent with children,
+        # we can bail (as the parent of a node with children
+        # must also have children)
+        while parents:
+            child = parents.pop()
+            if len(child) == 0:
+                del parents[-1][child.name]
+            else:
+                return
+
+
+class TestSuiteProblems(TestSuite):
+    def __init__(self, suite):
         super().__init__()
-        self._source = source
-        self._origin = origin
-        self._child_labels = []
-        self._child_nodes = {}
-
-    def __repr__(self):
-        return 'Problem with %s' % self._origin
-
-    ######################################################################
-    # Methods required by the TreeSource interface
-    ######################################################################
-
-    def __len__(self):
-        return len(self._child_labels)
-
-    def __getitem__(self, index):
-        return self._child_nodes[self._child_labels[index]]
-
-    def can_have_children(self):
-        return True
-
-    ######################################################################
-    # Methods used by Cricket
-    ######################################################################
-
-    def __setitem__(self, label, child):
-        # Insert the item, sort the list,
-        # and find out where the item was inserted.
-        self._child_labels.append(label)
-        self._child_labels.sort()
-        index = self._child_labels.index(label)
-
-        self._child_nodes[label] = child
-
-        self._source._notify('insert', parent=self, index=index, item=child)
-
-    def __delitem__(self, label):
-        # Find the label in the list of children, and remove it.
-        index = self._child_labels.index(label)
-        self._child_nodes[label] = child
-
-        self._source._notify('remove', item=child)
-        del self._child_labels[index]
-        del self._child_nodes[label]
-
-    @property
-    def path(self):
-        "The dotted-path name that identifies this test method to the test runner"
-        return self._origin.path
-
-    @property
-    def label(self):
-        "The display label for the node"
-        return self._origin.label
-
-
-class TestSuiteProblems(Problem, Source):
-    def __init__(self, source):
-        super().__init__(self, source)
-
-        # Listen to any changes on the source
-        source.add_listener(self)
+        self.suite = suite
+        # Listen to any changes on the test suite
+        self.suite.add_listener(self)
 
     def __repr__(self):
         return 'TestSuiteProblems'
 
     def change(self, item):
-        labels = item.path.split('.')
         if item.status in TestMethod.FAILING_STATES:
             # Test didn't pass. Make sure it exists in the problem tree.
-            parent = self
-            while labels:
-                label = labels.pop(0)
-                try:
-                    problem_child = parent._child_nodes[label]
-                except KeyError:
-                    # It's a new problem. Add it to the problem tree
-                    child = parent._origin._child_nodes[label]
-                    if isinstance(child, TestMethod):
-                        problem_child = child
-                    else:
-                        problem_child = Problem(self._source, child)
+            failing_item = self.put_test(item.path)
 
-                    parent[label] = problem_child
-                parent = problem_child
+            failing_item.set_result(
+                description=item.description,
+                status=item.status,
+                output=item.output,
+                error=item.error,
+                duration=item.duration
+            )
         else:
-            # Test passed. Make sure it's not in the problem tree.
-            parent = self
-            while labels:
-                label = labels.pop(0)
-                try:
-                    problem_child = parent._child_nodes[label]
-                    parent = problem_child
-                except KeyError:
-                    # This node doesn't exist. Don't have to worry
-                    # about any deeper children.
-                    labels = None
+            self.del_test(item.path)
+
+    def split_test_id(self, test_id):
+        return self.suite.split_test_id(test_id)
+
+    def join_path(self, parent, klass, part):
+        return self.suite.join_path(parent, klass, part)
