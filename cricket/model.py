@@ -20,14 +20,15 @@ class ModelLoadError(Exception):
 
 
 class TestNode:
-    def __init__(self, source, prefix, name):
+    def __init__(self, source, path, name):
         super().__init__()
         self._child_labels = []
         self._child_nodes = {}
 
         self._source = source
-        self._prefix = prefix
-        self.name = name
+
+        self._path = path
+        self._name = name
         self._active = True
 
     ######################################################################
@@ -37,8 +38,11 @@ class TestNode:
     def __len__(self):
         return len(self._child_labels)
 
-    def __getitem__(self, index):
-        return self._child_nodes[self._child_labels[index]]
+    def __getitem__(self, index_or_name):
+        if isinstance(index_or_name, (int, slice)):
+            return self._child_nodes[self._child_labels[index_or_name]]
+        else:
+            return self._child_nodes[index_or_name]
 
     def can_have_children(self):
         return True
@@ -67,49 +71,23 @@ class TestNode:
         del self._child_labels[index]
         del self._child_nodes[label]
 
-    @property
-    def path(self):
-        "The dotted-path name that identifies this test method to the test runner"
-        if self._prefix:
-            return '{}.{}'.format(self._prefix, self.name)
-        return self.name
+    def index(self, label):
+        return self._child_labels.index(label)
 
     @property
-    def label(self):
-        "The display label for the node"
-        return self.name
+    def path(self):
+        "The dotted-path name that identifies this node to the test runner"
+        return self._path
+
+    @property
+    def name(self):
+        "The identifying name for this node"
+        return self._name
 
     @property
     def active(self):
         "Is this test method currently active?"
         return self._active
-
-    def confirm_exists(self, test_label):
-        """Confirm that the given test label exists in the current data model.
-
-        If it doesn't, create a representation for it.
-        """
-        parts = test_label.split('.')
-
-        if len(parts) == 1:
-            TestClass = TestMethod
-        elif len(parts) == 2:
-            TestClass = TestCase
-        else:
-            TestClass = TestModule
-
-        try:
-            child = self._child_nodes[parts[0]]
-        except KeyError:
-            child = TestClass(self._source, self.path, parts[0])
-            self[parts[0]] = child
-
-        if len(parts) > 1:
-            test = child.confirm_exists('.'.join(parts[1:]))
-        else:
-            test = child
-
-        return test
 
     def find_tests(self, active=True, status=None):
         """Find the test labels matching the search criteria.
@@ -149,12 +127,6 @@ class TestNode:
 
 class TestMethod:
     """A data representation of an individual test method.
-
-    Emits:
-        * 'new' when a new node is added
-        * 'inactive' when the test method is made inactive in the suite.
-        * 'active' when the test method is made active in the suite.
-        * 'status_update' when the pass/fail status of the method is updated.
     """
     STATUS_UNKNOWN = None
     STATUS_PASS = 100
@@ -176,12 +148,12 @@ class TestMethod:
         STATUS_ERROR: toga.Icon('icons/status/error.png'),
     }
 
-    def __init__(self, source, prefix, name):
+    def __init__(self, source, path, name):
         self._source = source
-        self._prefix = prefix
-        self._active = True
 
+        self._path = path
         self._name = name
+        self._active = True
 
         # Test status
         self._description = ''
@@ -206,19 +178,16 @@ class TestMethod:
 
     @property
     def path(self):
-        "The dotted-path name that identifies this test method to the test runner"
-        if self._prefix:
-            return '{}.{}'.format(self._prefix, self.name)
-        return self.name
+        return self._path
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def label(self):
         "The display label for the node"
         return (self.STATUS_ICONS[self.status], self.name)
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def description(self):
@@ -263,13 +232,11 @@ class TestMethod:
         if self._active:
             if not is_active:
                 self._active = False
-                # self.emit('inactive')
                 if cascade:
                     self.parent._update_active()
         else:
             if is_active:
                 self._active = True
-                # self.emit('active')
                 if cascade:
                     self.parent._update_active()
 
@@ -283,14 +250,16 @@ class TestMethod:
 
 class TestCase(TestNode):
     """A data representation of a test case, wrapping multiple test methods.
-
-    Emits:
-        * 'new' when a new node is added
-        * 'inactive' when the test method is made inactive in the suite.
-        * 'active' when the test method is made active in the suite.
     """
+    TEST_CASE_ICON = toga.Icon('icons/status/test_case.png')
+
     def __repr__(self):
         return 'TestCase %s' % self.path
+
+    @property
+    def label(self):
+        "The display label for the node"
+        return (self.TEST_CASE_ICON, self.name)
 
     def set_active(self, is_active, cascade=True):
         """Explicitly set the active state of the test case.
@@ -336,15 +305,16 @@ class TestCase(TestNode):
 
 class TestModule(TestNode):
     """A data representation of a module. It may contain test cases, or other modules.
-
-    Emits:
-        * 'new' when a new node is added
-        * 'inactive' when the test method is made inactive in the suite.
-        * 'active' when the test method is made active in the suite.
     """
+    TEST_MODULE_ICON = toga.Icon('icons/status/test_module.png')
 
     def __repr__(self):
         return 'TestModule %s' % self.path
+
+    @property
+    def label(self):
+        "The display label for the node"
+        return (self.TEST_MODULE_ICON, self.name)
 
     def set_active(self, is_active, cascade=True):
         """Explicitly set the active state of the test case.
@@ -389,8 +359,10 @@ class TestModule(TestNode):
 
 
 class TestSuite(TestNode, Source):
-    """A data representation of a test suite, containing 1+ test apps.
+    """A data representation of a test suite, containing 1+ test cases.
     """
+    TEST_SUITE_ICON = toga.Icon('icons/status/test_suite.png')
+
     def __init__(self):
         super().__init__(self, None, None)
         self.errors = []
@@ -399,12 +371,10 @@ class TestSuite(TestNode, Source):
     def __repr__(self):
         return 'TestSuite'
 
-    @classmethod
-    def add_arguments(cls, parser):
-        """Add test suite specific commandline arguments to the *parser*
-        object. *parser* is an instance of argparse.ArgumentParser.
-        """
-        pass
+    @property
+    def label(self):
+        "The display label for the node"
+        return (self.TEST_SUITE_ICON, self.name)
 
     def refresh(self, test_list=None, errors=None):
         """Rediscover the tests in the test suite.
@@ -431,15 +401,27 @@ class TestSuite(TestNode, Source):
         timestamp = datetime.now()
 
         # Make sure there is a data representation for every test in the list.
-        for test_label in test_list:
-            self.confirm_exists(test_label)
-
-        # for testModule_name, testModule in self.items():
-        #     testModule._purge(timestamp)
-        #     if len(testModule) == 0:
-        #         self.pop(testModule_name)
+        for test_id in test_list:
+            self.confirm_exists(test_id)
 
         self.errors = errors if errors is not None else []
+
+    def confirm_exists(self, test_id):
+        parent = self
+
+        for NodeClass, part in self.split_test_id(test_id):
+            try:
+                child = parent[part]
+            except KeyError:
+                child = NodeClass(
+                    source=self,
+                    path=self.join_path(parent, NodeClass, part),
+                    name=part
+                )
+                parent[part] = child
+            parent = child
+
+        return child
 
 
 class Problem:
