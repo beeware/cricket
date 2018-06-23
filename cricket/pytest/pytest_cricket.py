@@ -62,12 +62,12 @@ class CricketReporter:
 
 class CricketDiscoverReporter(CricketReporter):
     def pytest_itemcollected(self, item):
-        self.print(item.nodeid)
+        self.print(item.nodeid, flush=True)
 
 
 class CricketExecuteReporter(CricketReporter):
     def report(self, **kwargs):
-        self.print(json.dumps(kwargs))
+        self.print(json.dumps(kwargs), flush=True)
 
     def pytest_sessionstart(self, session):
         self._started = False
