@@ -177,6 +177,28 @@ class ExecutorTests(unittest.TestCase):
 
         self.assertEqual(results, {'OK': 6})
 
+    def test_single_root_test_method(self):
+        found, results = self.execute(
+            'test_root.py::test_at_root',
+        )
+
+        self.assertEqual(found, {
+            'test_root.py::test_at_root',
+        })
+
+        self.assertEqual(results, {'OK': 1})
+
+    def test_single_root_test_method(self):
+        found, results = self.execute(
+            'test_root.py',
+        )
+
+        self.assertEqual(found, {
+            'test_root.py::test_at_root',
+        })
+
+        self.assertEqual(results, {'OK': 1})
+
     # PyTest doesn't filter test naming overlaps.
     # This is (arguably) a bug in PyTest itself.
     @unittest.expectedFailure
