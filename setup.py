@@ -25,20 +25,29 @@ setup(
     author_email='russell@keith-magee.com',
     url='http://pybee.org/cricket',
     packages=find_packages(exclude='tests'),
+    py_modules=['pytest_cricket'],
     package_data={
         'cricket': ['icons/*'],
     },
     include_package_data=True,
     install_requires=[
-        'toga==0.3.0.dev8',
+        'toga>=0.3.0.dev8',
         'setuptools==39.1.0',
+    ],
+    tests_require=[
+        'django~=1.11',
+        'pytest>=3.6',
     ],
     scripts=[],
     entry_points={
         'console_scripts': [
-            'cricket-django = cricket.django.__main__:main',
-            'cricket-unittest = cricket.unittest.__main__:main',
-        ]
+            'cricket-django = cricket.django.__main__:run',
+            'cricket-unittest = cricket.unittest.__main__:run',
+            'cricket-pytest = cricket.pytest.__main__:run',
+        ],
+        'pytest11': [
+            'cricket = cricket.pytest.pytest_cricket',
+        ],
     },
     license='New BSD',
     classifiers=[

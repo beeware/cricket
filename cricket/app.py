@@ -20,7 +20,6 @@ def main(Model):
 
     parser.add_argument("--version", help="Display version number and exit", action="store_true")
 
-    Model.add_arguments(parser)
     options = parser.parse_args()
 
     # Check the shortcut options

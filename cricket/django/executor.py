@@ -24,14 +24,7 @@ class TestExecutor(TestRunnerClass):
     Formats output in a machine-readable format.
     """
     def run_suite(self, suite, **kwargs):
-        # Django 1.6 introduce the new-style test runner.
-        # If that test runner is in use, we use the full test name.
-        # If we're still using a pre 1.6-style runner, we need to
-        # drop out all everything between the app name and the test module.
-        use_old_discovery = (DjangoTestSuiteRunner and
-                             issubclass(TestRunnerClass, DjangoTestSuiteRunner))
-
-        return PipedTestRunner(use_old_discovery=use_old_discovery).run(suite)
+        return PipedTestRunner().run(suite)
 
 
 class TestCoverageExecutor(TestExecutor):

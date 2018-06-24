@@ -1,10 +1,12 @@
-#!/usr/bin/env python
+# A command line tool that passes in a custom runner for running
+# Django's own internal unit tests.
+import importlib
 import os
 import warnings
 import argparse
 
-from django.utils import importlib
-
+# This is Django's runtest module
+# (the one you use to run Django's test suite)
 import runtests
 
 

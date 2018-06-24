@@ -20,14 +20,15 @@ class ModelLoadError(Exception):
 
 
 class TestNode:
-    def __init__(self, source, prefix, name):
+    def __init__(self, source, path, name):
         super().__init__()
         self._child_labels = []
         self._child_nodes = {}
 
         self._source = source
-        self._prefix = prefix
-        self.name = name
+
+        self._path = path
+        self._name = name
         self._active = True
 
     ######################################################################
@@ -37,8 +38,11 @@ class TestNode:
     def __len__(self):
         return len(self._child_labels)
 
-    def __getitem__(self, index):
-        return self._child_nodes[self._child_labels[index]]
+    def __getitem__(self, index_or_name):
+        if isinstance(index_or_name, (int, slice)):
+            return self._child_nodes[self._child_labels[index_or_name]]
+        else:
+            return self._child_nodes[index_or_name]
 
     def can_have_children(self):
         return True
@@ -69,92 +73,111 @@ class TestNode:
 
     @property
     def path(self):
-        "The dotted-path name that identifies this test method to the test runner"
-        if self._prefix:
-            return '{}.{}'.format(self._prefix, self.name)
-        return self.name
+        "The dotted-path name that identifies this node to the test runner"
+        return self._path
 
     @property
-    def label(self):
-        "The display label for the node"
-        return self.name
+    def name(self):
+        "The identifying name for this node"
+        return self._name
 
     @property
     def active(self):
         "Is this test method currently active?"
         return self._active
 
-    def confirm_exists(self, test_label):
-        """Confirm that the given test label exists in the current data model.
-
-        If it doesn't, create a representation for it.
-        """
-        parts = test_label.split('.')
-
-        if len(parts) == 1:
-            TestClass = TestMethod
-        elif len(parts) == 2:
-            TestClass = TestCase
-        else:
-            TestClass = TestModule
-
-        try:
-            child = self._child_nodes[parts[0]]
-        except KeyError:
-            child = TestClass(self._source, self.path, parts[0])
-            self[parts[0]] = child
-
-        if len(parts) > 1:
-            test = child.confirm_exists('.'.join(parts[1:]))
-        else:
-            test = child
-
-        return test
-
-    def find_tests(self, active=True, status=None):
+    def find_tests(self, active=True, status=None, labels=None):
         """Find the test labels matching the search criteria.
+
+        This will check:
+            * active: if the method is currently an active test
+            * status: if the last run status of the method is in the provided list
+            * labels: if the method label is in the provided list
 
         Returns a count of tests found, plus the labels needed to
         execute those tests.
         """
         tests = []
         count = 0
-
         found_partial = False
         for child_label, child_node in self._child_nodes.items():
-            include = True
-
-            # If only active tests have been requested, the module
-            # must be active.
+            # If only active tests have been requested,
+            # the child node must be active.
+            # If only "status == X" tests have been requested,
+            # the child node must have that status.
             if active and not child_node.active:
-                include = False
+                # There's at least one child marked inactive;
+                # this node is therefore a partial selection
+                subcount = 0
+                subtests = []
+                found_partial = True
+            elif status and child_node.status not in status:
+                # There's at least one child marked inactive;
+                # this node is therefore a partial selection
+                subcount = 0
+                subtests = []
+                found_partial = True
+            else:
+                if labels:
+                    # A specific set of tests has been requested.
+                    if child_node.path in labels:
+                        # This child node exactly matches a requested label.
+                        # Find *all* subtests of this node.
+                        subcount, subtests = child_node.find_tests(active, status)
 
-            subcount, subtests = child_node.find_tests(active, status)
+                        # If subtests have been found, but the list of subtests
+                        # is None, then this node's path can be provided as a
+                        # specifier for "all subtests of this node"
+                        if subtests is None:
+                            subtests = [child_node.path]
+                        else:
+                            # At least one descendent of this child is excluded
+                            # that means this node is a partial match.
+                            found_partial = True
+                    else:
+                        # Search children of this child for the provided labels.
+                        subcount, subtests = child_node.find_tests(active, status, labels)
 
-            if include:
-                count = count + subcount
+                        # If subtests have been found, but the list of subtests
+                        # is None, then this node's path can be provided as a
+                        # specifier for "all subtests of this node"
+                        if subtests is None:
+                            subtests = [child_node.path]
+                        else:
+                            # At least one descendent of this child is excluded
+                            # that means this node is a partial match.
+                            found_partial = True
 
-                if isinstance(subtests, list):
-                    found_partial = True
-                    tests.extend(subtests)
                 else:
-                    tests.append(subtests)
+                    # All tests have been requested.
+                    subcount, subtests = child_node.find_tests(active, status)
 
-        # No partials found; just reference the app.
+                    # If subtests have been found, but the list of subtests
+                    # is empty, then this node's path can be provided as a
+                    # specifier for "all subtests of this node"
+                    if subtests is None:
+                        subtests = [child_node.path]
+                    else:
+                        # At least one descendent of this child is excluded
+                        # that means this node is a partial match.
+                        found_partial = True
+
+            count = count + subcount
+            tests.extend(subtests)
+
+
+        # No children were a partial match; therefore, this entire
+        # node is being executed. Return the count of subtests found,
+        # with a test list of None to flag the complete status.
         if not found_partial:
-            return count, []
+            return count, None
 
+        # Return the count of tests, and the labels needed to target them.
         return count, tests
 
 
 class TestMethod:
     """A data representation of an individual test method.
-
-    Emits:
-        * 'new' when a new node is added
-        * 'inactive' when the test method is made inactive in the suite.
-        * 'active' when the test method is made active in the suite.
-        * 'status_update' when the pass/fail status of the method is updated.
     """
     STATUS_UNKNOWN = None
     STATUS_PASS = 100
@@ -176,12 +199,12 @@ class TestMethod:
         STATUS_ERROR: toga.Icon('icons/status/error.png'),
     }
 
-    def __init__(self, source, prefix, name):
+    def __init__(self, source, path, name):
         self._source = source
-        self._prefix = prefix
-        self._active = True
 
+        self._path = path
         self._name = name
+        self._active = True
 
         # Test status
         self._description = ''
@@ -191,7 +214,7 @@ class TestMethod:
         self._duration = None
 
     def __repr__(self):
-        return 'TestMethod %s' % self.path
+        return '<TestMethod %s>' % self.path
 
     ######################################################################
     # Methods required by the TreeSource interface
@@ -206,19 +229,16 @@ class TestMethod:
 
     @property
     def path(self):
-        "The dotted-path name that identifies this test method to the test runner"
-        if self._prefix:
-            return '{}.{}'.format(self._prefix, self.name)
-        return self.name
+        return self._path
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def label(self):
         "The display label for the node"
         return (self.STATUS_ICONS[self.status], self.name)
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def description(self):
@@ -263,13 +283,11 @@ class TestMethod:
         if self._active:
             if not is_active:
                 self._active = False
-                # self.emit('inactive')
                 if cascade:
                     self.parent._update_active()
         else:
             if is_active:
                 self._active = True
-                # self.emit('active')
                 if cascade:
                     self.parent._update_active()
 
@@ -277,20 +295,28 @@ class TestMethod:
         "Toggle the current active status of this test method"
         self.set_active(not self.active)
 
-    def find_tests(self, active=True, status=None):
-        return 1, [self.path]
+    def find_tests(self, active=True, status=None, labels=None):
+        if labels:
+            if self.path in labels:
+                return 1, None
+            else:
+                return 0, []
+        else:
+            return 1, None
 
 
 class TestCase(TestNode):
     """A data representation of a test case, wrapping multiple test methods.
-
-    Emits:
-        * 'new' when a new node is added
-        * 'inactive' when the test method is made inactive in the suite.
-        * 'active' when the test method is made active in the suite.
     """
+    TEST_CASE_ICON = toga.Icon('icons/status/test_case.png')
+
     def __repr__(self):
-        return 'TestCase %s' % self.path
+        return '<TestCase %s>' % self.path
+
+    @property
+    def label(self):
+        "The display label for the node"
+        return (self.TEST_CASE_ICON, self.name)
 
     def set_active(self, is_active, cascade=True):
         """Explicitly set the active state of the test case.
@@ -336,15 +362,16 @@ class TestCase(TestNode):
 
 class TestModule(TestNode):
     """A data representation of a module. It may contain test cases, or other modules.
-
-    Emits:
-        * 'new' when a new node is added
-        * 'inactive' when the test method is made inactive in the suite.
-        * 'active' when the test method is made active in the suite.
     """
+    TEST_MODULE_ICON = toga.Icon('icons/status/test_module.png')
 
     def __repr__(self):
-        return 'TestModule %s' % self.path
+        return '<TestModule %s>' % self.path
+
+    @property
+    def label(self):
+        "The display label for the node"
+        return (self.TEST_MODULE_ICON, self.name)
 
     def set_active(self, is_active, cascade=True):
         """Explicitly set the active state of the test case.
@@ -389,7 +416,7 @@ class TestModule(TestNode):
 
 
 class TestSuite(TestNode, Source):
-    """A data representation of a test suite, containing 1+ test apps.
+    """A data representation of a test suite, containing 1+ test cases.
     """
     def __init__(self):
         super().__init__(self, None, None)
@@ -397,14 +424,7 @@ class TestSuite(TestNode, Source):
         self.coverage = False
 
     def __repr__(self):
-        return 'TestSuite'
-
-    @classmethod
-    def add_arguments(cls, parser):
-        """Add test suite specific commandline arguments to the *parser*
-        object. *parser* is an instance of argparse.ArgumentParser.
-        """
-        pass
+        return '<TestSuite>'
 
     def refresh(self, test_list=None, errors=None):
         """Rediscover the tests in the test suite.
@@ -431,114 +451,89 @@ class TestSuite(TestNode, Source):
         timestamp = datetime.now()
 
         # Make sure there is a data representation for every test in the list.
-        for test_label in test_list:
-            self.confirm_exists(test_label)
-
-        # for testModule_name, testModule in self.items():
-        #     testModule._purge(timestamp)
-        #     if len(testModule) == 0:
-        #         self.pop(testModule_name)
+        for test_id in test_list:
+            self.put_test(test_id)
 
         self.errors = errors if errors is not None else []
 
+    def put_test(self, test_id):
+        """An idempotent insert method for tests.
 
-class Problem:
-    def __init__(self, source, origin):
+        Ensures that a test identified as `test_id` exists in the test tree.
+        """
+        parent = self
+
+        for NodeClass, part in self.split_test_id(test_id):
+            try:
+                child = parent[part]
+            except KeyError:
+                child = NodeClass(
+                    source=self,
+                    path=self.join_path(parent, NodeClass, part),
+                    name=part
+                )
+                parent[part] = child
+            parent = child
+
+        return child
+
+    def del_test(self, test_id):
+        parent = self
+        parents = []
+        for NodeClass, part in self.split_test_id(test_id):
+            try:
+                child = parent[part]
+                parents.append(parent)
+                parent = child
+            except KeyError:
+                # We've found a part of the path does doesn't
+                # exist in the tree - that means we can bail.
+                return
+
+        # If we complete iterating, we've found a test with this id.
+        # So, we can delete the child...
+        del parents[-1][child.name]
+
+        # ... then we can walk back up the list of parents,
+        # deleting any parent that has no children.
+        # If at any point we find a parent with children,
+        # we can bail (as the parent of a node with children
+        # must also have children)
+        while parents:
+            child = parents.pop()
+            if len(child) == 0:
+                del parents[-1][child.name]
+            else:
+                return
+
+
+class TestSuiteProblems(TestSuite):
+    def __init__(self, suite):
         super().__init__()
-        self._source = source
-        self._origin = origin
-        self._child_labels = []
-        self._child_nodes = {}
+        self.suite = suite
+        # Listen to any changes on the test suite
+        self.suite.add_listener(self)
 
     def __repr__(self):
-        return 'Problem with %s' % self._origin
-
-    ######################################################################
-    # Methods required by the TreeSource interface
-    ######################################################################
-
-    def __len__(self):
-        return len(self._child_labels)
-
-    def __getitem__(self, index):
-        return self._child_nodes[self._child_labels[index]]
-
-    def can_have_children(self):
-        return True
-
-    ######################################################################
-    # Methods used by Cricket
-    ######################################################################
-
-    def __setitem__(self, label, child):
-        # Insert the item, sort the list,
-        # and find out where the item was inserted.
-        self._child_labels.append(label)
-        self._child_labels.sort()
-        index = self._child_labels.index(label)
-
-        self._child_nodes[label] = child
-
-        self._source._notify('insert', parent=self, index=index, item=child)
-
-    def __delitem__(self, label):
-        # Find the label in the list of children, and remove it.
-        index = self._child_labels.index(label)
-        self._child_nodes[label] = child
-
-        self._source._notify('remove', item=child)
-        del self._child_labels[index]
-        del self._child_nodes[label]
-
-    @property
-    def path(self):
-        "The dotted-path name that identifies this test method to the test runner"
-        return self._origin.path
-
-    @property
-    def label(self):
-        "The display label for the node"
-        return self._origin.label
-
-
-class TestSuiteProblems(Problem, Source):
-    def __init__(self, source):
-        super().__init__(self, source)
-
-        # Listen to any changes on the source
-        source.add_listener(self)
-
-    def __repr__(self):
-        return 'TestSuiteProblems'
+        return '<TestSuiteProblems>'
 
     def change(self, item):
-        labels = item.path.split('.')
         if item.status in TestMethod.FAILING_STATES:
             # Test didn't pass. Make sure it exists in the problem tree.
-            parent = self
-            while labels:
-                label = labels.pop(0)
-                try:
-                    problem_child = parent._child_nodes[label]
-                except KeyError:
-                    # It's a new problem. Add it to the problem tree
-                    child = parent._origin._child_nodes[label]
-                    if isinstance(child, TestMethod):
-                        problem_child = child
-                    else:
-                        problem_child = Problem(self._source, child)
+            failing_item = self.put_test(item.path)
 
-                    parent[label] = problem_child
-                parent = problem_child
+            failing_item.set_result(
+                description=item.description,
+                status=item.status,
+                output=item.output,
+                error=item.error,
+                duration=item.duration
+            )
         else:
-            # Test passed. Make sure it's not in the problem tree.
-            parent = self
-            while labels:
-                label = labels.pop(0)
-                try:
-                    problem_child = parent._child_nodes[label]
-                    parent = problem_child
-                except KeyError:
-                    # This node doesn't exist. Don't have to worry
-                    # about any deeper children.
-                    labels = None
+            self.del_test(item.path)
+
+    def split_test_id(self, test_id):
+        return self.suite.split_test_id(test_id)
+
+    def join_path(self, parent, klass, part):
+        return self.suite.join_path(parent, klass, part)

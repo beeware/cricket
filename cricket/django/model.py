@@ -6,7 +6,7 @@ collecetion and execution.
 import os
 import sys
 
-from cricket.model import TestSuite
+from cricket.model import TestSuite, TestModule, TestCase, TestMethod
 
 
 class DjangoTestSuite(TestSuite):
@@ -72,3 +72,20 @@ class DjangoTestSuite(TestSuite):
         command.extend(labels)
 
         return command
+
+    def split_test_id(self, test_id):
+        pathparts = test_id.split('.')
+
+        return [
+            (TestModule, part)
+            for part in pathparts[:-2]
+        ] + [
+            (TestCase, pathparts[-2]),
+            (TestMethod, pathparts[-1]),
+        ]
+
+    def join_path(self, parent, klass, part):
+        if parent.path is None:
+            return part
+        else:
+            return '{}.{}'.format(parent.path, part)

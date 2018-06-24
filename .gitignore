@@ -4,12 +4,14 @@
 # Tests
 .coverage
 .tox
+.pytest_cache
 
 # Distribution
 env/
 dist/
 build/
 *.egg-info
+.eggs
 _build
 distribute-*
 

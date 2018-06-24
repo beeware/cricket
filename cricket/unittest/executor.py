@@ -7,6 +7,7 @@ Its main API is the command line, but it's just as sensible to
 call into it. See __main__ for usage
 '''
 import argparse
+import os
 import unittest
 
 try:
@@ -17,13 +18,27 @@ except ImportError:
 from cricket import pipes
 
 
-class PyTestExecutor:
+def unroll_test_suite(suite):
+    """Convert a (possibly heirarchical) test suite into a flat set of tests.
+
+    This is used to ensure that the suite only executes any
+    individual test once.
+    """
+    flat = set()
+    for test in suite:
+        if isinstance(test, unittest.TestSuite):
+            flat.update(unroll_test_suite(test))
+        else:
+            flat.add(test)
+    return flat
+
+
+class UnittestExecutor:
     '''
     This is a thing which, when run, produces a stream
     of well-formed test result outputs. Its processing is
     initiated by the top-level Executor class
     '''
-
     def __init__(self):
 
         # Allows the executor to run a specified list of tests
@@ -33,35 +48,40 @@ class PyTestExecutor:
         self.specified_list = specified_list
 
     def stream_suite(self, suite):
-
         pipes.PipedTestRunner().run(suite)
 
     def stream_results(self):
-        '''
-        1.) Discover all tests if necessary
-        2.) Otherwise fetch specific tests
-        3.) Execute-and-stream
-        '''
+        """Build a suite matching the requested test list, and stream it."""
 
         loader = unittest.TestLoader()
 
         if not self.specified_list:
             suite = loader.discover('.')
-            self.stream_suite(suite)
         else:
+            all_tests = set()
+
             for module in self.specified_list:
-                suite = loader.loadTestsFromName(module)
-                self.stream_suite(suite)
+                file_path = module.replace('.', os.sep)
+                if os.path.isdir(file_path):
+                    subsuite = loader.discover(file_path, top_level_dir='.')
+                else:
+                    subsuite = loader.loadTestsFromName(module)
+
+                all_tests.update(unroll_test_suite(subsuite))
+
+            suite = unittest.TestSuite(list(all_tests))
+
+        self.stream_suite(suite)
 
 
-class PyTestCoverageExecutor(PyTestExecutor):
+class UnittestCoverageExecutor(UnittestExecutor):
     '''
-    A version of PyTestExecutor that gathers coverage data.
+    A version of UnittestExecutor that gathers coverage data.
     '''
     def stream_suite(self, suite):
         cov = coverage()
         cov.start()
-        super(PyTestCoverageExecutor, self).stream_suite(suite)
+        super(UnittestCoverageExecutor, self).stream_suite(suite)
         cov.stop()
         cov.save()
 
@@ -78,10 +98,10 @@ if __name__ == '__main__':
     options = parser.parse_args()
 
     if options.coverage:
-        PTE = PyTestCoverageExecutor()
+        executor = UnittestCoverageExecutor()
     else:
-        PTE = PyTestExecutor()
+        executor = UnittestExecutor()
 
     if options.labels:
-        PTE.run_only(options.labels)
-    PTE.stream_results()
+        executor.run_only(options.labels)
+    executor.stream_results()

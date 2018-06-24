@@ -15,14 +15,13 @@ class TestErrorAndStatus(unittest.TestCase):
         }
         for error_code, expected_status in expected_error_definitions.items():
             with self.subTest('error code ' + error_code):
-                status, error = parse_status_and_error(
-                    {'end_time': 1500000000,
-                     'status': error_code,
-                     'description': 'Some Test',
-                     'error': '',
-                     'output': '',
-                     }
-                )
+                status, error = parse_status_and_error({
+                    'end_time': 1500000000,
+                    'status': error_code,
+                    'description': 'Some Test',
+                    'error': '',
+                    'output': '',
+                })
                 self.assertEqual(status, expected_status)
 
     def test_error_returned(self):
@@ -30,14 +29,13 @@ class TestErrorAndStatus(unittest.TestCase):
         expect_error_text = ['s', 'F', 'x', 'E']
         for error_code in expect_error_text:
             with self.subTest('error text returned for code ' + error_code):
-                status, error = parse_status_and_error(
-                    {'end_time': 1500000000,
-                     'status': error_code,
-                     'description': 'Some Test',
-                     'error': sample_error,
-                     'output': '',
-                     }
-                )
+                status, error = parse_status_and_error({
+                    'end_time': 1500000000,
+                    'status': error_code,
+                    'description': 'Some Test',
+                    'error': sample_error,
+                    'output': '',
+                })
                 self.assertIn(sample_error, error)
 
     def test_error_not_returned(self):
@@ -45,12 +43,11 @@ class TestErrorAndStatus(unittest.TestCase):
         expect_no_error_text = ['OK', 'u']
         for error_code in expect_no_error_text:
             with self.subTest('error is none when error code is ' + error_code):
-                status, error = parse_status_and_error(
-                    {'end_time': 1500000000,
-                     'status': error_code,
-                     'description': 'Some Test',
-                     'error': sample_error,
-                     'output': '',
-                     }
-                )
+                status, error = parse_status_and_error({
+                    'end_time': 1500000000,
+                    'status': error_code,
+                    'description': 'Some Test',
+                    'error': sample_error,
+                    'output': '',
+                })
                 self.assertIsNone(error)
