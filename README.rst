@@ -53,31 +53,37 @@ Quickstart
 
 At present, Cricket has support for:
 
-* `Django <https://djangoproject.com>`__ 1.6+ project test suites using unittest2-style discovery; and
-* unittest project test suites; and
-* `pytest <https://pytest.org>`__ test suites.
+* unittest test suites; and
+* `pytest <https://pytest.org>`__ test suites; and
+* `Django <https://djangoproject.com>`__ 1.6+ project test suites
 
-In your Django project, install cricket, and then run it::
+To use Cricket, install it with pip::
 
     $ pip install cricket
+
+Then, to run your unittest suite::
+
+    $ cricket-unittest
+
+Or, in a pytest project::
+
+    $ cricket-pytest
+
+Or, in a Django project::
+
     $ cricket-django
 
 ``cricket-django`` will also work in Django's own tests directory -- i.e., you
 can use ``cricket-django`` to run Django's own test suite (for Django 1.6 or
 later).
 
-In a unittest project, install cricket, and then run it::
-
-    $ pip install cricket
-    $ cricket-unittest
-
-This will pop up a GUI window. Hit "Run all", and watch your test suite
-execute. A progress bar is displayed in the bottom right hand corner of
+Running cricket will display a GUI window. Hit "Run all", and watch your test
+suite execute. A progress bar is displayed in the bottom right hand corner of
 the window, along with an estimate of time remaining.
 
-While the suite is running, you can click on test names to see the output
-of that test. If the test passed, it will be displayed in green; other test
-results will be shown in other colors.
+While the suite is running, you can click on test names to see the output of
+that test. The icon in the tree, and the summary panel on the right, will
+display the status of the test, as well as any output or error text.
 
 Documentation
 -------------
