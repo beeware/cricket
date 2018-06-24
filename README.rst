@@ -126,6 +126,11 @@ Cricket is part of the `BeeWare suite`_. You can talk to the community through:
 We foster a welcoming and respectful community as described in our
 `BeeWare Community Code of Conduct`_.
 
+Acknowledgements
+----------------
+
+Icons for Cricket come from `Icons8 <https://icons8.com>`__, and are used under the terms of a `CC BY-ND 3.0 <https://creativecommons.org/licenses/by-nd/3.0/>`__ license.
+
 Contributing
 ------------
 

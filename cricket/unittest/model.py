@@ -16,6 +16,8 @@ class UnittestTestSuite(TestSuite):
         args = [sys.executable, '-m', 'cricket.unittest.executor']
         if self.coverage:
             args.append('--coverage')
+        if labels is None:
+            return args
         return args + labels
 
     def split_test_id(self, test_id):
