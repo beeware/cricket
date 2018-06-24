@@ -308,7 +308,7 @@ class TestMethod:
 class TestCase(TestNode):
     """A data representation of a test case, wrapping multiple test methods.
     """
-    TEST_CASE_ICON = toga.Icon('icons/status/test_case.png')
+    TEST_CASE_ICON = toga.Icon('icons/test_case.png')
 
     def __repr__(self):
         return '<TestCase %s>' % self.path
@@ -363,7 +363,7 @@ class TestCase(TestNode):
 class TestModule(TestNode):
     """A data representation of a module. It may contain test cases, or other modules.
     """
-    TEST_MODULE_ICON = toga.Icon('icons/status/test_module.png')
+    TEST_MODULE_ICON = toga.Icon('icons/test_module.png')
 
     def __repr__(self):
         return '<TestModule %s>' % self.path
