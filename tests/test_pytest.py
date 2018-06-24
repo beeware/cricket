@@ -11,6 +11,13 @@ SAMPLE_DIR = os.path.join(ROOT_DIR, 'sample', 'pytest')
 
 
 class DiscoveryTests(unittest.TestCase):
+    def setUp(self):
+        self._cwd = os.getcwd()
+        os.chdir(SAMPLE_DIR)
+
+    def tearDown(self):
+        os.chdir(self._cwd)
+
     def test_discovery(self):
         suite = PyTestTestSuite()
         runner = subprocess.run(
@@ -19,7 +26,6 @@ class DiscoveryTests(unittest.TestCase):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=False,
-            cwd=SAMPLE_DIR,
         )
 
         found = set()
@@ -62,6 +68,13 @@ class DiscoveryTests(unittest.TestCase):
 
 
 class ExecutorTests(unittest.TestCase):
+    def setUp(self):
+        self._cwd = os.getcwd()
+        os.chdir(SAMPLE_DIR)
+
+    def tearDown(self):
+        os.chdir(self._cwd)
+
     def execute(self, *args):
         suite = PyTestTestSuite()
         runner = subprocess.run(
@@ -70,7 +83,6 @@ class ExecutorTests(unittest.TestCase):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=False,
-            cwd=SAMPLE_DIR,
         )
 
         found = set()
