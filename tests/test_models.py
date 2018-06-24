@@ -11,12 +11,12 @@ class TestTestSuite(unittest.TestCase):
     def _full_tree(self, node):
         "Internal method generating a simple tree version of a test_suite node"
         if isinstance(node, TestCase):
-            return (type(node), node._child_nodes.keys())
+            return (type(node), node._child_labels)
         else:
-            return {
-                (type(sub_tree), sub_node): self._full_tree(sub_tree)
+            return dict(
+                ((type(sub_tree), sub_node), self._full_tree(sub_tree))
                 for sub_node, sub_tree in node._child_nodes.items()
-            }
+            )
 
     def test_no_tests(self):
         "If there are no tests, an empty tree is generated"
