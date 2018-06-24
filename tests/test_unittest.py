@@ -3,6 +3,8 @@ import os
 import subprocess
 import unittest
 
+from cricket.unittest.model import UnittestTestSuite
+
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.join(__file__)))
 SAMPLE_DIR = os.path.join(ROOT_DIR, 'sample', 'unittest')
@@ -10,8 +12,9 @@ SAMPLE_DIR = os.path.join(ROOT_DIR, 'sample', 'unittest')
 
 class DiscoveryTests(unittest.TestCase):
     def test_discovery(self):
+        suite = UnittestTestSuite()
         runner = subprocess.run(
-            ['python', '-m', 'cricket.unittest.discoverer'],
+            suite.discover_commandline(),
             stdin=None,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -61,8 +64,9 @@ class DiscoveryTests(unittest.TestCase):
 
 class ExecutorTests(unittest.TestCase):
     def execute(self, *args):
+        suite = UnittestTestSuite()
         runner = subprocess.run(
-            ['python', '-m', 'cricket.unittest.executor'] + list(args),
+            suite.execute_commandline(list(args)),
             stdin=None,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
