@@ -22,3 +22,5 @@ push:
     - smoke-test:
         task: py35
         name: Smoke build (Python 3.5)
+        environment:
+            EXTRA_REQUIRES: pytest>=3.6 django~=1.11
