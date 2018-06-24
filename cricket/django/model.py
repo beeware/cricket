@@ -69,7 +69,8 @@ class DjangoTestSuite(TestSuite):
             command.append('--testrunner=cricket.django.executor.TestCoverageExecutor')
         else:
             command.append('--testrunner=cricket.django.executor.TestExecutor')
-        command.extend(labels)
+        if labels is not None:
+            command.extend(labels)
 
         return command
 
