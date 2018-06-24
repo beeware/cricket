@@ -4,6 +4,7 @@ import subprocess
 import unittest
 
 from cricket.django.model import DjangoTestSuite
+from cricket.model import TestModule, TestCase, TestMethod
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.join(__file__)))
@@ -67,7 +68,6 @@ class DiscoveryTests(unittest.TestCase):
                 'secondapp.tests.ModuleTests.test_things',
             }
         )
-
 
 
 class ExecutorTests(unittest.TestCase):
@@ -252,3 +252,77 @@ class ExecutorTests(unittest.TestCase):
         })
 
         self.assertEqual(results, {'OK': 5})
+
+
+class SuiteSplitTests(unittest.TestCase):
+    def test_split_minimal(self):
+        suite = DjangoTestSuite()
+        parts = suite.split_test_id('app.tests.TestClass.test_stuff')
+
+        self.assertEqual(
+            parts,
+            [
+                (TestModule, 'app'),
+                (TestModule, 'tests'),
+                (TestCase, 'TestClass'),
+                (TestMethod, 'test_stuff'),
+            ]
+        )
+
+    def test_split_long(self):
+        suite = DjangoTestSuite()
+        parts = suite.split_test_id('app.tests.submodule.subsubmodule.test_deep_nesting.DeepNestedTests.test_stuff')
+
+        self.assertEqual(
+            parts,
+            [
+                (TestModule, 'app'),
+                (TestModule, 'tests'),
+                (TestModule, 'submodule'),
+                (TestModule, 'subsubmodule'),
+                (TestModule, 'test_deep_nesting'),
+                (TestCase, 'DeepNestedTests'),
+                (TestMethod, 'test_stuff'),
+            ]
+        )
+
+
+class SuiteJoinTests(unittest.TestCase):
+    def test_join_method(self):
+        suite = DjangoTestSuite()
+        parent = TestCase(None, 'app.tests.module.TestClass', 'TestClass')
+        self.assertEqual(
+            suite.join_path(parent, TestMethod, 'test_stuff'),
+            'app.tests.module.TestClass.test_stuff'
+        )
+
+    def test_join_case(self):
+        suite = DjangoTestSuite()
+        parent = TestModule(None, 'app.tests.module', 'module')
+        self.assertEqual(
+            suite.join_path(parent, TestCase, 'TestClass'),
+            'app.tests.module.TestClass'
+        )
+
+    def test_join_module(self):
+        suite = DjangoTestSuite()
+        parent = TestModule(None, 'app.tests', 'tests')
+        self.assertEqual(
+            suite.join_path(parent, TestModule, 'module'),
+            'app.tests.module'
+        )
+
+    def test_join_submodule(self):
+        suite = DjangoTestSuite()
+        parent = TestModule(None, 'app', 'app')
+        self.assertEqual(
+            suite.join_path(parent, TestModule, 'tests'),
+            'app.tests'
+        )
+
+    def test_join_app(self):
+        suite = DjangoTestSuite()
+        self.assertEqual(
+            suite.join_path(suite, TestModule, 'tests'),
+            'tests'
+        )

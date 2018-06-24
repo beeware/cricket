@@ -4,6 +4,7 @@ import subprocess
 import unittest
 
 from cricket.unittest.model import UnittestTestSuite
+from cricket.model import TestModule, TestCase, TestMethod
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.join(__file__)))
@@ -65,7 +66,6 @@ class DiscoveryTests(unittest.TestCase):
                 'tests.test_unusual.UnusualTests.test_slow_9',
             }
         )
-
 
 
 class ExecutorTests(unittest.TestCase):
@@ -235,3 +235,67 @@ class ExecutorTests(unittest.TestCase):
         })
 
         self.assertEqual(results, {'OK': 3})
+
+
+class SuiteSplitTests(unittest.TestCase):
+    def test_split_minimal(self):
+        suite = UnittestTestSuite()
+        parts = suite.split_test_id('tests.TestClass.test_stuff')
+
+        self.assertEqual(
+            parts,
+            [
+                (TestModule, 'tests'),
+                (TestCase, 'TestClass'),
+                (TestMethod, 'test_stuff'),
+            ]
+        )
+
+    def test_split_long(self):
+        suite = UnittestTestSuite()
+        parts = suite.split_test_id('tests.submodule.subsubmodule.test_deep_nesting.DeepNestedTests.test_stuff')
+
+        self.assertEqual(
+            parts,
+            [
+                (TestModule, 'tests'),
+                (TestModule, 'submodule'),
+                (TestModule, 'subsubmodule'),
+                (TestModule, 'test_deep_nesting'),
+                (TestCase, 'DeepNestedTests'),
+                (TestMethod, 'test_stuff'),
+            ]
+        )
+
+
+class SuiteJoinTests(unittest.TestCase):
+    def test_join_method(self):
+        suite = UnittestTestSuite()
+        parent = TestCase(None, 'tests.module.TestClass', 'TestClass')
+        self.assertEqual(
+            suite.join_path(parent, TestMethod, 'test_stuff'),
+            'tests.module.TestClass.test_stuff'
+        )
+
+    def test_join_case(self):
+        suite = UnittestTestSuite()
+        parent = TestModule(None, 'tests.module', 'module')
+        self.assertEqual(
+            suite.join_path(parent, TestCase, 'TestClass'),
+            'tests.module.TestClass'
+        )
+
+    def test_join_module(self):
+        suite = UnittestTestSuite()
+        parent = TestModule(None, 'tests', 'tests')
+        self.assertEqual(
+            suite.join_path(parent, TestModule, 'module'),
+            'tests.module'
+        )
+
+    def test_join_submodule(self):
+        suite = UnittestTestSuite()
+        self.assertEqual(
+            suite.join_path(suite, TestModule, 'tests'),
+            'tests'
+        )

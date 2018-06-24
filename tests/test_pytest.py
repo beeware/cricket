@@ -4,6 +4,7 @@ import subprocess
 import unittest
 
 from cricket.pytest.model import PyTestTestSuite
+from cricket.model import TestModule, TestCase, TestMethod
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.join(__file__)))
@@ -64,7 +65,6 @@ class DiscoveryTests(unittest.TestCase):
                 'tests/test_unusual.py::test_slow_9',
             }
         )
-
 
 
 class ExecutorTests(unittest.TestCase):
@@ -240,3 +240,113 @@ class ExecutorTests(unittest.TestCase):
         })
 
         self.assertEqual(results, {'OK': 3})
+
+
+class SuiteSplitTests(unittest.TestCase):
+    def test_split_root(self):
+        suite = PyTestTestSuite()
+        parts = suite.split_test_id('tests.py::test_stuff')
+
+        self.assertEqual(
+            parts,
+            [
+                (TestModule, 'tests.py'),
+                (TestMethod, 'test_stuff'),
+            ]
+        )
+
+    def test_split_root_unittest(self):
+        suite = PyTestTestSuite()
+        parts = suite.split_test_id('tests.py::TestClass::test_stuff')
+
+        self.assertEqual(
+            parts,
+            [
+                (TestModule, 'tests.py'),
+                (TestCase, 'TestClass'),
+                (TestMethod, 'test_stuff'),
+            ]
+        )
+
+    def test_split_minimal(self):
+        suite = PyTestTestSuite()
+        parts = suite.split_test_id('tests/test_module.py::test_stuff')
+
+        self.assertEqual(
+            parts,
+            [
+                (TestModule, 'tests'),
+                (TestModule, 'test_module.py'),
+                (TestMethod, 'test_stuff'),
+            ]
+        )
+
+    def test_split_unittest(self):
+        suite = PyTestTestSuite()
+        parts = suite.split_test_id('tests/test_module.py::TestClass::test_stuff')
+
+        self.assertEqual(
+            parts,
+            [
+                (TestModule, 'tests'),
+                (TestModule, 'test_module.py'),
+                (TestCase, 'TestClass'),
+                (TestMethod, 'test_stuff'),
+            ]
+        )
+
+    def test_split_long(self):
+        suite = PyTestTestSuite()
+        parts = suite.split_test_id('tests/submodule/subsubmodule/test_deep_nesting.py::test_stuff')
+
+        self.assertEqual(
+            parts,
+            [
+                (TestModule, 'tests'),
+                (TestModule, 'submodule'),
+                (TestModule, 'subsubmodule'),
+                (TestModule, 'test_deep_nesting.py'),
+                (TestMethod, 'test_stuff'),
+            ]
+        )
+
+
+class SuiteJoinTests(unittest.TestCase):
+    def test_join_method_unittest(self):
+        suite = PyTestTestSuite()
+        parent = TestCase(None, 'tests/module.py::TestClass', 'TestClass')
+        self.assertEqual(
+            suite.join_path(parent, TestMethod, 'test_stuff'),
+            'tests/module.py::TestClass::test_stuff'
+        )
+
+    def test_join_method(self):
+        suite = PyTestTestSuite()
+        parent = TestCase(None, 'tests/module.py', 'module.py')
+        self.assertEqual(
+            suite.join_path(parent, TestMethod, 'test_stuff'),
+            'tests/module.py::test_stuff'
+        )
+
+    def test_join_case(self):
+        suite = PyTestTestSuite()
+        parent = TestModule(None, 'tests/module.py', 'module.py')
+        self.assertEqual(
+            suite.join_path(parent, TestCase, 'TestClass'),
+            'tests/module.py::TestClass'
+        )
+
+    def test_join_module(self):
+        suite = PyTestTestSuite()
+        parent = TestModule(None, 'tests', 'tests')
+        self.assertEqual(
+            suite.join_path(parent, TestModule, 'module.py'),
+            'tests/module.py'
+        )
+
+    def test_join_submodule(self):
+        suite = PyTestTestSuite()
+        self.assertEqual(
+            suite.join_path(suite, TestModule, 'tests'),
+            'tests'
+        )
