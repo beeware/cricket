@@ -86,39 +86,93 @@ class TestNode:
         "Is this test method currently active?"
         return self._active
 
-    def find_tests(self, active=True, status=None):
+    def find_tests(self, active=True, status=None, labels=None):
         """Find the test labels matching the search criteria.
+
+        This will check:
+            * active: if the method is currently an active test
+            * status: if the last run status of the method is in the provided list
+            * labels: if the method label is in the provided list
 
         Returns a count of tests found, plus the labels needed to
         execute those tests.
         """
         tests = []
         count = 0
-
         found_partial = False
         for child_label, child_node in self._child_nodes.items():
-            include = True
-
-            # If only active tests have been requested, the module
-            # must be active.
+            # If only active tests have been requested,
+            # the child node must be active.
+            # If only "status == X" tests have been requested,
+            # the child node must have that status.
             if active and not child_node.active:
-                include = False
+                # There's at least one child marked inactive;
+                # this node is therefore a partial selection
+                subcount = 0
+                subtests = []
+                found_partial = True
+            elif status and child_node.status not in status:
+                # There's at least one child marked inactive;
+                # this node is therefore a partial selection
+                subcount = 0
+                subtests = []
+                found_partial = True
+            else:
+                if labels:
+                    # A specific set of tests has been requested.
+                    if child_node.path in labels:
+                        # This child node exactly matches a requested label.
+                        # Find *all* subtests of this node.
+                        subcount, subtests = child_node.find_tests(active, status)
 
-            subcount, subtests = child_node.find_tests(active, status)
+                        # If subtests have been found, but the list of subtests
+                        # is None, then this node's path can be provided as a
+                        # specifier for "all subtests of this node"
+                        if subtests is None:
+                            subtests = [child_node.path]
+                        else:
+                            # At least one descendent of this child is excluded
+                            # that means this node is a partial match.
+                            found_partial = True
+                    else:
+                        # Search children of this child for the provided labels.
+                        subcount, subtests = child_node.find_tests(active, status, labels)
 
-            if include:
-                count = count + subcount
+                        # If subtests have been found, but the list of subtests
+                        # is None, then this node's path can be provided as a
+                        # specifier for "all subtests of this node"
+                        if subtests is None:
+                            subtests = [child_node.path]
+                        else:
+                            # At least one descendent of this child is excluded
+                            # that means this node is a partial match.
+                            found_partial = True
 
-                if isinstance(subtests, list):
-                    found_partial = True
-                    tests.extend(subtests)
                 else:
-                    tests.append(subtests)
+                    # All tests have been requested.
+                    subcount, subtests = child_node.find_tests(active, status)
 
-        # No partials found; just reference the app.
+                    # If subtests have been found, but the list of subtests
+                    # is empty, then this node's path can be provided as a
+                    # specifier for "all subtests of this node"
+                    if subtests is None:
+                        subtests = [child_node.path]
+                    else:
+                        # At least one descendent of this child is excluded
+                        # that means this node is a partial match.
+                        found_partial = True
+
+            count = count + subcount
+            tests.extend(subtests)
+
+
+        # No children were a partial match; therefore, this entire
+        # node is being executed. Return the count of subtests found,
+        # with a test list of None to flag the complete status.
         if not found_partial:
-            return count, []
+            return count, None
 
+        # Return the count of tests, and the labels needed to target them.
         return count, tests
 
 
@@ -160,7 +214,7 @@ class TestMethod:
         self._duration = None
 
     def __repr__(self):
-        return 'TestMethod %s' % self.path
+        return '<TestMethod %s>' % self.path
 
     ######################################################################
     # Methods required by the TreeSource interface
@@ -241,8 +295,14 @@ class TestMethod:
         "Toggle the current active status of this test method"
         self.set_active(not self.active)
 
-    def find_tests(self, active=True, status=None):
-        return 1, [self.path]
+    def find_tests(self, active=True, status=None, labels=None):
+        if labels:
+            if self.path in labels:
+                return 1, None
+            else:
+                return 0, []
+        else:
+            return 1, None
 
 
 class TestCase(TestNode):
@@ -251,7 +311,7 @@ class TestCase(TestNode):
     TEST_CASE_ICON = toga.Icon('icons/status/test_case.png')
 
     def __repr__(self):
-        return 'TestCase %s' % self.path
+        return '<TestCase %s>' % self.path
 
     @property
     def label(self):
@@ -306,7 +366,7 @@ class TestModule(TestNode):
     TEST_MODULE_ICON = toga.Icon('icons/status/test_module.png')
 
     def __repr__(self):
-        return 'TestModule %s' % self.path
+        return '<TestModule %s>' % self.path
 
     @property
     def label(self):
@@ -364,7 +424,7 @@ class TestSuite(TestNode, Source):
         self.coverage = False
 
     def __repr__(self):
-        return 'TestSuite'
+        return '<TestSuite>'
 
     def refresh(self, test_list=None, errors=None):
         """Rediscover the tests in the test suite.
@@ -455,7 +515,7 @@ class TestSuiteProblems(TestSuite):
         self.suite.add_listener(self)
 
     def __repr__(self):
-        return 'TestSuiteProblems'
+        return '<TestSuiteProblems>'
 
     def change(self, item):
         if item.status in TestMethod.FAILING_STATES:

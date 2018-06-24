@@ -353,7 +353,7 @@ class Cricket(toga.App):
         "Update the layout with the initial values."
         # Get a count of active tests to display in the status bar.
 
-        count, labels = self.test_suite.find_tests(True)
+        count, labels = self.test_suite.find_tests(active=True)
         self.run_summary.text = 'T:{count} P:0 F:0 E:0 X:0 U:0 S:0'.format(count=count)
 
         # Update the test suite to make sure coverage status matches the GUI
@@ -399,10 +399,10 @@ class Cricket(toga.App):
 
     async def cmd_run_selected(self, widget):
         "Command: The 'run selected' button has been pressed"
-        tests_to_run = []
+        tests_to_run = set()
         if self.current_tree.selection:
             for node in self.current_tree.selection:
-                tests_to_run.append(node.path)
+                tests_to_run.add(node.path)
 
         # If the executor isn't currently running, we can
         # start a test run.
@@ -650,10 +650,7 @@ class Cricket(toga.App):
         If labels is provided, only tests with those labels will
             be executed
         """
-        if labels:
-            count = len(labels)
-        else:
-            count, labels = self.test_suite.find_tests(active, status)
+        count, labels = self.test_suite.find_tests(active=active, status=status, labels=labels)
 
         self.run_status.text = 'Running...'
         self.run_summary.text = 'T:{count} P:0 F:0 E:0 X:0 U:0 S:0'.format(count=count)
