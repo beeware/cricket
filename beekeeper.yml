@@ -8,6 +8,8 @@ pull_request:
     - smoke-test:
         task: py35
         name: Smoke build (Python 3.5)
+        environment:
+            EXTRA_REQUIRES: pytest>=3.6 django~=1.11
     # - full-test:
     #     subtasks:
     #         - py3.5:
@@ -18,5 +20,5 @@ pull_request:
     #             task: py36
 push:
     - smoke-test:
-        task: py34
-        name: Smoke build (Python 3.4)
+        task: py35
+        name: Smoke build (Python 3.5)
