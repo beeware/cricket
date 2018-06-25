@@ -18,7 +18,7 @@ class PyTestTestSuite(TestSuite):
         # if self.coverage:
         #     args.append('--coverage')
         if labels is None:
-            return labels
+            return args
         return args + labels
 
     def split_test_id(self, test_id):
