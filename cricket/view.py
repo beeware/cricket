@@ -71,6 +71,9 @@ class Cricket(toga.App):
 
         self._check_errors_status()
 
+    def open_document(self, doc):
+        pass
+
     ######################################################
     # Error handlers from the model or test suite  FIXME
     ######################################################
