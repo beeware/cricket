@@ -32,7 +32,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'toga>=0.3.0.dev8',
-        'setuptools==39.1.0',
+        'setuptools>=39.1.0',
     ],
     tests_require=[
         'django~=1.11',
