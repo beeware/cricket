@@ -1,6 +1,6 @@
-.. image:: http://pybee.org/project/projects/tools/cricket/cricket.png
+.. image:: https://beeware.org/project/projects/tools/cricket/cricket.png
     :width: 72px
-    :target: https://pybee.org/cricket
+    :target: https://beeware.org/cricket
 
 Cricket
 =======
