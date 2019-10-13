@@ -66,7 +66,7 @@ setup(
         'Topic :: Utilities',
     ],
     test_suite='tests',
-    package_urls={
+    project_urls={
         'Funding': 'https://pybee.org/contributing/membership/',
         'Documentation': 'http://cricket.readthedocs.io/en/latest/',
         'Tracker': 'https://github.com/pybee/cricket/issues',

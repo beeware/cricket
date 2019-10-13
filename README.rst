@@ -17,8 +17,9 @@ Cricket
 .. image:: https://img.shields.io/pypi/l/cricket.svg
     :target: https://github.com/pybee/cricket/blob/master/LICENSE
 
-.. image:: https://beekeeper.beeware.org/projects/beeware/cricket/shield
-    :target: https://beekeeper.beeware.org/projects/beeware/cricket
+.. image:: https://github.com/beeware/colosseum/workflows/Build%20status/badge.svg
+   :target: https://github.com/beeware/colosseum/actions
+   :alt: Build Status
 
 .. image:: https://badges.gitter.im/pybee/general.svg
     :target: https://gitter.im/pybee/general
