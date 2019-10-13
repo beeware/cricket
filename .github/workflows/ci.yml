@@ -37,7 +37,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get install -y python3-gi python3-gi-cairo gir1.2-gtk-3.0 python3-dev libgirepository1.0-dev libcairo2-dev pkg-config
-        pip install --upgrade pip setuptools pytest-tldr
+        pip install --upgrade pip setuptools
+        pip install pytest
         pip install -e .
     - name: Test
       run: |
@@ -61,6 +62,7 @@ jobs:
       run: |
         sudo apt-get install -y python3-gi python3-gi-cairo gir1.2-gtk-3.0 python3-dev libgirepository1.0-dev libcairo2-dev pkg-config
         pip install --upgrade pip setuptools
+        pip install pytest
         pip install -e .
     - name: Test
       run: |
