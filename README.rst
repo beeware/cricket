@@ -7,24 +7,29 @@ Cricket
 
 .. image:: https://img.shields.io/pypi/pyversions/cricket.svg
     :target: https://pypi.python.org/pypi/cricket
+    :alt: Python versions
 
 .. image:: https://img.shields.io/pypi/v/cricket.svg
     :target: https://pypi.python.org/pypi/cricket
+    :alt: Project version
 
 .. image:: https://img.shields.io/pypi/status/cricket.svg
     :target: https://pypi.python.org/pypi/cricket
+    :alt: Development status
 
 .. image:: https://img.shields.io/pypi/l/cricket.svg
-    :target: https://github.com/pybee/cricket/blob/master/LICENSE
+    :target: https://github.com/beeware/cricket/blob/master/LICENSE
+    :alt: Project license
 
 .. image:: https://github.com/beeware/colosseum/workflows/Build%20status/badge.svg
    :target: https://github.com/beeware/colosseum/actions
    :alt: Build Status
 
-.. image:: https://badges.gitter.im/pybee/general.svg
-    :target: https://gitter.im/pybee/general
+.. image:: https://badges.gitter.im/beeware/general.svg
+    :target: https://gitter.im/beeware/general
+    :alt: Gitter chat room
 
-Cricket is part of the `BeeWare suite`_. The project website is `http://pybee.org/cricket`_.
+Cricket is part of the `BeeWare suite`_. The project website is `http://beeware.org/cricket`_.
 
 Cricket is a graphical tool that helps you run your test suites.
 
@@ -43,8 +48,8 @@ test suites. The usual approach for making cricket watchable is a generous
 dose of beer; in programming, `Ballmer Peak`_ limits come into effect, so
 something else is required...
 
-.. _BeeWare suite: http://pybee.org/
-.. _http://pybee.org/cricket: http://pybee.org/cricket
+.. _BeeWare suite: http://beeware.org/
+.. _http://beeware.org/cricket: http://beeware.org/cricket
 .. _Test Cricket: http://en.wikipedia.org/wiki/Test_cricket
 .. _Ballmer Peak: http://xkcd.com/323/
 
@@ -98,7 +103,7 @@ Cricket is part of the `BeeWare suite`_. You can talk to the community through:
 
 * `@pybeeware on Twitter`_
 
-* The `pybee/general`_ channel on Gitter.
+* The `beeware/general`_ channel on Gitter.
 
 We foster a welcoming and respectful community as described in our
 `BeeWare Community Code of Conduct`_.
@@ -115,8 +120,8 @@ If you experience problems with cricket, `log them on GitHub`_. If you want to c
 
 .. _Read The Docs: https://cricket.readthedocs.io
 .. _@pybeeware on Twitter: https://twitter.com/pybeeware
-.. _pybee/general: https://gitter.im/pybee/general
-.. _BeeWare Community Code of Conduct: http://pybee.org/community/behavior/
-.. _log them on Github: https://github.com/pybee/cricket/issues
-.. _fork the code: https://github.com/pybee/cricket
-.. _submit a pull request: https://github.com/pybee/cricket/pulls
+.. _beeware/general: https://gitter.im/beeware/general
+.. _BeeWare Community Code of Conduct: http://beeware.org/community/behavior/
+.. _log them on Github: https://github.com/beeware/cricket/issues
+.. _fork the code: https://github.com/beeware/cricket
+.. _submit a pull request: https://github.com/beeware/cricket/pulls
