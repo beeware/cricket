@@ -10,8 +10,8 @@ import webbrowser
 
 import toga
 from toga.style import Pack
-from toga.style.pack import RIGHT, LEFT, CENTER, ROW, COLUMN, VISIBLE, HIDDEN
-from toga.font import BOLD, SANS_SERIF
+from toga.style.pack import RIGHT, CENTER, ROW, COLUMN
+from toga.fonts import BOLD, SANS_SERIF
 
 # Check for the existence of coverage and duvet
 try:
