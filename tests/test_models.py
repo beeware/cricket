@@ -4,6 +4,7 @@ from cricket.model import TestModule, TestCase
 # Use Unittest as a template for TestSuite behavior.
 from cricket.unittest.model import UnittestTestSuite as TestSuite
 
+
 class TestTestSuite(unittest.TestCase):
     """Tests for the process of converting the output of the Discoverer
     into an internal tree.
@@ -754,7 +755,6 @@ class FindLabelTests(unittest.TestCase):
                 'app6.package2',
             ]),
             (5, ['app6']))
-
 
         self.assertEqual(self.test_suite.find_tests(labels=[
                 'app8.package1.subpackage.tests.TestCase.test_method',
