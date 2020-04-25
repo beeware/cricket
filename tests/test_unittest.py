@@ -149,7 +149,6 @@ class ExecutorTests(unittest.TestCase):
 
         self.assertEqual(results, {'OK': 1})
 
-
     def test_multiple_test_methods(self):
         found, results = self.execute(
             'tests.submodule.test_nesting.NestedTests.test_stuff',

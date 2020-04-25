@@ -147,7 +147,6 @@ class ExecutorTests(unittest.TestCase):
 
         self.assertEqual(results, {'OK': 1})
 
-
     def test_multiple_test_methods(self):
         found, results = self.execute(
             'tests/submodule/test_nesting.py::test_stuff',
@@ -200,7 +199,7 @@ class ExecutorTests(unittest.TestCase):
 
         self.assertEqual(results, {'OK': 1})
 
-    def test_single_root_test_method(self):
+    def test_single_root_test_file(self):
         found, results = self.execute(
             'test_root.py',
         )
