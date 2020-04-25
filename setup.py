@@ -23,22 +23,21 @@ setup(
     long_description=long_description,
     author='Russell Keith-Magee',
     author_email='russell@keith-magee.com',
-    url='http://pybee.org/cricket',
+    url='http://beeware.org/cricket',
     packages=find_packages(exclude='tests'),
     py_modules=['pytest_cricket'],
     package_data={
-        'cricket': ['icons/*'],
+        'cricket': ['resources/*'],
     },
     include_package_data=True,
     install_requires=[
-        'toga>=0.3.0.dev9',
-        'setuptools>=39.1.0',
+        'toga>=0.3.0.dev19',
     ],
     tests_require=[
         'django~=1.11',
         'pytest>=3.6',
     ],
-    python_requires='>=3.4',
+    python_requires='>=3.5',
     scripts=[],
     entry_points={
         'console_scripts': [
