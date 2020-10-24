@@ -11,7 +11,7 @@ Release History
 * Dropped support for the pre-Django 1.6 test runner
 
 0.2.3 - September 26, 2013
---------------------------
+------------------------------
 
 * Added ability to generate coverage
 
