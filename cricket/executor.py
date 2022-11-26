@@ -5,7 +5,7 @@ import sys
 from threading import Thread
 
 try:
-    from Queue import Queue, Empty
+    from Queue import Empty, Queue
 except ImportError:
     from queue import Queue, Empty  # python 3.x
 

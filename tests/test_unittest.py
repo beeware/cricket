@@ -3,9 +3,8 @@ import os
 import subprocess
 import unittest
 
+from cricket.model import TestCase, TestMethod, TestModule
 from cricket.unittest.model import UnittestTestSuite
-from cricket.model import TestModule, TestCase, TestMethod
-
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.join(__file__)))
 SAMPLE_DIR = os.path.join(ROOT_DIR, 'sample', 'unittest')

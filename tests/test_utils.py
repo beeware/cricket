@@ -1,4 +1,5 @@
 import unittest
+
 from cricket.executor import parse_status_and_error
 from cricket.model import TestMethod
 

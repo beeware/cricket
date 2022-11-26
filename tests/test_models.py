@@ -1,6 +1,6 @@
 import unittest
-from cricket.model import TestModule, TestCase
 
+from cricket.model import TestCase, TestModule
 # Use Unittest as a template for TestSuite behavior.
 from cricket.unittest.model import UnittestTestSuite as TestSuite
 

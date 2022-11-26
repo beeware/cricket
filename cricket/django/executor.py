@@ -6,6 +6,7 @@ except ImportError:
     coverage = None
 
 from django.conf import settings
+
 try:
     from django.test.simple import DjangoTestSuiteRunner
 except ImportError:

@@ -1,7 +1,7 @@
 import os
 import sys
 
-from cricket.model import TestSuite, TestModule, TestCase, TestMethod
+from cricket.model import TestCase, TestMethod, TestModule, TestSuite
 
 
 class PyTestTestSuite(TestSuite):

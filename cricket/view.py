@@ -4,14 +4,14 @@ This is the "View" of the MVC world.
 """
 
 import os
-import sys
 import subprocess
+import sys
 import webbrowser
 
 import toga
-from toga.style import Pack
-from toga.style.pack import RIGHT, CENTER, ROW, COLUMN
 from toga.fonts import BOLD, SANS_SERIF
+from toga.style import Pack
+from toga.style.pack import CENTER, COLUMN, RIGHT, ROW
 
 # Check for the existence of coverage and duvet
 try:
@@ -24,9 +24,10 @@ except ImportError:
     coverage = None
     duvet = None
 
-from cricket.model import TestMethod, TestSuiteProblems
+from cricket.dialogs import (FailedTestDialog, IgnorableTestLoadErrorDialog,
+                             TestLoadErrorDialog)
 from cricket.executor import Executor
-from cricket.dialogs import FailedTestDialog, TestLoadErrorDialog, IgnorableTestLoadErrorDialog
+from cricket.model import TestMethod, TestSuiteProblems
 
 
 class Cricket(toga.App):
@@ -108,7 +109,7 @@ class Cricket(toga.App):
             'Show coverage...',
             group=self.instruments_group
         )
-        self.show_coverage_command.enabled = False if duvet is None else True
+        self.show_coverage_command.enabled = duvet is not None
 
         # Button to stop run the tests
         self.stop_command = toga.Command(
@@ -545,7 +546,7 @@ class Cricket(toga.App):
     def on_coverageChange(self, widget):
         "Event handler: when the coverage checkbox has been toggled"
         self.coverage = not self.coverage
-        self.test_suite.coverage = self.coverage == True
+        self.test_suite.coverage = bool(self.coverage)
 
     def on_executorStatusUpdate(self, event, update):
         "The executor has some progress to report"
@@ -637,7 +638,7 @@ class Cricket(toga.App):
             self.rerun_command.enabled = False
 
     def set_selected_button_state(self):
-        state = False if self.executor else True
+        state = not self.executor
         self.run_selected_command.enabled = state
 
     ######################################################

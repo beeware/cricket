@@ -1,9 +1,9 @@
 # A command line tool that passes in a custom runner for running
 # Django's own internal unit tests.
+import argparse
 import importlib
 import os
 import warnings
-import argparse
 
 # This is Django's runtest module
 # (the one you use to run Django's test suite)

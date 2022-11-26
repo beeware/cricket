@@ -4,8 +4,7 @@ import subprocess
 import unittest
 
 from cricket.django.model import DjangoTestSuite
-from cricket.model import TestModule, TestCase, TestMethod
-
+from cricket.model import TestCase, TestMethod, TestModule
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.join(__file__)))
 SAMPLE_DIR = os.path.join(ROOT_DIR, 'sample', 'django')

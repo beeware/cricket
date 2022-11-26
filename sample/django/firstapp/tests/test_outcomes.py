@@ -1,4 +1,4 @@
-from unittest import TestCase, skip, expectedFailure
+from unittest import TestCase, expectedFailure, skip
 
 
 class GoodTests(TestCase):

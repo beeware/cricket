@@ -11,7 +11,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import os
+import sys
 
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

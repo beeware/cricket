@@ -6,8 +6,9 @@ to initiate the GUI main loop.
 from argparse import ArgumentParser
 
 import toga
-from cricket.view import Cricket
+
 from cricket.model import ModelLoadError
+from cricket.view import Cricket
 
 
 def main(Model):
