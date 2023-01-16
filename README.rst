@@ -18,16 +18,16 @@ Cricket
     :alt: Development status
 
 .. image:: https://img.shields.io/pypi/l/cricket.svg
-    :target: https://github.com/beeware/cricket/blob/master/LICENSE
+    :target: https://github.com/beeware/cricket/blob/main/LICENSE
     :alt: Project license
 
-.. image:: https://github.com/beeware/colosseum/workflows/Build%20status/badge.svg
-   :target: https://github.com/beeware/colosseum/actions
+.. image:: https://github.com/beeware/cricket/workflows/CI/badge.svg?branch=main
+   :target: https://github.com/beeware/cricket/actions
    :alt: Build Status
 
-.. image:: https://badges.gitter.im/beeware/general.svg
-    :target: https://gitter.im/beeware/general
-    :alt: Gitter chat room
+.. image:: https://img.shields.io/discord/836455665257021440?label=Discord%20Chat&logo=discord&style=plastic
+   :target: https://beeware.org/bee/chat/
+   :alt: Discord server
 
 Cricket is part of the `BeeWare suite`_. The project website is `http://beeware.org/cricket`_.
 
@@ -103,7 +103,7 @@ Cricket is part of the `BeeWare suite`_. You can talk to the community through:
 
 * `@pybeeware on Twitter`_
 
-* The `beeware/general`_ channel on Gitter.
+* `Discord <https://beeware.org/bee/chat/>`__
 
 We foster a welcoming and respectful community as described in our
 `BeeWare Community Code of Conduct`_.
@@ -120,7 +120,6 @@ If you experience problems with cricket, `log them on GitHub`_. If you want to c
 
 .. _Read The Docs: https://cricket.readthedocs.io
 .. _@pybeeware on Twitter: https://twitter.com/pybeeware
-.. _beeware/general: https://gitter.im/beeware/general
 .. _BeeWare Community Code of Conduct: http://beeware.org/community/behavior/
 .. _log them on Github: https://github.com/beeware/cricket/issues
 .. _fork the code: https://github.com/beeware/cricket
