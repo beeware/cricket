@@ -114,7 +114,7 @@ class Cricket(toga.App):
         self.stop_command = toga.Command(
             self.cmd_stop, 'Stop',
             tooltip='Stop running the tests.',
-            icon=toga.Icon('icons/stop.png'),
+            icon=toga.Icon('resources/stop.png'),
             shortcut='s',
             group=self.control_tests_group
         )
@@ -124,7 +124,7 @@ class Cricket(toga.App):
         self.run_all_command = toga.Command(
             self.cmd_run_all, 'Run all',
             tooltip='Run all the tests.',
-            icon=toga.Icon('icons/play.png'),
+            icon=toga.Icon('resources/play.png'),
             shortcut='r',
             group=self.control_tests_group
         )
@@ -133,7 +133,7 @@ class Cricket(toga.App):
         self.run_selected_command = toga.Command(
             self.cmd_run_selected, 'Run selected',
             tooltip='Run the tests selected.',
-            icon=toga.Icon('icons/run_select.png'),
+            icon=toga.Icon('resources/run_select.png'),
             shortcut='e',
             group=self.control_tests_group
         )
@@ -143,7 +143,7 @@ class Cricket(toga.App):
         self.rerun_command = toga.Command(
             self.cmd_rerun, 'Re-run',
             tooltip='Re-run the tests.',
-            icon=toga.Icon('icons/re_run.png'),
+            icon=toga.Icon('resources/re_run.png'),
             shortcut='a',
             group=self.control_tests_group
         )
@@ -391,7 +391,7 @@ class Cricket(toga.App):
     async def cmd_run_all(self, widget):
         "Command: The Run all button has been pressed"
         # Update test status icon
-        # self.tests_tree_data.update_visualization(toga.Icon('icons/wait.png'))
+        # self.tests_tree_data.update_visualization(toga.Icon('resources/wait.png'))
         # self.problem_tests_data.data = {}
         # self.all_tests_tree.update()
         # self.problem_tests_tree.update()

@@ -7,4 +7,3 @@ class ModuleTests(TestCase):
 
     def test_things(self):
         pass
-

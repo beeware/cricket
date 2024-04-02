@@ -190,13 +190,13 @@ class TestMethod:
     FAILING_STATES = (STATUS_FAIL, STATUS_UNEXPECTED_SUCCESS, STATUS_ERROR)
 
     STATUS_ICONS = {
-        STATUS_UNKNOWN: toga.Icon('icons/status/unknown.png'),
-        STATUS_PASS: toga.Icon('icons/status/pass.png'),
-        STATUS_SKIP: toga.Icon('icons/status/skip.png'),
-        STATUS_EXPECTED_FAIL: toga.Icon('icons/status/expected_fail.png'),
-        STATUS_UNEXPECTED_SUCCESS: toga.Icon('icons/status/unexpected_success.png'),
-        STATUS_FAIL: toga.Icon('icons/status/fail.png'),
-        STATUS_ERROR: toga.Icon('icons/status/error.png'),
+        STATUS_UNKNOWN: toga.Icon('resources/status/unknown.png'),
+        STATUS_PASS: toga.Icon('resources/status/pass.png'),
+        STATUS_SKIP: toga.Icon('resources/status/skip.png'),
+        STATUS_EXPECTED_FAIL: toga.Icon('resources/status/expected_fail.png'),
+        STATUS_UNEXPECTED_SUCCESS: toga.Icon('resources/status/unexpected_success.png'),
+        STATUS_FAIL: toga.Icon('resources/status/fail.png'),
+        STATUS_ERROR: toga.Icon('resources/status/error.png'),
     }
 
     def __init__(self, source, path, name):
@@ -308,7 +308,7 @@ class TestMethod:
 class TestCase(TestNode):
     """A data representation of a test case, wrapping multiple test methods.
     """
-    TEST_CASE_ICON = toga.Icon('icons/test_case.png')
+    TEST_CASE_ICON = toga.Icon('resources/test_case.png')
 
     def __repr__(self):
         return '<TestCase %s>' % self.path
@@ -363,7 +363,7 @@ class TestCase(TestNode):
 class TestModule(TestNode):
     """A data representation of a module. It may contain test cases, or other modules.
     """
-    TEST_MODULE_ICON = toga.Icon('icons/test_module.png')
+    TEST_MODULE_ICON = toga.Icon('resources/test_module.png')
 
     def __repr__(self):
         return '<TestModule %s>' % self.path
