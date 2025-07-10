@@ -29,7 +29,7 @@ Cricket
    :target: https://beeware.org/bee/chat/
    :alt: Discord server
 
-Cricket is part of the `BeeWare suite`_. The project website is `http://beeware.org/cricket`_.
+Cricket is part of the `BeeWare suite`_. The project website is `https://beeware.org/cricket`_.
 
 Cricket is a graphical tool that helps you run your test suites.
 
@@ -49,7 +49,7 @@ dose of beer; in programming, `Ballmer Peak`_ limits come into effect, so
 something else is required...
 
 .. _BeeWare suite: http://beeware.org/
-.. _http://beeware.org/cricket: http://beeware.org/cricket
+.. _https://beeware.org/cricket: http://beeware.org/cricket
 .. _Test Cricket: http://en.wikipedia.org/wiki/Test_cricket
 .. _Ballmer Peak: http://xkcd.com/323/
 
@@ -94,33 +94,29 @@ display the status of the test, as well as any output or error text.
 Documentation
 -------------
 
-Documentation for cricket can be found on `Read The Docs`_.
+Documentation for cricket can be found on `Read The Docs <https://cricket.readthedocs.io>`__.
 
 Community
 ---------
 
-Cricket is part of the `BeeWare suite`_. You can talk to the community through:
+Cricket is part of the `BeeWare suite <https://beeware.org>`__. You can talk to the
+community through:
 
-* `@pybeeware on Twitter`_
+* `@beeware@fosstodon.org on Mastodon <https://fosstodon.org/@beeware>`__
 
 * `Discord <https://beeware.org/bee/chat/>`__
 
-We foster a welcoming and respectful community as described in our
-`BeeWare Community Code of Conduct`_.
+We foster a welcoming and respectful community as described in our `BeeWare Community
+Code of Conduct <https://beeware.org/community/behavior/>`__.
+
+Contributing
+------------
+
+If you experience problems with Cricket, `log them on GitHub <https://github.com/beeware/cricket/issues>`__. 
+
+If you want to contribute, please `fork the project <https://github.com/beeware/cricket>`__ and `submit a pull request <https://github.com/beeware/cricket/pulls>`__.
 
 Acknowledgements
 ----------------
 
 Icons for Cricket come from `Icons8 <https://icons8.com>`__, and are used under the terms of a `CC BY-ND 3.0 <https://creativecommons.org/licenses/by-nd/3.0/>`__ license.
-
-Contributing
-------------
-
-If you experience problems with cricket, `log them on GitHub`_. If you want to contribute code, please `fork the code`_ and `submit a pull request`_.
-
-.. _Read The Docs: https://cricket.readthedocs.io
-.. _@pybeeware on Twitter: https://twitter.com/pybeeware
-.. _BeeWare Community Code of Conduct: http://beeware.org/community/behavior/
-.. _log them on Github: https://github.com/beeware/cricket/issues
-.. _fork the code: https://github.com/beeware/cricket
-.. _submit a pull request: https://github.com/beeware/cricket/pulls

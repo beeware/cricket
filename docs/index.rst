@@ -1,7 +1,7 @@
 Cricket
 =======
 
-Cricket is part of the `BeeWare suite`_. The project website is `http://pybee.org/cricket`_.
+Cricket is part of the `BeeWare suite`_. The project website is `https://beeware.org/cricket`_.
 
 Cricket is a graphical tool that helps projects with large test suites **identify failures without waiting** for all your tests to finish.
 
@@ -20,8 +20,8 @@ test suites. The usual approach for making cricket watchable is a generous
 dose of beer; in programming, `Ballmer Peak`_ limits come into effect, so
 something else is required...
 
-.. _BeeWare suite: http://pybee.org/
-.. _http://pybee.org/cricket: http://pybee.org/cricket
+.. _BeeWare suite: https://beeware.org/
+.. _https://beeware.org/cricket: http://beeware.org/cricket
 .. _Test Cricket: http://en.wikipedia.org/wiki/Test_cricket
 .. _Ballmer Peak: http://xkcd.com/323/
 
