@@ -19,3 +19,7 @@ distribute-*
 .DS_Store
 .*.sw[op]
 *~
+
+# IntelliJ Idea family of suites
+.idea
+*.iml
