@@ -5,7 +5,6 @@ to initiate the GUI main loop.
 '''
 from argparse import ArgumentParser
 
-import toga
 from cricket.view import Cricket
 from cricket.model import ModelLoadError
 

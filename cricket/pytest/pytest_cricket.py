@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 import json
-import os
 import sys
 import time
 
-import pluggy
-import py
 import pytest
 
 

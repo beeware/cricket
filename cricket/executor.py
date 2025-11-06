@@ -1,13 +1,5 @@
 import asyncio
 import json
-import subprocess
-import sys
-from threading import Thread
-
-try:
-    from Queue import Queue, Empty
-except ImportError:
-    from queue import Queue, Empty  # python 3.x
 
 from cricket.model import TestMethod
 from cricket.pipes import PipedTestResult, PipedTestRunner

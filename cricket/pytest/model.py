@@ -1,5 +1,4 @@
 import os
-import sys
 
 from cricket.model import TestSuite, TestModule, TestCase, TestMethod
 

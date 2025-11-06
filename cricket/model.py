@@ -6,8 +6,6 @@ Each object in the model is an event source; views/controllers
 can bind to events on the model to be notified of changes.
 """
 import subprocess
-import sys
-from datetime import datetime
 
 import toga
 from toga.sources import Source
@@ -164,7 +162,6 @@ class TestNode:
 
             count = count + subcount
             tests.extend(subtests)
-
 
         # No children were a partial match; therefore, this entire
         # node is being executed. Return the count of subtests found,
@@ -447,8 +444,6 @@ class TestSuite(TestNode, Source):
                 errors.append(line.strip().decode('utf-8'))
             if errors and not test_list:
                 raise ModelLoadError('\n'.join(errors))
-
-        timestamp = datetime.now()
 
         # Make sure there is a data representation for every test in the list.
         for test_id in test_list:

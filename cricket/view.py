@@ -3,10 +3,8 @@
 This is the "View" of the MVC world.
 """
 
-import os
 import sys
 import subprocess
-import webbrowser
 
 import toga
 from toga.style import Pack
@@ -445,7 +443,7 @@ class Cricket(toga.App):
     # def cmd_about_cricket(self, sender):
     #     "Show a dialog with Cricket information"
 
-    #     self.about_cricket = "Cricket is a graphical tool that helps you run your test suites. \n \nNormal unittest test runners dump all output to the console, and provide very little detail while the suite is running. As a result: \n \n- You can't start looking at failures until the test suite has completed running,\n- It isn't a very accessible format for identifying patterns in test failures, \n- It can be hard (or cumbersome) to re-run any tests that have failed. \n \nWhy the name cricket? Test Cricket is the most prestigious version of the game of cricket. Games last for up to 5 days... just like running some test suites. The usual approach for making cricket watchable is a generous dose of beer; in programming, Balmer Peak limits come into effect, so something else is required..."
+    #     self.about_cricket = "Cricket is a graphical tool that helps you run your test suites."
 
     #     self.main_window.info_dialog('Cricket', self.about_cricket)
 
@@ -517,7 +515,7 @@ class Cricket(toga.App):
                     self.error_view.clear()
 
                     # self.error_box.style.visibility = HIDDEN
-            except AttributeError as e:
+            except AttributeError:
                 # There's no description attribute; that means it's not a test method,
                 # it's a module or test case.
                 self.status_label.text = ''
@@ -545,7 +543,7 @@ class Cricket(toga.App):
     def on_coverageChange(self, widget):
         "Event handler: when the coverage checkbox has been toggled"
         self.coverage = not self.coverage
-        self.test_suite.coverage = self.coverage == True
+        self.test_suite.coverage = self.coverage
 
     def on_executorStatusUpdate(self, event, update):
         "The executor has some progress to report"
@@ -563,15 +561,18 @@ class Cricket(toga.App):
         self.progress.value += 1
 
         # Update the run summary
-        self.run_summary.text = 'T{total} P:{passes} F:{failed} E:{errors} X:{expected} U:{unexpected} S:{skipped}, ~{remaining} remaining'.format(
-            total=self.executor.total_count,
-            passes=self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
-            failed=self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
-            errors=self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
-            expected=self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
-            unexpected=self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
-            skipped=self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
-            remaining=remaining_time,
+        self.run_summary.text = (
+            'T{total} P:{passes} F:{failed} E:{errors} '
+            'X:{expected} U:{unexpected} S:{skipped}, ~{remaining} remaining'.format(
+                total=self.executor.total_count,
+                passes=self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
+                failed=self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
+                errors=self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
+                expected=self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
+                unexpected=self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
+                skipped=self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
+                remaining=remaining_time,
+            )
         )
 
     def executor_suite_end(self, error=None):
@@ -603,14 +604,17 @@ class Cricket(toga.App):
                                 message=message or 'No tests were ran')
 
         # Reset the running summary.
-        self.run_summary.text = 'T{total} P:{passes} F:{failed} E:{errors} X:{expected} U:{unexpected} S:{skipped}'.format(
-            total=self.executor.total_count,
-            passes=self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
-            failed=self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
-            errors=self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
-            expected=self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
-            unexpected=self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
-            skipped=self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
+        self.run_summary.text = (
+            'T{total} P:{passes} F:{failed} E:{errors} '
+            'X:{expected} U:{unexpected} S:{skipped}'.format(
+                total=self.executor.total_count,
+                passes=self.executor.result_count.get(TestMethod.STATUS_PASS, 0),
+                failed=self.executor.result_count.get(TestMethod.STATUS_FAIL, 0),
+                errors=self.executor.result_count.get(TestMethod.STATUS_ERROR, 0),
+                expected=self.executor.result_count.get(TestMethod.STATUS_EXPECTED_FAIL, 0),
+                unexpected=self.executor.result_count.get(TestMethod.STATUS_UNEXPECTED_SUCCESS, 0),
+                skipped=self.executor.result_count.get(TestMethod.STATUS_SKIP, 0),
+            )
         )
 
     def on_executorSuiteError(self, event, error):
@@ -702,7 +706,9 @@ class Cricket(toga.App):
             if dialog.status == dialog.CANCEL:
                 sys.exit(1)
         elif self._ignorable_test_load_error:
-            dialog = IgnorableTestLoadErrorDialog(self,
-                        self._ignorable_test_load_error)
+            dialog = IgnorableTestLoadErrorDialog(
+                self,
+                self._ignorable_test_load_error
+            )
             if dialog.status == dialog.CANCEL:
                 sys.exit(1)
