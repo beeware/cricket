@@ -34,8 +34,10 @@ setup(
         'toga>=0.3.0.dev19',
     ],
     tests_require=[
-        'django~=1.11',
-        'pytest>=3.6',
+        # These have been unpinned to stop dependabot complaining.
+        # the last known good versions have been flagged.
+        'django', # #~=1.11'
+        'pytest', # >=3.6',
     ],
     python_requires='>=3.5',
     scripts=[],
