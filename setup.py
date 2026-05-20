@@ -31,7 +31,8 @@ setup(
     },
     include_package_data=True,
     install_requires=[
-        'toga>=0.3.0.dev19',
+        'toga>=0.3.0.dev19,<0.4',
+        'travertino<0.4',
     ],
     tests_require=[
         # These have been unpinned to stop dependabot complaining.
