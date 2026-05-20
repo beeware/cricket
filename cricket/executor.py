@@ -81,6 +81,7 @@ class Executor:
             stdin=None,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            bufsize=0,
         )
 
         line = await self.proc.stdout.readline()
