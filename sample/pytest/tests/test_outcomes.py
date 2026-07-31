@@ -5,26 +5,27 @@ def test_passing_item():
     pass
 
 
-@pytest.mark.skip(reason='tra-la-la')
+@pytest.mark.skip(reason="tra-la-la")
 def test_skipped_item():
     pass
 
 
 def test_failing_item():
-    assert False, 'Failed!'
+    raise AssertionError("Failed!")
 
 
 def test_assertion_item():
-    assert 1 == 2, 'Who are you kidding?'
+    value1 = 1
+    assert value1 == 2, "Who are you kidding?"
 
 
 def test_error_item():
-    raise Exception("this is really bad")
+    raise ValueError("this is really bad")
 
 
 @pytest.mark.xfail
 def test_xfailing_item():
-    assert False,  'This is a known bad'
+    raise AssertionError("This is a known bad")
 
 
 @pytest.mark.xfail

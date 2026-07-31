@@ -1,15 +1,10 @@
-[<img src="https://beeware.org/project/projects/tools/cricket/cricket.png" width="72" alt="image" />](https://beeware.org/cricket)
-
 # Cricket
 
-[![Python versions](https://img.shields.io/pypi/pyversions/cricket.svg)](https://pypi.python.org/pypi/cricket)
-[![Project version](https://img.shields.io/pypi/v/cricket.svg)](https://pypi.python.org/pypi/cricket)
-[![Development status](https://img.shields.io/pypi/status/cricket.svg)](https://pypi.python.org/pypi/cricket)
-[![Project license](https://img.shields.io/pypi/l/cricket.svg)](https://github.com/beeware/cricket/blob/main/LICENSE)
-[![Build Status](https://github.com/beeware/cricket/workflows/CI/badge.svg?branch=main)](https://github.com/beeware/cricket/actions)
-[![Discord server](https://img.shields.io/discord/836455665257021440?label=Discord%20Chat&logo=discord&style=plastic)](https://beeware.org/bee/chat/)
+[![Cricket](docs/en/images/cricket.png)](https://cricket.beeware.org)
 
-Cricket is part of the [BeeWare suite](https://beeware.org). The project website is [https://beeware.org/cricket]().
+[![Python Versions](https://img.shields.io/pypi/pyversions/cricket.svg)](https://pypi.python.org/pypi/cricket) [![PyPI Version](https://img.shields.io/pypi/v/cricket.svg)](https://pypi.python.org/pypi/cricket) [![Maturity](https://img.shields.io/pypi/status/cricket.svg)](https://pypi.python.org/pypi/cricket) [![BSD License](https://img.shields.io/pypi/l/cricket.svg)](https://github.com/beeware/cricket/blob/main/LICENSE) [![Discord server](https://img.shields.io/discord/836455665257021440?label=Discord%20Chat&logo=discord&style=plastic)](https://beeware.org/bee/chat/)
+
+Cricket is part of the [BeeWare suite](https://beeware.org).
 
 Cricket is a graphical tool that helps you run your test suites.
 
@@ -53,7 +48,7 @@ While the suite is running, you can click on test names to see the output of tha
 
 ## Documentation
 
-Documentation for cricket can be found on [Read The Docs](https://cricket.readthedocs.io).
+Documentation for Cricket can be found on [Read The Docs](https://cricket.beeware.org).
 
 ## Community
 

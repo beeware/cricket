@@ -1,0 +1,53 @@
+---
+search:
+  exclude: true
+---
+
+- Tutorial
+    - [Tutorial](tutorial/index.md)
+- How-to guides
+    - [How-to guides](how-to/index.md)
+    - Contribute
+        - [Contributing](how-to/contribute/index.md)
+        - [First-time contributors](how-to/contribute/first-time-contributors.md)
+        - What can I do?
+            - [Fix an issue](how-to/contribute/what/fix-issue.md)
+            - [Implement a new feature](how-to/contribute/what/implement-feature.md)
+            - [Write documentation](how-to/contribute/what/write-docs.md)
+            - [Triage an issue](how-to/contribute/what/triage.md)
+            - [Review a pull request](how-to/contribute/what/review-pr.md)
+            - [Propose a new feature](how-to/contribute/what/propose-feature.md)
+            - [Use the tools](how-to/contribute/what/use-tools.md)
+        - How do I contribute?
+            - [Setting up a development environment](how-to/contribute/how/dev-environment.md)
+            - [Reproducing an issue](how-to/contribute/how/reproduce-issue.md)
+            - [Working from a branch](how-to/contribute/how/branches.md)
+            - [Avoiding scope creep](how-to/contribute/how/scope-creep.md)
+            - [Writing, running, and testing code](how-to/contribute/how/write-code.md)
+            - [Building documentation](how-to/contribute/how/build-docs.md)
+            - [Writing documentation](how-to/contribute/how/write-docs.md)
+            - [Adding a change note](how-to/contribute/how/change-note.md)
+            - [Submitting a pull request](how-to/contribute/how/submit-pr.md)
+            - [Providing a review](how-to/contribute/how/review-pr.md)
+            - [Submitting a new issue](how-to/contribute/how/new-issue.md)
+            - [Proposing a new feature](how-to/contribute/how/propose-feature.md)
+        - What happens next?
+            - [Pull request review process](how-to/contribute/next/pr-review.md)
+            - [Release process](how-to/contribute/next/release.md)
+        - Policies
+            - [AI Policy](how-to/contribute/policies/ai-policy.md)
+        - Style guides
+            - [Code style guide](how-to/contribute/style/code-style-guide.md)
+            - [Documentation style guide](how-to/contribute/style/docs-style-guide.md)
+    - Internal
+        - [Internal How-to guides](how-to/internal/index.md)
+        - [Release process](how-to/internal/release.md)
+- Topic guides
+    - [Topic guides](topics/index.md)
+- Reference
+    - [Reference](reference/index.md)
+- About Cricket
+    - [About Cricket](about/index.md)
+    - [FAQ](about/faq.md)
+    - [Community](about/community.md)
+    - [Release History](about/releases.md)

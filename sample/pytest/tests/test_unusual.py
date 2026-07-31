@@ -13,5 +13,5 @@ def slow():
     time.sleep(0.2)
 
 
-for i in range(0, 10):
-    locals()['test_slow_{}'.format(i)] = slow
+for i in range(10):
+    locals()[f"test_slow_{i}"] = slow

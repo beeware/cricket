@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import sys
 import time
 from unittest import TestCase
@@ -17,5 +15,5 @@ def slow(self):
     time.sleep(0.2)
 
 
-for i in range(0, 10):
-    setattr(UnusualTests, 'test_slow_{}'.format(i), slow)
+for i in range(10):
+    setattr(UnusualTests, f"test_slow_{i}", slow)

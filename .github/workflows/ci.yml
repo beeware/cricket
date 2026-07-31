@@ -1,69 +1,149 @@
 name: CI
-on: [pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_call:
+    inputs:
+      attest-package:
+        description: "Create GitHub provenance attestation for the package."
+        default: "false"
+        type: string
+
+# Cancel active CI runs for a PR before starting another run
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+# Default to no permissions; each job opts in to exactly what it needs.
+permissions: {}
+
+env:
+  FORCE_COLOR: "1"
 
 jobs:
-  beefore:
-    name: Pre-test checks
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        task: ['pycodestyle']
-    steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3.7
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-    - name: Install dependencies
-      run: |
-        pip install --upgrade pip setuptools beefore
-    - name: Run Beefore checks
-      env:
-        GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        beefore --username github-actions --repository ${{ github.repository }} --pull-request ${{ github.event.number }} --commit ${{ github.event.pull_request.head.sha }} ${{ matrix.task }} .
+  pre-commit:
+    name: Pre-commit checks
+    permissions:
+      contents: read
+    uses: beeware/.github/.github/workflows/pre-commit-run.yml@66283ddb9e206f93b423118deecf1caf516078c1 # main
+    with:
+      pre-commit-source: "pre-commit"
 
-  smoke:
-    name: Smoke test
-    needs: beefore
-    runs-on: ubuntu-latest
+  build-wheels:
+    needs: pre-commit
+    name: Build wheels
+    runs-on: macos-latest
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3.7
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-    - name: Install dependencies
-      run: |
-        sudo apt-get install -y python3-gi python3-gi-cairo gir1.2-gtk-3.0 python3-dev libgirepository1.0-dev libcairo2-dev pkg-config
-        pip install --upgrade pip setuptools
-        pip install pytest
-        pip install -e .
-    - name: Test
-      run: |
-        python setup.py test
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
-  python-versions:
-    name: Python compatibility test
-    needs: smoke
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.5, 3.6]
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.x"
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
+        with:
+          output-dir: dist
+
+      - name: Generate build provenance attestation for wheels
+        if: inputs.attest-package == 'true'
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4
+        with:
+          subject-path: "dist/*.whl"
+
+      - name: Upload artefacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist-wheels
+          path: ./dist/*.whl
+          if-no-files-found: error
+
+  build-sdist:
+    needs: pre-commit
+    name: Build sdist
+    runs-on: macos-latest
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        sudo apt-get install -y python3-gi python3-gi-cairo gir1.2-gtk-3.0 python3-dev libgirepository1.0-dev libcairo2-dev pkg-config
-        pip install --upgrade pip setuptools
-        pip install pytest
-        pip install -e .
-    - name: Test
-      run: |
-        python setup.py test
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.x"
+
+      - name: Build sdist
+        run: |
+          python -m pip install --upgrade build
+          python -m build --sdist
+
+      - name: Generate build provenance attestation for sdist
+        if: inputs.attest-package == 'true'
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4
+        with:
+          subject-path: "dist/*.tar.gz"
+
+      - name: Upload artefacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist-sdist
+          path: ./dist/*.tar.gz
+          if-no-files-found: error
+
+  test:
+    name: Test (${{ matrix.python-version }})
+    needs: build-wheels
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist-wheels
+          path: wheelhouse
+
+      - name: Install tox
+        run: |
+          python -m pip install --group tox-uv
+
+      - name: Run smoke test
+        run: tox -e py
