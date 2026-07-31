@@ -32,7 +32,7 @@ def main(Model):
         return
 
     # Construct a Toga application
-    app = Cricket(formal_name="Cricket", app_id="org.pybee.cricket", app_name="cricket")
+    app = Cricket(formal_name="Cricket", app_id="org.beeware.cricket")
 
     # Try to load the test_suite. If any error occurs during
     # test suite load, show an error dialog

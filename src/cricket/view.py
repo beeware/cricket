@@ -8,7 +8,7 @@ import sys
 
 import toga
 from toga.fonts import BOLD, SANS_SERIF
-from toga.style import Pack
+from toga.sources import AccessorColumn
 from toga.style.pack import CENTER, COLUMN, RIGHT, ROW
 
 # Check for the existence of coverage and duvet
@@ -52,7 +52,7 @@ class Cricket(toga.App):
         self.executor = None
 
         # Main window of the application with title and size
-        self.main_window = toga.MainWindow(title=self.name, size=(1024, 768))
+        self.main_window = toga.MainWindow(size=(1024, 768))
 
         # Setup the menu and toolbar
         self._setup_commands()
@@ -72,7 +72,25 @@ class Cricket(toga.App):
         # Show the main window
         self.main_window.show()
 
-        self._check_errors_status()
+    async def on_running(self):
+        if self.test_load_error:
+            if not await self.dialog(
+                toga.StackTraceDialog(
+                    "Errors during test suite",
+                    "The following errors were generated while running the test suite:",
+                    self.test_load_error,
+                )
+            ):
+                self.exit()
+        elif self.ignorable_test_load_error:
+            if not await self.dialog(
+                toga.StackTraceDialog(
+                    "Errors during test suite",
+                    "The following errors were generated while running the test suite:",
+                    self.ignorable_test_load_error,
+                )
+            ):
+                self.exit()
 
     def open_document(self, doc):
         pass
@@ -187,12 +205,12 @@ class Cricket(toga.App):
                 (self.tree_notebook, 33),
                 (self.right_box, 66),
             ],
-            style=Pack(flex=1),
+            flex=1,
         )
         # Main content area
         self.outer_box = toga.Box(
             children=[self.split_main_container, self.statusbar],
-            style=Pack(direction=COLUMN),
+            direction=COLUMN,
         )
         self.content = self.outer_box
 
@@ -201,14 +219,15 @@ class Cricket(toga.App):
         The left frame mostly consists of the tree widget
         """
         self.all_tests_tree = toga.Tree(
-            ["Test"], accessors=["label"], data=self.test_suite, multiple_select=True
+            columns=[AccessorColumn("Test", "label")],
+            data=self.test_suite,
+            multiple_select=True,
         )
 
         self.all_tests_tree.on_select = self.on_test_selected
 
         self.problem_tests_tree = toga.Tree(
-            ["Test"],
-            accessors=["label"],
+            columns=[AccessorColumn("Test", "label")],
             data=TestSuiteProblems(self.test_suite),
             multiple_select=True,
         )
@@ -227,7 +246,7 @@ class Cricket(toga.App):
         The right frame is basically the "output viewer" space
         """
         # Box to show the detail of a test
-        self.right_box = toga.Box(style=Pack(direction=COLUMN, padding=(10, 0)))
+        self.right_box = toga.Box(direction=COLUMN, margin=(10, 0))
 
         # Initial status for coverage
         self.coverage = False
@@ -245,83 +264,98 @@ class Cricket(toga.App):
         # Label for indicator status of test
         self.status_label = toga.Label(
             "",
-            style=Pack(
-                text_align=CENTER,
-                width=60,
-                padding_right=10,
-                font_family=SANS_SERIF,
-                font_weight=BOLD,
-                font_size=40,
-            ),
+            text_align=CENTER,
+            width=60,
+            margin_left=10,
+            font_family=SANS_SERIF,
+            font_weight=BOLD,
+            font_size=40,
         )
 
         # Box to put the name of the test
-        self.name_box = toga.Box(style=Pack(direction=ROW, padding=(5, 10)))
+        self.name_box = toga.Box(direction=ROW, margin=(5, 10))
         # Label to indicate that the next input text it will be the name
         self.name_label = toga.Label(
-            "Name:", style=Pack(text_align=RIGHT, width=80, padding_right=10)
+            "Name:",
+            text_align=RIGHT,
+            width=80,
+            margin_right=10,
         )
         # Text input to show the name of the test
-        self.name_view = toga.TextInput(readonly=True, style=Pack(flex=1))
+        self.name_view = toga.TextInput(readonly=True, flex=1)
         # Insert the name box objects
         self.name_box.add(self.name_label)
         self.name_box.add(self.name_view)
 
         # Box to put the test duration
-        self.duration_box = toga.Box(style=Pack(direction=ROW, padding=(5, 10)))
+        self.duration_box = toga.Box(direction=ROW, margin=(5, 10))
         # Label to indicate the test duration
         self.duration_label = toga.Label(
-            "Duration:", style=Pack(text_align=RIGHT, width=80, padding_right=10)
+            "Duration:",
+            text_align=RIGHT,
+            width=80,
+            margin_right=10,
         )
         # Text input to show the test duration
-        self.duration_view = toga.TextInput(readonly=True, style=Pack(flex=1))
+        self.duration_view = toga.TextInput(readonly=True, flex=1)
         self.duration_box.add(self.duration_label)
         self.duration_box.add(self.duration_view)
 
         # Group the name and duration into a single "identifier" box
-        self.identifier_box = toga.Box(style=Pack(direction=COLUMN, flex=1))
+        self.identifier_box = toga.Box(direction=COLUMN, flex=1)
         self.identifier_box.add(self.name_box)
         self.identifier_box.add(self.duration_box)
 
         # Put the identifiers on the same row as the status label
-        self.summary_box = toga.Box(style=Pack(direction=ROW, alignment=CENTER))
+        self.summary_box = toga.Box(direction=ROW, align_items=CENTER)
         self.summary_box.add(self.identifier_box)
         self.summary_box.add(self.status_label)
 
         # Box to put the test description
         self.description_box = toga.Box(
-            style=Pack(direction=ROW, padding=(5, 10), flex=1)
+            direction=ROW,
+            margin=(5, 10),
+            flex=1,
         )
         # Label to indicate the test description
         self.description_label = toga.Label(
-            "Description:", style=Pack(text_align=RIGHT, width=80, padding_right=10)
+            "Description:",
+            text_align=RIGHT,
+            width=80,
+            margin_right=10,
         )
         # Text input to show the test description
-        self.description_view = toga.MultilineTextInput(style=Pack(flex=1))
+        self.description_view = toga.MultilineTextInput(flex=1)
         # Insert the test description box objects
         self.description_box.add(self.description_label)
         self.description_box.add(self.description_view)
 
         # Box to put the test output
-        self.output_box = toga.Box(style=Pack(direction=ROW, padding=(5, 10), flex=3))
+        self.output_box = toga.Box(direction=ROW, margin=(5, 10), flex=3)
         # Label to indicate the test output
         self.output_label = toga.Label(
-            "Output:", style=Pack(text_align=RIGHT, width=80, padding_right=10)
+            "Output:",
+            text_align=RIGHT,
+            width=80,
+            margin_right=10,
         )
         # Text input to show the test output
-        self.output_view = toga.MultilineTextInput(style=Pack(flex=1))
+        self.output_view = toga.MultilineTextInput(flex=1)
         # Insert the test output box objects
         self.output_box.add(self.output_label)
         self.output_box.add(self.output_view)
 
         # Box to put the test error
-        self.error_box = toga.Box(style=Pack(direction=ROW, padding=(5, 10), flex=3))
+        self.error_box = toga.Box(direction=ROW, margin=(5, 10), flex=3)
         # Label to indicate the test error
         self.error_label = toga.Label(
-            "Error:", style=Pack(text_align=RIGHT, width=80, padding_right=10)
+            "Error:",
+            text_align=RIGHT,
+            width=80,
+            margin_right=10,
         )
         # Text input to show the test error
-        self.error_view = toga.MultilineTextInput(style=Pack(flex=1))
+        self.error_view = toga.MultilineTextInput(flex=1)
         # Insert the test error box objects
         self.error_box.add(self.error_label)
         self.error_box.add(self.error_view)
@@ -337,18 +371,24 @@ class Cricket(toga.App):
         """The bottom frame to inform the user about the status of the tests
         that are running.
         """
-        self.run_status = toga.Label("Not running", style=Pack(padding_left=10))
+        self.run_status = toga.Label("Not running", margin_left=10)
 
         self.run_summary = toga.Label(
-            "T:0 P:0 F:0 E:0 X:0 U:0 S:0", style=Pack(flex=1, text_align=RIGHT)
+            "T:0 P:0 F:0 E:0 X:0 U:0 S:0",
+            flex=1,
+            text_align=RIGHT,
         )
 
         # Test progress
         self.progress = toga.ProgressBar(
-            max=100, value=0, style=Pack(padding_left=10, padding_right=10, width=200)
+            max=100,
+            value=0,
+            margin_left=10,
+            margin_right=10,
+            width=200,
         )
 
-        self.statusbar = toga.Box(style=Pack(direction=ROW))
+        self.statusbar = toga.Box(direction=ROW)
 
         self.statusbar.add(self.run_status)
         self.statusbar.add(self.run_summary)
@@ -708,21 +748,3 @@ class Cricket(toga.App):
         self.run_status.text = "Stopped."
 
         self.reset_button_states_on_end()
-
-    def _check_errors_status(self):
-        """Checks if the model or the test_suite have errors.
-
-        If there are errors on the model show the dialog TestLoadErrorDialog
-            with these errors.
-        If there are error on the test_suite show the dialog
-            IgnorableTestLoadErrorDialog with these errors.
-        """
-
-        if self._test_load_error:
-            dialog = TestLoadErrorDialog(self, self._test_load_error)
-            if dialog.status == dialog.CANCEL:
-                sys.exit(1)
-        elif self._ignorable_test_load_error:
-            dialog = IgnorableTestLoadErrorDialog(self, self._ignorable_test_load_error)
-            if dialog.status == dialog.CANCEL:
-                sys.exit(1)
