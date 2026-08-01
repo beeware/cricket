@@ -7,7 +7,11 @@ import pytest
 
 from cricket.model import (
     TestCase as CTCase,
+)
+from cricket.model import (
     TestMethod as CTMethod,
+)
+from cricket.model import (
     TestModule as CTModule,
 )
 from cricket.pytest.model import PyTestTestSuite as PTSuite
@@ -101,6 +105,7 @@ def execute(*args, success=True):
         stdin=None,
         capture_output=True,
         shell=False,
+        check=False,
     )
 
     if success:

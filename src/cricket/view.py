@@ -9,7 +9,7 @@ import webbrowser
 import toga
 from toga.fonts import BOLD, SANS_SERIF
 from toga.sources import AccessorColumn
-from toga.style.pack import CENTER, COLUMN, RIGHT, ROW, HIDDEN, VISIBLE, MONOSPACE
+from toga.style.pack import CENTER, COLUMN, HIDDEN, MONOSPACE, RIGHT, ROW, VISIBLE
 
 # Check for the existence of coverage and duvet
 try:
@@ -23,11 +23,6 @@ except ImportError:
     coverage = None
     duvet = None
 
-from cricket.dialogs import (
-    FailedTestDialog,
-    IgnorableTestLoadErrorDialog,
-    TestLoadErrorDialog,
-)
 from cricket.executor import Executor
 from cricket.model import TestMethod, TestSuiteProblems
 
@@ -77,22 +72,24 @@ class Cricket(toga.App):
 
     async def on_running(self):
         if self.test_load_error:
-            if not await self.dialog(
+            abort = await self.dialog(
                 toga.StackTraceDialog(
                     "Errors during test suite",
                     "The following errors were generated while running the test suite:",
                     self.test_load_error,
                 )
-            ):
+            )
+            if abort:
                 self.exit()
         elif self.ignorable_test_load_error:
-            if not await self.dialog(
+            abort = await self.dialog(
                 toga.StackTraceDialog(
                     "Errors during test suite",
                     "The following errors were generated while running the test suite:",
                     self.ignorable_test_load_error,
                 )
-            ):
+            )
+            if abort:
                 self.exit()
 
     def open_document(self, doc):

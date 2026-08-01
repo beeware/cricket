@@ -2,7 +2,11 @@ import pytest
 
 from cricket.model import (
     TestCase as CTCase,
+)
+from cricket.model import (
     TestMethod as CTMethod,
+)
+from cricket.model import (
     TestModule as CTModule,
 )
 from cricket.pytest.model import PyTestTestSuite as PTSuite
@@ -27,7 +31,7 @@ def _full_tree(node):
     elif isinstance(node, PTSuite):
         return [_full_tree(sub_tree) for _, sub_tree in node._child_nodes.items()]
     else:
-        raise ValueError(f"Don't know how to handle node of type {type(node)}")
+        raise TypeError(f"Don't know how to handle node of type {type(node)}")
 
 
 @pytest.mark.parametrize(
