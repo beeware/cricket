@@ -168,7 +168,7 @@ terms = ["TODO"]
 
 [tool.towncrier]
 directory = "changes"
-package = "toga_chart"
+package = "cricket"
 package_dir = "src"
 filename = "docs/en/about/releases.md"
 title_format = false

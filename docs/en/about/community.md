@@ -9,6 +9,6 @@ We foster a welcoming and respectful community as described in our [BeeWare Comm
 
 ## Contributing
 
-If you experience problems with Cricket, [log them on GitHub](https://github.com/beeware/toga-chart/issues).
+If you experience problems with Cricket, [log them on GitHub](https://github.com/beeware/cricket/issues).
 
 If you want to contribute to Cricket, you can read through the [Cricket contribution guides](../how-to/contribute/index.md)
