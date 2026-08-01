@@ -2,6 +2,10 @@
 
 <!-- towncrier release notes start -->
 
+## 0.3.0.dev1 (2018-07-07)
+
+* Developer release; first demonstration of using Toga
+
 ## 0.2.3 (2013-09-26)
 
 ## 0.2.2 (2013-09-17)
@@ -18,4 +22,4 @@
 
 ## 0.1.0 (2013-06-22)
 
-Initial public release.
+* Initial public release.
