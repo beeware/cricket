@@ -1,7 +1,3 @@
-"""
-This is the main entry point for running pytest test suites.
-"""
-
 from cricket.app import main as cricket_main
 from cricket.pytest.model import PyTestTestSuite
 

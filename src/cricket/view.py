@@ -65,9 +65,10 @@ class Cricket(toga.App):
         # initial display of the status bar and details.
         self.on_tab_selected(self.tree_notebook)
 
-        # Now that we've laid out the grid, hide the error text
+        # Now that we've laid out the grid, hide the output and error text
         # until we actually have an error/output to display
         self.error_box.style.visibility = HIDDEN
+        self.output_box.style.visibility = HIDDEN
 
         # Sets the content defined above to show on the main window
         self.main_window.content = self.content
@@ -360,21 +361,6 @@ class Cricket(toga.App):
         self.description_box.add(self.description_label)
         self.description_box.add(self.description_view)
 
-        # Box to put the test output
-        self.output_box = toga.Box(direction=ROW, margin=(5, 10), flex=3)
-        # Label to indicate the test output
-        self.output_label = toga.Label(
-            "Output:",
-            text_align=RIGHT,
-            width=80,
-            margin_right=10,
-        )
-        # Text input to show the test output
-        self.output_view = toga.MultilineTextInput(flex=1, font_family=MONOSPACE)
-        # Insert the test output box objects
-        self.output_box.add(self.output_label)
-        self.output_box.add(self.output_view)
-
         # Box to put the test error
         self.error_box = toga.Box(direction=ROW, margin=(5, 10), flex=3)
         # Label to indicate the test error
@@ -390,12 +376,27 @@ class Cricket(toga.App):
         self.error_box.add(self.error_label)
         self.error_box.add(self.error_view)
 
+        # Box to put the test output
+        self.output_box = toga.Box(direction=ROW, margin=(5, 10), flex=3)
+        # Label to indicate the test output
+        self.output_label = toga.Label(
+            "Output:",
+            text_align=RIGHT,
+            width=80,
+            margin_right=10,
+        )
+        # Text input to show the test output
+        self.output_view = toga.MultilineTextInput(flex=1, font_family=MONOSPACE)
+        # Insert the test output box objects
+        self.output_box.add(self.output_label)
+        self.output_box.add(self.output_view)
+
         # Insert the right box contents
         # self.right_box.add(self.coverage_checkbox)
         self.right_box.add(self.summary_box)
         self.right_box.add(self.description_box)
-        self.right_box.add(self.output_box)
         self.right_box.add(self.error_box)
+        self.right_box.add(self.output_box)
 
     def _setup_status_bar(self):
         """The bottom frame to inform the user about the status of the tests
@@ -533,7 +534,9 @@ class Cricket(toga.App):
 
             self.output_view.text = ""
             self.error_view.text = ""
+
             self.error_box.style.visibility = HIDDEN
+            self.output_box.style.visibility = HIDDEN
         elif nodes:
             # Find the definition for the actual test method out of the test_suite
             testMethod = nodes[0]
@@ -565,21 +568,26 @@ class Cricket(toga.App):
                     # Test has been executed
                     self.duration_view.value = f"{testMethod.duration:0.2f}s"
 
-                    self.output_view.value = testMethod.output
-
                     if testMethod.error:
                         self.error_view.value = testMethod.error
                         self.error_box.style.visibility = VISIBLE
                     else:
                         self.error_box.style.visibility = HIDDEN
+
+                    if testMethod.output:
+                        self.output_view.value = testMethod.output
+                        self.output_box.style.visibility = VISIBLE
+                    else:
+                        self.output_box.style.visibility = HIDDEN
                 else:
                     # Test hasn't been executed yet.
                     self.duration_view.value = "Not executed"
 
-                    self.output_view.text = ""
                     self.error_view.text = ""
-
                     self.error_box.style.visibility = HIDDEN
+
+                    self.output_view.text = ""
+                    self.output_box.style.visibility = HIDDEN
             except AttributeError:
                 # There's no description attribute; that means it's not a test method,
                 # it's a module or test case.
@@ -587,20 +595,23 @@ class Cricket(toga.App):
                 self.description_view.text = ""
                 self.duration_view.text = ""
 
-                self.output_view.text = ""
                 self.error_view.text = ""
-
                 self.error_box.style.visibility = HIDDEN
+
+                self.output_view.text = ""
+                self.output_box.style.visibility = HIDDEN
         else:
             # No selection at all.
             self.status_label.text = ""
             self.name_view.text = ""
             self.description_view.text = ""
             self.duration_view.text = ""
-            self.output_view.text = ""
-            self.error_view.text = ""
 
+            self.error_view.text = ""
             self.error_box.style.visibility = HIDDEN
+
+            self.output_view.text = ""
+            self.output_box.style.visibility = HIDDEN
 
         # update "run selected" button enabled state
         self.run_selected_command.enabled = not self.executor

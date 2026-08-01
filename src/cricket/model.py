@@ -66,7 +66,7 @@ class TestNode:
         index = self._child_labels.index(label)
         child = self._child_nodes[label]
 
-        self._source._notify("remove", item=child)
+        self._source.notify("remove", item=child)
         del self._child_labels[index]
         del self._child_nodes[label]
 

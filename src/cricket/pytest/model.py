@@ -13,7 +13,7 @@ class PyTestTestSuite(TestSuite):
 
     def execute_commandline(self, labels):
         "Return the command line to execute the specified test labels"
-        args = ["pytest", "--cricket", "execute"]
+        args = ["pytest", "--cricket", "execute", "-vv"]
         # if self.coverage:
         #     args.append('--coverage')
         if labels is None:
@@ -26,7 +26,13 @@ class PyTestTestSuite(TestSuite):
 
         parts = [(TestModule, dirpart) for dirpart in dirparts[:-1]]
 
-        if len(pathparts) == 2:
+        if len(pathparts) == 1:
+            parts.extend(
+                [
+                    (TestMethod, pathparts[0]),
+                ]
+            )
+        elif len(pathparts) == 2:
             parts.extend(
                 [
                     (TestModule, pathparts[0]),

@@ -38,8 +38,7 @@ dependencies = [
 ]
 
 [project.gui-scripts]
-cricket-unittest = "cricket.unittest.__main__:run"
-cricket-pytest = "cricket.pytest.__main__:run"
+cricket = "cricket.__main__:run"
 
 [project.entry-points.pytest11]
 cricket = "cricket.pytest.plugin"
@@ -81,6 +80,10 @@ test = [
 docs = [
     "beeware-docs-tools @ git+https://github.com/beeware/beeware-docs-tools@main",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error"]
 
 [tool.ruff.lint]
 # In addition to the default rules, these additional rules will be used:
