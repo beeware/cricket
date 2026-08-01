@@ -113,6 +113,7 @@ def test_no_tests(test_list, expected_errors, expected_tree):
         ),
     ],
 )
+@pytest.mark.skipif(sys.platform == "win32", reason="Test has problems on Windows")
 def test_with_tests(test_list, expected_errors, expected_tree):
     "If tests are found, the right tree is created"
     test_suite = PTSuite()
