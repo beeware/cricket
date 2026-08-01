@@ -4,12 +4,12 @@ This is the "View" of the MVC world.
 """
 
 import subprocess
-import sys
+import webbrowser
 
 import toga
 from toga.fonts import BOLD, SANS_SERIF
 from toga.sources import AccessorColumn
-from toga.style.pack import CENTER, COLUMN, RIGHT, ROW
+from toga.style.pack import CENTER, COLUMN, RIGHT, ROW, HIDDEN, VISIBLE, MONOSPACE
 
 # Check for the existence of coverage and duvet
 try:
@@ -61,11 +61,13 @@ class Cricket(toga.App):
         self._setup_status_bar()
         self._setup_main_content()
 
-        self._setup_init_values()
+        # Emit a tab selection event; this primes the
+        # initial display of the status bar and details.
+        self.on_tab_selected(self.tree_notebook)
 
         # Now that we've laid out the grid, hide the error text
         # until we actually have an error/output to display
-        # self.error_box.style.visibility = HIDDEN
+        self.error_box.style.visibility = HIDDEN
 
         # Sets the content defined above to show on the main window
         self.main_window.content = self.content
@@ -95,9 +97,9 @@ class Cricket(toga.App):
     def open_document(self, doc):
         pass
 
-    ######################################################
-    # Error handlers from the model or test suite  FIXME
-    ######################################################
+    #############################################
+    # Error handlers from the model or test suite
+    #############################################
 
     @property
     def test_load_error(self):
@@ -125,9 +127,11 @@ class Cricket(toga.App):
         self.instruments_group = toga.Group("Instruments")
 
         self.show_coverage_command = toga.Command(
-            self.cmd_show_coverage, "Show coverage...", group=self.instruments_group
+            self.cmd_show_coverage,
+            "Show coverage...",
+            group=self.instruments_group,
+            enabled=duvet is not None,
         )
-        self.show_coverage_command.enabled = duvet is not None
 
         # Button to stop run the tests
         self.stop_command = toga.Command(
@@ -137,8 +141,8 @@ class Cricket(toga.App):
             icon=toga.Icon("resources/stop.png"),
             shortcut="s",
             group=self.control_tests_group,
+            enabled=False,
         )
-        self.stop_command.enabled = False
 
         # Button to run all the tests
         self.run_all_command = toga.Command(
@@ -158,8 +162,8 @@ class Cricket(toga.App):
             icon=toga.Icon("resources/run_select.png"),
             shortcut="e",
             group=self.control_tests_group,
+            enabled=False,
         )
-        self.run_selected_command.enabled = False
 
         # Re-run all the tests
         self.rerun_command = toga.Command(
@@ -169,13 +173,37 @@ class Cricket(toga.App):
             icon=toga.Icon("resources/re_run.png"),
             shortcut="a",
             group=self.control_tests_group,
+            enabled=False,
         )
-        self.rerun_command.enabled = False
+
+        # Help
+        cmd_cricket_docs = toga.Command(
+            self.show_cricket_docs,
+            "Open Cricket documentation",
+            group=toga.Group.HELP,
+            order=20,
+        )
+        cmd_beeware_homepage = toga.Command(
+            self.show_beeware_homepage,
+            "Open BeeWare homepage",
+            group=toga.Group.HELP,
+            order=21,
+        )
+        cmd_cricket_github = toga.Command(
+            self.show_cricket_github,
+            "Open Cricket on GitHub",
+            group=toga.Group.HELP,
+            order=22,
+        )
 
         # Cricket's menu items
         self.commands.add(
             # Instrument items
             self.show_coverage_command,
+            # Help items
+            cmd_cricket_docs,
+            cmd_beeware_homepage,
+            cmd_cricket_github,
         )
 
         self.main_window.toolbar.add(
@@ -221,17 +249,18 @@ class Cricket(toga.App):
         self.all_tests_tree = toga.Tree(
             columns=[AccessorColumn("Test", "label")],
             data=self.test_suite,
+            on_select=self.on_test_selected,
             multiple_select=True,
         )
-
-        self.all_tests_tree.on_select = self.on_test_selected
+        self.all_tests_tree.expand()
 
         self.problem_tests_tree = toga.Tree(
             columns=[AccessorColumn("Test", "label")],
             data=TestSuiteProblems(self.test_suite),
+            on_select=self.on_test_selected,
             multiple_select=True,
         )
-        self.problem_tests_tree.on_select = self.on_test_selected
+        self.problem_tests_tree.expand()
 
         self.tree_notebook = toga.OptionContainer(
             content=[
@@ -239,6 +268,7 @@ class Cricket(toga.App):
                 ("Problems", self.problem_tests_tree),
             ],
             on_select=self.on_tab_selected,
+            margin_top=5,
         )
 
     def _setup_right_frame(self):
@@ -340,7 +370,7 @@ class Cricket(toga.App):
             margin_right=10,
         )
         # Text input to show the test output
-        self.output_view = toga.MultilineTextInput(flex=1)
+        self.output_view = toga.MultilineTextInput(flex=1, font_family=MONOSPACE)
         # Insert the test output box objects
         self.output_box.add(self.output_label)
         self.output_box.add(self.output_view)
@@ -355,7 +385,7 @@ class Cricket(toga.App):
             margin_right=10,
         )
         # Text input to show the test error
-        self.error_view = toga.MultilineTextInput(flex=1)
+        self.error_view = toga.MultilineTextInput(flex=1, font_family=MONOSPACE)
         # Insert the test error box objects
         self.error_box.add(self.error_label)
         self.error_box.add(self.error_view)
@@ -470,62 +500,40 @@ class Cricket(toga.App):
                 "Error on open duvet", f"Unable to start Duvet: {e}"
             )
 
-    # def cmd_cricket_page(self, sender):
-    #     "Show the Cricket test_suite page"
-    #     webbrowser.open_new('http://pybee.org/cricket/')
+    def show_beeware_homepage(self, sender):
+        "Show the Beeware test_suite page"
+        webbrowser.open_new("https://beeware.org/")
 
-    # def cmd_beeware_page(self, sender):
-    #     "Show the Beeware test_suite page"
-    #     webbrowser.open_new('http://pybee.org/')
+    def show_cricket_github(self, sender):
+        "Show the Cricket GitHub repo"
+        webbrowser.open_new("https://github.com/beeware/cricket")
 
-    # def cmd_cricket_github(self, sender):
-    #     "Show the Cricket GitHub repo"
-    #     webbrowser.open_new('http://github.com/pybee/cricket')
-
-    # def cmd_cricket_docs(self, sender):
-    #     "Show the Cricket documentation"
-    #     webbrowser.open_new('https://cricket.readthedocs.io/')
-
-    # def cmd_about_cricket(self, sender):
-    #     "Show a dialog with Cricket information"
-
-    #     self.about_cricket = "Cricket is a graphical tool that helps you run
-    #     your test suites. \n \nNormal unittest test runners dump all output to
-    #     the console, and provide very little detail while the suite is
-    #     running. As a result: \n \n- You can't start looking at failures until
-    #     the test suite has completed running,\n- It isn't a very accessible
-    #     format for identifying patterns in test failures, \n- It can be hard
-    #     (or cumbersome) to re-run any tests that have failed. \n \nWhy the
-    #     name cricket? Test Cricket is the most prestigious version of the game
-    #     of cricket. Games last for up to 5 days... just like running some test
-    #     suites. The usual approach for making cricket watchable is a generous
-    #     dose of beer; in programming, Balmer Peak limits come into effect, so
-    #     something else is required..."
-
-    #     self.main_window.info_dialog('Cricket', self.about_cricket)
+    def show_cricket_docs(self, sender):
+        "Show the Cricket documentation"
+        webbrowser.open_new("https://cricket.beeware.org/")
 
     ######################################################
     # GUI Callbacks
     ######################################################
 
-    def on_tab_selected(self, tab, option):
+    def on_tab_selected(self, widget, **kwargs):
         "Event handler: the tree selection has changed."
-        self.current_tree = option
-        self.on_test_selected(option, None)
+        self.current_tree = widget.current_tab.content
+        self.on_test_selected(self.current_tree)
 
-    def on_test_selected(self, widget, node):
+    def on_test_selected(self, widget, **kwargs):
         "Event handler: a test case has been selected in the tree"
         nodes = widget.selection
         # Multiple tests selected
         if nodes and len(nodes) > 1:
             self.status_label.text = ""
-            self.name_view.clear()
-            self.duration_view.clear()
-            self.description_view.clear()
+            self.name_view.text = ""
+            self.duration_view.text = ""
+            self.description_view.text = ""
 
-            self.output_view.clear()
-            self.error_view.clear()
-            # self.error_box.style.visibility = HIDDEN
+            self.output_view.text = ""
+            self.error_view.text = ""
+            self.error_box.style.visibility = HIDDEN
         elif nodes:
             # Find the definition for the actual test method out of the test_suite
             testMethod = nodes[0]
@@ -561,41 +569,41 @@ class Cricket(toga.App):
 
                     if testMethod.error:
                         self.error_view.value = testMethod.error
-                    #     self.error_box.style.visibility = VISIBLE
-                    # else:
-                    #     self.error_box.style.visibility = HIDDEN
+                        self.error_box.style.visibility = VISIBLE
+                    else:
+                        self.error_box.style.visibility = HIDDEN
                 else:
                     # Test hasn't been executed yet.
                     self.duration_view.value = "Not executed"
 
-                    self.output_view.clear()
-                    self.error_view.clear()
+                    self.output_view.text = ""
+                    self.error_view.text = ""
 
-                    # self.error_box.style.visibility = HIDDEN
+                    self.error_box.style.visibility = HIDDEN
             except AttributeError:
                 # There's no description attribute; that means it's not a test method,
                 # it's a module or test case.
                 self.status_label.text = ""
-                self.description_view.clear()
-                self.duration_view.clear()
+                self.description_view.text = ""
+                self.duration_view.text = ""
 
-                self.output_view.clear()
-                self.error_view.clear()
+                self.output_view.text = ""
+                self.error_view.text = ""
 
-                # self.error_box.style.visibility = HIDDEN
+                self.error_box.style.visibility = HIDDEN
         else:
             # No selection at all.
             self.status_label.text = ""
-            self.name_view.clear()
-            self.description_view.clear()
-            self.duration_view.clear()
-            self.output_view.clear()
-            self.error_view.clear()
+            self.name_view.text = ""
+            self.description_view.text = ""
+            self.duration_view.text = ""
+            self.output_view.text = ""
+            self.error_view.text = ""
 
-            # self.error_box.style.visibility = HIDDEN
+            self.error_box.style.visibility = HIDDEN
 
         # update "run selected" button enabled state
-        self.set_selected_button_state()
+        self.run_selected_command.enabled = not self.executor
 
     def on_coverageChange(self, widget):
         "Event handler: when the coverage checkbox has been toggled"
@@ -620,7 +628,7 @@ class Cricket(toga.App):
         # Update the run summary
         e = self.executor
         self.run_summary.text = (
-            f"T{e.total_count} "
+            f"T:{e.total_count} "
             f"P:{e.result_count.get(TestMethod.STATUS_PASS, 0)} "
             f"F:{e.result_count.get(TestMethod.STATUS_FAIL, 0)} "
             f"E:{e.result_count.get(TestMethod.STATUS_ERROR, 0)} "
@@ -630,13 +638,13 @@ class Cricket(toga.App):
             f"~{remaining_time} remaining"
         )
 
-    def executor_suite_end(self, error=None):
+    async def executor_suite_end(self, error=None):
         "The test suite finished running."
         # Display the final results
         self.run_status.text = "Finished."
 
         if error:
-            self.main_window.error_dialog("Result", error)
+            await self.dialog(toga.ErrorDialog("Result", error))
 
         def state_msg(state):
             return {
@@ -654,10 +662,13 @@ class Cricket(toga.App):
         )
 
         if self.executor.any_failed:
-            self.main_window.error_dialog("Result", message)
+            await self.dialog(toga.ErrorDialog("Result", message))
         else:
-            self.main_window.info_dialog(
-                "Result", message=message or "No tests were ran"
+            await self.dialog(
+                toga.InfoDialog(
+                    "Result",
+                    message=message or "No tests were run",
+                ),
             )
 
         # Reset the running summary.
@@ -672,32 +683,28 @@ class Cricket(toga.App):
             f"S:{e.result_count.get(TestMethod.STATUS_SKIP, 0)}"
         )
 
-    def on_executorSuiteError(self, event, error):
-        "An error occurred running the test suite."
-        # Display the error in a dialog
-        self.run_status.text = "Error running test suite."
+    # def on_executorSuiteError(self, event, error):
+    #     "An error occurred running the test suite."
+    #     # Display the error in a dialog
+    #     self.run_status.text = "Error running test suite."
 
-        FailedTestDialog(self, error)
+    #     FailedTestDialog(self, error)
 
-        # Reset the buttons
-        self.reset_button_states_on_end()
+    #     # Reset the buttons
+    #     self.reset_button_states()
 
-        # Drop the reference to the executor
-        self.executor = None
+    #     # Drop the reference to the executor
+    #     self.executor = None
 
-    def reset_button_states_on_end(self):
+    def reset_button_states(self):
         "A test run has ended and we should enable or disable buttons as appropriate."
         self.stop_command.enabled = False
         self.run_all_command.enabled = True
-        self.set_selected_button_state()
+        self.run_selected_command.enabled = not self.executor
         if self.executor and self.executor.any_failed:
             self.rerun_command.enabled = True
         else:
             self.rerun_command.enabled = False
-
-    def set_selected_button_state(self):
-        state = not self.executor
-        self.run_selected_command.enabled = state
 
     ######################################################
     # GUI utility methods
@@ -735,7 +742,7 @@ class Cricket(toga.App):
 
         # Once it's done, clean up.
         self.executor = None
-        self.reset_button_states_on_end()
+        self.reset_button_states()
 
     async def stop(self):
         "Stop the test suite."
@@ -747,4 +754,4 @@ class Cricket(toga.App):
         self.executor = None
         self.run_status.text = "Stopped."
 
-        self.reset_button_states_on_end()
+        self.reset_button_states()

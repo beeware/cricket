@@ -200,7 +200,7 @@ class Executor:
 
         # Update the display
         if self.display:
-            self.display.executor_suite_end()
+            await self.display.executor_suite_end()
 
         # elif stopped:
         #     # Suite has stopped producing output.

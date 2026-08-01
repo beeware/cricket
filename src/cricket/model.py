@@ -59,7 +59,7 @@ class TestNode:
 
         self._child_nodes[label] = child
 
-        self._source._notify("insert", parent=self, index=index, item=child)
+        self._source.notify("insert", parent=self, index=index, item=child)
 
     def __delitem__(self, label):
         # Find the label in the list of children, and remove it.
@@ -274,7 +274,7 @@ class TestMethod:
         self._error = error
         self._duration = duration
 
-        self._source._notify("change", item=self)
+        self._source.notify("change", item=self)
 
     def set_active(self, is_active, cascade=True):
         """Explicitly set the active state of the test method
@@ -522,7 +522,7 @@ class TestSuiteProblems(TestSuite):
     def __repr__(self):
         return "<TestSuiteProblems>"
 
-    def change(self, item):
+    def source_change(self, item):
         if item.status in TestMethod.FAILING_STATES:
             # Test didn't pass. Make sure it exists in the problem tree.
             failing_item = self.put_test(item.path)

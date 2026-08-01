@@ -41,6 +41,9 @@ dependencies = [
 cricket-unittest = "cricket.unittest.__main__:run"
 cricket-pytest = "cricket.pytest.__main__:run"
 
+[project.entry-points.pytest11]
+cricket = "cricket.pytest.plugin"
+
 [project.urls]
 Homepage = "https://github.com/beeware/cricket"
 Funding = "https://beeware.org/contributing/membership/"

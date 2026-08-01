@@ -8,7 +8,7 @@ def consume(iterable):
         try:
             data = iter(item)
             input = list(data) + input
-        except StopIteration:
+        except TypeError:
             yield item
 
 
