@@ -49,5 +49,4 @@ search:
 - About Cricket
     - [About Cricket](about/index.md)
     - [FAQ](about/faq.md)
-    - [Community](about/community.md)
     - [Release History](about/releases.md)

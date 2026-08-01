@@ -18,11 +18,7 @@ Why the name `cricket`? [Test Cricket](http://en.wikipedia.org/wiki/Test_cricket
 
 ## Quickstart
 
-At present, Cricket has support for:
-
-- unittest test suites; and
-- [pytest](https://pytest.org) test suites; and
-- [Django](https://djangoproject.com) 1.6+ project test suites
+Cricket can run any test suite that can be run run with `pytest`.
 
 To use Cricket, install it with pip:
 
@@ -30,17 +26,7 @@ To use Cricket, install it with pip:
 
 Then, to run your unittest suite:
 
-    $ cricket-unittest
-
-Or, in a pytest project:
-
-    $ cricket-pytest
-
-Or, in a Django project:
-
-    $ cricket-django
-
-`cricket-django` will also work in Django's own tests directory -- i.e., you can use `cricket-django` to run Django's own test suite (for Django 1.6 or later).
+    $ cricket
 
 Running cricket will display a GUI window. Hit "Run all", and watch your test suite execute. A progress bar is displayed in the bottom right hand corner of the window, along with an estimate of time remaining.
 
