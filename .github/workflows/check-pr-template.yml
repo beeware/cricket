@@ -1,0 +1,14 @@
+name: PR Checklist
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  check-pr-template:
+    name: Check PR template
+    permissions:
+      pull-requests: read
+    uses: beeware/.github/.github/workflows/pr-checklist.yml@66283ddb9e206f93b423118deecf1caf516078c1  # main

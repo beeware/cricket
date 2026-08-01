@@ -1,0 +1,11 @@
+INHERIT: config.yml
+site_name: Cricket
+site_url: !ENV READTHEDOCS_CANONICAL_URL
+docs_dir: en
+
+theme:
+  language: en
+
+extra:
+  translation_type: original
+  header: {}

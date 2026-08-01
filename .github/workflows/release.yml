@@ -1,0 +1,65 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions: {}
+
+jobs:
+  ci:
+    name: CI
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    uses: ./.github/workflows/ci.yml
+    with:
+      attest-package: "true"
+
+  release:
+    name: Create Release
+    needs: [ci]
+    # This has to be run on macOS, because rubicon tries to load the Foundation library
+    runs-on: macOS-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Set build variables
+        run: |
+          echo "VERSION=${GITHUB_REF_NAME#v}" | tee -a $GITHUB_ENV
+
+      - name: Get packages
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: "dist-*"
+          merge-multiple: true
+          path: dist
+
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: gh release create "$GITHUB_REF_NAME" --draft --title "$VERSION" dist/*
+
+  test-publish:
+    name: Publish test package
+    needs: [ci, release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Get packages
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: "dist-*"
+          merge-multiple: true
+          path: dist
+
+      - name: Publish release to Test PyPI
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/

@@ -1,0 +1,7 @@
+[project]
+name = "sample"
+description = "A sample project with a test suite."
+version = "0.0.1"
+
+# Need an empty configuration to override the cricket project config
+[tool.pytest.ini_options]

@@ -1,0 +1,183 @@
+[build-system]
+requires = [
+    "setuptools==83.0.0",
+    "setuptools_scm==10.2.0",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cricket"
+dynamic = ["version"]
+description = "A graphical tool to assist running test suites."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+authors = [
+    {name = "Russell Keith-Magee", email = "russell@keith-magee.com"},
+]
+keywords = ["testing"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "toga ~= 0.5.6",
+]
+
+[project.gui-scripts]
+cricket = "cricket.__main__:run"
+
+[project.entry-points.pytest11]
+cricket = "cricket.pytest.plugin"
+
+[project.urls]
+Homepage = "https://github.com/beeware/cricket"
+Funding = "https://beeware.org/contributing/membership/"
+Tracker = "https://github.com/beeware/cricket/issues"
+Source = "https://github.com/beeware/cricket"
+
+[dependency-groups]
+# Extras used by developers *of* this library are pinned to specific versions to
+# ensure environment consistency.
+pre-commit = [
+    "pre-commit == 4.6.0",
+]
+
+setuptools-scm = [
+    "setuptools_scm == 10.2.0",
+]
+
+towncrier = [
+    "towncrier == 25.8.0",
+]
+
+tox = [
+    "tox-uv == 1.35.2",
+]
+
+dev = [
+    {include-group = "setuptools-scm"},
+    {include-group = "pre-commit"},
+    {include-group = "test"},
+    {include-group = "tox"},
+]
+
+test = [
+    "coverage[toml] == 7.15.2",
+    "pytest == 9.1.1"
+]
+
+# Docs are always built on a specific Python version; see RTD and tox config files.
+# beeware-docs-tools is not published to PyPI; install from the base repo.
+docs = [
+    "beeware-docs-tools @ git+https://github.com/beeware/beeware-docs-tools@main",
+]
+
+[tool.coverage.run]
+parallel = true
+branch = true
+relative_files = true
+source_pkgs = ["cricket"]
+
+[tool.coverage.paths]
+source = [
+    "src",
+    "**/site-packages",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+skip_empty = true
+precision = 1
+exclude_lines = [
+    "pragma: no cover",
+    "@(abc\\.)?abstractmethod",
+    "@runtime_checkable",
+    "NotImplementedError\\(\\)",
+    "if TYPE_CHECKING:",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error"]
+
+[tool.ruff.lint]
+# In addition to the default rules, these additional rules will be used:
+extend-select = [
+    "E",      # pycodestyle
+    "W",      # pycodestyle
+    "F",      # pyflakes
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "YTT",    # flake8-2020
+    "ASYNC",  # flake8-async
+    "C4",     # flake8-comprehensions
+    "I",      # isort
+    # The SIM rules are *very* opinionated, and don't necessarily make for better code.
+    # They may be worth occasionally turning on just to see if something could actually
+    # use improvement.
+    # "SIM",    # flake8-simplify
+]
+
+[tool.rumdl]
+flavor = "mkdocs"
+include = ["**/*.md"]
+exclude = ["docs/en/SUMMARY.md", "CODE_OF_CONDUCT.md", "changes/template.md"]
+respect-gitignore = true
+
+# Disable rules:
+# MD014: Forces commands in codeblocks to show output
+disable = [
+    "MD014",
+]
+
+[tool.rumdl.per-file-ignores]
+# MD041: First line in file should be level 1 heading; title will be included in the target page
+"docs/en/how-to/contribute/**/*.md" = ["MD041"]
+"docs/en/how-to/contribute/*.md" = ["MD041"]
+# MD041: Change note fragments are prose snippets, not standalone documents
+"changes/*.md" = ["MD041"]
+
+[tool.rumdl.MD013]  # Line length
+line_length = 999999
+reflow = true
+reflow_mode = "normalize"
+
+[tool.rumdl.MD026]  # Remove punctuation at the end of headings
+punctuation = ",;:"
+
+[tool.rumdl.MD061]  # Fail on certain strings.
+terms = ["TODO"]
+
+[tool.setuptools_scm]
+# To enable SCM versioning, we need an empty tool configuration for setuptools_scm
+
+[tool.towncrier]
+directory = "changes"
+package = "cricket"
+package_dir = "src"
+filename = "docs/en/about/releases.md"
+title_format = false
+template = "changes/template.md"
+start_string = "<!-- towncrier release notes start -->"
+type = [
+    { directory = "feature", name = "Features", showcontent = true },
+    { directory = "bugfix", name = "Bugfixes", showcontent = true },
+    { directory = "removal", name = "Backward Incompatible Changes", showcontent = true },
+    { directory = "doc", name = "Documentation", showcontent = true },
+    { directory = "misc", name = "Misc", showcontent = false },
+]

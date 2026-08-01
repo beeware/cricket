@@ -5,6 +5,12 @@
 .coverage
 .tox
 .pytest_cache
+.ruff_cache
+.rumdl_cache
+
+# Virtual environments
+/venv*
+/.venv*
 
 # Distribution
 env/
@@ -19,6 +25,7 @@ distribute-*
 .DS_Store
 .*.sw[op]
 *~
+.vscode
 
 # IntelliJ Idea family of suites
 .idea
