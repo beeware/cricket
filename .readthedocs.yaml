@@ -13,6 +13,8 @@ build:
     post_checkout:
       - git fetch --unshallow
     pre_install:
+      - sudo apt update -y
+      - sudo apt install libgirepository-2.0-dev libcairo2-dev gir1.2-gtk-3.0 libcanberra-gtk3-module
       - python -m pip install --upgrade pip
       - python -m pip install --group tox
     build:
