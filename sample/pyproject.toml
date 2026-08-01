@@ -1,0 +1,4 @@
+[project]
+name = "sample"
+description = "A sample project with a test suite."
+version = "0.0.1"
