@@ -60,6 +60,10 @@ setuptools-scm = [
     "setuptools_scm == 10.2.0",
 ]
 
+towncrier = [
+    "towncrier == 25.8.0",
+]
+
 tox = [
     "tox-uv == 1.35.2",
 ]
