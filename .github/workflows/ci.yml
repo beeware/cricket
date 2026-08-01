@@ -33,117 +33,172 @@ jobs:
     name: Pre-commit checks
     permissions:
       contents: read
-    uses: beeware/.github/.github/workflows/pre-commit-run.yml@66283ddb9e206f93b423118deecf1caf516078c1 # main
+    uses: beeware/.github/.github/workflows/pre-commit-run.yml@main
     with:
-      pre-commit-source: "pre-commit"
+      pre-commit-source: "--group pre-commit"
 
-  build-wheels:
-    needs: pre-commit
-    name: Build wheels
-    runs-on: macos-latest
+  towncrier:
+    name: Check towncrier
+    uses: beeware/.github/.github/workflows/towncrier-run.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+    with:
+      tox-source: "--group tox"
+
+  package:
+    name: Package Briefcase
     permissions:
       id-token: write
-      attestations: write
       contents: read
+      attestations: write
+    uses: beeware/.github/.github/workflows/python-package-create.yml@main
+    with:
+      attest: ${{ inputs.attest-package }}
+
+  docs-lint:
+    name: Documentation linting
+    needs: [ pre-commit ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
-          fetch-depth: 0
           persist-credentials: false
+          fetch-depth: 1
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
-          python-version: "3.x"
+          python-version: "3.X"
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            .pre-commit-config.yaml
 
-      - name: Build wheels
-        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
-        with:
-          output-dir: dist
-
-      - name: Generate build provenance attestation for wheels
-        if: inputs.attest-package == 'true'
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4
-        with:
-          subject-path: "dist/*.whl"
-
-      - name: Upload artefacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: dist-wheels
-          path: ./dist/*.whl
-          if-no-files-found: error
-
-  build-sdist:
-    needs: pre-commit
-    name: Build sdist
-    runs-on: macos-latest
-    permissions:
-      id-token: write
-      attestations: write
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3.x"
-
-      - name: Build sdist
+      - name: Install system dependencies
         run: |
-          python -m pip install --upgrade build
-          python -m build --sdist
+          sudo apt-get install aspell aspell-en
 
-      - name: Generate build provenance attestation for sdist
-        if: inputs.attest-package == 'true'
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4
-        with:
-          subject-path: "dist/*.tar.gz"
+      - name: Update pip
+        run: python -m pip install -U pip
 
-      - name: Upload artefacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: dist-sdist
-          path: ./dist/*.tar.gz
-          if-no-files-found: error
+      - name: Install Tox
+        run: python -m pip install --group 'tox-uv'
 
-  test:
-    name: Test (${{ matrix.python-version }})
-    needs: build-wheels
-    runs-on: macos-latest
-    permissions:
-      contents: read
+      - name: Perform lint checks
+        run: python -m tox -e docs-lint
+
+  unit-tests:
+    name: Unit tests
+    needs: [ pre-commit, towncrier, package ]
+    runs-on: ${{ matrix.platform }}
+    continue-on-error: ${{ matrix.experimental || false }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+        platform: [ "macos-latest", "windows-latest", "ubuntu-24.04" ]
+        python-version: [ "3.10", "3.14" ]
+        include:
+          # Ensure the Python versions between min and max are tested
+          - platform: "ubuntu-24.04"
+            python-version: "3.11"
+          - platform: "ubuntu-24.04"
+            python-version: "3.12"
+          - platform: "ubuntu-24.04"
+            python-version: "3.13"
+          # # Allow dev Python to fail without failing entire job
+          # - python-version: "3.15"
+          #   experimental: true
     steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
-          persist-credentials: false
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      with:
+        persist-credentials: false
+        fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
+    - name: Set up Python
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
 
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: dist-wheels
-          path: wheelhouse
+    - name: Get Packages
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+      with:
+        pattern: ${{ format('{0}*', needs.package.outputs.artifact-basename) }}
+        merge-multiple: true
+        path: dist
 
-      - name: Install tox
-        run: |
-          python -m pip install --group tox-uv
+    - name: Install Tox
+      run: python -m pip install --group tox
 
-      - name: Run smoke test
-        run: tox -e py
+    - name: Test Briefcase
+      id: test
+      run: |
+        RUNNER_OS=$(cut -d- -f1 <<< ${{ matrix.platform }})
+        RUNNER_VERSION=$(cut -d- -f2 <<< ${{ matrix.platform }})
+        COVERAGE_FILE=".coverage.${RUNNER_OS}.${RUNNER_VERSION}.${{ matrix.python-version }}" \
+          tox -e py-cov --installpkg dist/cricket-*.whl
+
+    - name: Store Coverage Data
+      if: always() && (steps.test.outcome == 'success' || steps.test.outcome == 'failure')
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+      with:
+        name: coverage-data-${{ matrix.platform }}-${{ matrix.python-version }}
+        path: ".coverage.*"
+        if-no-files-found: error
+        include-hidden-files: true
+
+    - name: Report Platform Coverage
+      id: coverage
+      if: always() && (steps.test.outcome == 'success' || steps.test.outcome == 'failure')
+      # coverage reporting must use the same Python version used to produce coverage
+      run: tox -qe coverage$(tr -dc "0-9" <<< "${{ matrix.python-version }}")
+
+  coverage:
+    name: Project coverage
+    runs-on: ubuntu-24.04
+    needs: unit-tests
+    if: always() && (needs.unit-tests.result == 'success' || needs.unit-tests.result == 'failure')
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      with:
+        persist-credentials: false
+        fetch-depth: 0
+
+    - name: Setup Python
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+      with:
+        # Use minimum version of python for coverage to avoid phantom branches
+        # https://github.com/nedbat/coveragepy/issues/1572#issuecomment-1522546425
+        python-version: "3.10"
+
+    - name: Install Tox
+      run: python -m pip install --group tox
+
+    - name: Retrieve Coverage Data
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+      with:
+        pattern: coverage-data-*
+        merge-multiple: true
+
+    - name: Platform Coverage Reports
+      id: platform-coverage
+      run: |
+        tox --parallel-no-spinner -qe \
+          coverage-ci-platform-linux,coverage-ci-platform-macos,coverage-ci-platform-windows
+
+    - name: Project Coverage Report
+      id: project-coverage
+      if: always()
+      run: tox -qe coverage-ci-project-html
+
+    - name: Upload Project Coverage HTML Report
+      if: always() && steps.project-coverage.outcome == 'failure'
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+      with:
+        name: html-coverage-report-project
+        path: htmlcov
