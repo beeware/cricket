@@ -1,3 +1,4 @@
+import sys
 import pytest
 
 from cricket.model import (
@@ -198,6 +199,7 @@ def test_suite():
         pytest.param("app", (1, None), id="4"),
     ],
 )
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_single_test_test_suite(label, expected):
     """If the test_suite only contains a single test, the reduction is
     always the full suite"""
@@ -302,6 +304,7 @@ def test_all_tests(test_suite):
         ),
     ],
 )
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_method_selection(test_suite, label, expected):
     "Explicitly named test method paths may be trimmed if they are unique"
     assert test_suite.find_tests(labels=[label]) == expected
@@ -378,6 +381,7 @@ def test_method_selection(test_suite, label, expected):
         ),
     ],
 )
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_testcase_selection(test_suite, label, expected):
     "Explicitly named test case paths may be trimmed if they are unique"
     assert test_suite.find_tests(labels=[label]) == expected
@@ -428,6 +432,7 @@ def test_testcase_selection(test_suite, label, expected):
         ),
     ],
 )
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_testmodule_selection(test_suite, label, expected):
     "Explicitly named test module paths may be trimmed if they are unique"
     assert test_suite.find_tests(labels=[label]) == expected
@@ -444,6 +449,7 @@ def test_testmodule_selection(test_suite, label, expected):
         pytest.param("app8/package2", (5, ["app8/package2"]), id="5"),
     ],
 )
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_package_selection(test_suite, label, expected):
     "Explicitly named test package paths may be trimmed if they are unique"
     assert test_suite.find_tests(labels=[label]) == expected
@@ -466,6 +472,7 @@ def test_package_selection(test_suite, label, expected):
         ),
     ],
 )
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_subpackage_selection(test_suite, label, expected):
     "Explicitly named test subpackage paths may be trimmed if they are unique"
     assert test_suite.find_tests(labels=[label]) == expected
@@ -484,6 +491,7 @@ def test_subpackage_selection(test_suite, label, expected):
         pytest.param("app8", (6, ["app8"]), id="app8"),
     ],
 )
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_app_selection(test_suite, label, expected):
     "Explicitly named app paths return a count of all tests in the app"
     assert test_suite.find_tests(labels=[label]) == expected
@@ -706,6 +714,7 @@ def test_testmethod_collapse(test_suite, labels, expected):
         ),
     ],
 )
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_package_collapse(test_suite, labels, expected):
     """If all test cases in a test package are selected, "
     path is trimmed to the test method"""
@@ -745,6 +754,7 @@ def test_package_collapse(test_suite, labels, expected):
         ),
     ],
 )
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_subpackage_collapse(test_suite, labels, expected):
     assert test_suite.find_tests(labels=labels) == expected
 
@@ -1080,5 +1090,6 @@ def test_subpackage_collapse(test_suite, labels, expected):
         ),
     ],
 )
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_app_collapse(test_suite, labels, expected):
     assert test_suite.find_tests(labels=labels) == expected

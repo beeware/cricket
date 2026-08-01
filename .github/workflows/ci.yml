@@ -101,8 +101,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ "macos-26", "ubuntu-24.04" ]
-        # platform: [ "macos-latest", "windows-latest", "ubuntu-24.04" ]
+        platform: [ "macos-latest", "windows-latest", "ubuntu-24.04" ]
         python-version: [ "3.10", "3.14" ]
         include:
           # Ensure the Python versions between min and max are tested

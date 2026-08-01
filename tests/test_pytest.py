@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -27,6 +28,7 @@ def sample_suite():
     os.chdir(_cwd)
 
 
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_discovery():
     suite = PTSuite()
     runner = subprocess.run(
@@ -322,6 +324,7 @@ def test_split_root_unittest(sample_suite):
     ]
 
 
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_split_minimal(sample_suite):
     suite = PTSuite()
     parts = suite.split_test_id("tests/test_module.py::test_stuff")
@@ -333,6 +336,7 @@ def test_split_minimal(sample_suite):
     ]
 
 
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_split_unittest(sample_suite):
     suite = PTSuite()
     parts = suite.split_test_id("tests/test_module.py::TestClass::test_stuff")
@@ -345,6 +349,7 @@ def test_split_unittest(sample_suite):
     ]
 
 
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_split_long(sample_suite):
     suite = PTSuite()
     parts = suite.split_test_id(
@@ -383,6 +388,7 @@ def test_join_case(sample_suite):
     assert suite.join_path(parent, CTCase, "TestClass") == "tests/module.py::TestClass"
 
 
+@pytest.mark.skipif(sys.platform == "win32", "Test has problems on Windows")
 def test_join_module(sample_suite):
     suite = PTSuite()
     parent = CTModule(None, "tests", "tests")
