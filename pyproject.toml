@@ -1,7 +1,7 @@
 [build-system]
 requires = [
     "setuptools==84.0.0",
-    "setuptools_scm==10.2.1",
+    "setuptools_scm==10.3.4",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -60,7 +60,7 @@ setuptools-scm = [
 ]
 
 towncrier = [
-    "towncrier == 25.8.0",
+    "towncrier == 26.9.0",
 ]
 
 tox = [
@@ -75,7 +75,7 @@ dev = [
 ]
 
 test = [
-    "coverage[toml] == 7.16.0",
+    "coverage[toml] == 7.16.2",
     "pytest == 9.1.1"
 ]
 
