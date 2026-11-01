@@ -1,7 +1,7 @@
 [build-system]
 requires = [
-    "setuptools==84.0.0",
-    "setuptools_scm==10.2.1",
+    "setuptools==84.2.1",
+    "setuptools_scm==10.3.4",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -52,7 +52,7 @@ Source = "https://github.com/beeware/cricket"
 # Extras used by developers *of* this library are pinned to specific versions to
 # ensure environment consistency.
 pre-commit = [
-    "pre-commit == 4.6.2",
+    "pre-commit == 4.7.0",
 ]
 
 setuptools-scm = [
@@ -60,11 +60,11 @@ setuptools-scm = [
 ]
 
 towncrier = [
-    "towncrier == 25.8.0",
+    "towncrier == 26.9.0",
 ]
 
 tox = [
-    "tox-uv == 1.36.0",
+    "tox-uv == 1.37.0",
 ]
 
 dev = [
@@ -75,7 +75,7 @@ dev = [
 ]
 
 test = [
-    "coverage[toml] == 7.16.0",
+    "coverage[toml] == 7.17.0",
     "pytest == 9.1.1"
 ]
 
