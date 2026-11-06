@@ -1,0 +1,10 @@
+[project]
+site_name = "Cricket"
+docs_dir = "en"
+
+[project.theme]
+language = "en"
+
+[project.extra]
+translation_type = "original"
+header = {}

@@ -19,6 +19,7 @@ build/
 *.egg-info
 .eggs
 _build
+docs/_build.*.toml
 distribute-*
 
 # Others
